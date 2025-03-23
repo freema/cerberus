@@ -271,8 +271,6 @@ class ConfigService {
         },
         encryptionKey: encryptionKey
       });
-      
-      this.logger.info('Configuration initialized successfully');
     } catch (error) {
       console.error('Error initializing configuration:', error);
       throw error;

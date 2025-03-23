@@ -1,0 +1,8 @@
+node_modules/
+coverage/
+old/
+cache/
+config/
+.git/
+dist/
+*.min.js

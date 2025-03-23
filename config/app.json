@@ -1,0 +1,27 @@
+{
+  "cacheTTL": 86400000,
+  "supportedExtensions": [
+    ".php",
+    ".js",
+    ".jsx",
+    ".ts",
+    ".tsx",
+    ".py"
+  ],
+  "excludedDirs": [
+    "node_modules",
+    "vendor",
+    ".git",
+    "dist",
+    "build"
+  ],
+  "gitlab": {
+    "baseUrl": "https://gitlab.com/api/v4",
+    "timeout": 10000
+  },
+  "claude": {
+    "model": "claude-3-opus-20240229",
+    "maxTokens": 4000
+  },
+  "debug": false
+}

@@ -37,6 +37,17 @@ class MergeRequest {
    */
   getFilePath() {
     return path.join(
+      config.getDataPathForType('merge-requests'),
+      `${this.id}.json`
+    );
+  }
+
+  /**
+   * Get the cached file path for this merge request
+   * @returns {string} - Path to the cached merge request file
+   */
+  getCacheFilePath() {
+    return path.join(
       config.getCachePathForType('merge-requests'),
       `${this.id}.json`
     );
@@ -48,7 +59,13 @@ class MergeRequest {
    */
   async save() {
     try {
+      // Ensure data directory exists
+      await fileSystem.ensureDir(config.getDataPathForType('merge-requests'));
+      
+      // Save to data directory
       await fileSystem.saveToJson(this.getFilePath(), this.toJSON());
+      
+      logger.debug(`Merge request ${this.id} saved to ${this.getFilePath()}`);
     } catch (error) {
       logger.error(`Error saving merge request ${this.id}:`, error);
       throw error;
@@ -96,9 +113,26 @@ class MergeRequest {
    */
   static async load(id) {
     try {
-      const filePath = path.join(config.getCachePathForType('merge-requests'), `${id}.json`);
-      const data = await fileSystem.readJson(filePath);
-      return new MergeRequest(data);
+      // First try to load from data directory
+      const filePath = path.join(config.getDataPathForType('merge-requests'), `${id}.json`);
+      
+      try {
+        const data = await fileSystem.readJson(filePath);
+        return new MergeRequest(data);
+      } catch (dataError) {
+        // If not in data directory, try cache directory
+        logger.debug(`Merge request not found in data directory, trying cache directory...`);
+        const cacheFilePath = path.join(config.getCachePathForType('merge-requests'), `${id}.json`);
+        
+        const data = await fileSystem.readJson(cacheFilePath);
+        
+        // Create new merge request and migrate to data directory
+        const mergeRequest = new MergeRequest(data);
+        logger.info(`Migrating merge request ${id} from cache to data directory...`);
+        await mergeRequest.save();
+        
+        return mergeRequest;
+      }
     } catch (error) {
       logger.error(`Error loading merge request ${id}:`, error);
       throw error;
@@ -111,10 +145,31 @@ class MergeRequest {
    */
   static async listAll() {
     try {
-      const files = await fileSystem.listFiles(config.getCachePathForType('merge-requests'));
-      return files
-        .filter(file => file.endsWith('.json'))
-        .map(file => file.replace('.json', ''));
+      // Get merge requests from both data and cache directories
+      let dataFiles = [];
+      let cacheFiles = [];
+      
+      try {
+        dataFiles = await fileSystem.listFiles(config.getDataPathForType('merge-requests'));
+      } catch (error) {
+        logger.debug('No data merge-requests directory or error reading it');
+      }
+      
+      try {
+        cacheFiles = await fileSystem.listFiles(config.getCachePathForType('merge-requests'));
+      } catch (error) {
+        logger.debug('No cache merge-requests directory or error reading it');
+      }
+      
+      // Combine files from both directories
+      const allFiles = [...dataFiles, ...cacheFiles];
+      
+      // Filter and remove duplicates and .json extension
+      return [...new Set(
+        allFiles
+          .filter(file => file.endsWith('.json'))
+          .map(file => file.replace('.json', ''))
+      )];
     } catch (error) {
       logger.error('Error listing merge requests:', error);
       return [];

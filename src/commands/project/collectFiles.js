@@ -350,13 +350,17 @@ async function getFilesInDirectory(dirPath, extensions = null, excludeDirs = [])
 }
 
 /**
- * Copy files to the project directory
+ * Copy files to the project cache directory
  * @param {Array} files - Array of file objects
  * @param {Project} project - Project to copy files to
  * @returns {Promise<Object>} - Results of the copy operation
  */
 async function copyFilesToProject(files, project) {
-  const projectDir = project.getProjectPath();
+  // Data project directory is for metadata
+  const dataDir = project.getProjectDataPath();
+  // Cache project directory is for actual project files
+  const cacheDir = project.getProjectCachePath();
+  
   const copiedFiles = [];
   
   // Create a map of existing files for quick lookup
@@ -394,7 +398,7 @@ async function copyFilesToProject(files, project) {
       
       // Copy the file if it's new or changed
       if (fileChanged) {
-        const targetPath = path.join(projectDir, flattenedName);
+        const targetPath = path.join(cacheDir, flattenedName);
         await fs.copy(file.fullPath, targetPath);
         
         const stats = await fs.stat(file.fullPath);

@@ -271,6 +271,8 @@ class ConfigService {
         },
         encryptionKey: encryptionKey
       });
+      
+      this.logger.info('Configuration initialized successfully');
     } catch (error) {
       console.error('Error initializing configuration:', error);
       throw error;
@@ -448,9 +450,12 @@ class ConfigService {
   ensureDirectories() {
     const rootDir = path.resolve(process.cwd());
     const dirs = [
-      path.join(rootDir, 'cache', 'projects'),
-      path.join(rootDir, 'cache', 'merge-requests'),
-      path.join(rootDir, 'config')
+      path.join(rootDir, 'data', 'projects'),  // Trvalá data projektů
+      path.join(rootDir, 'data', 'merge-requests'), // Trvalá data code review
+      path.join(rootDir, 'cache'),  // Dočasná cache
+      path.join(rootDir, 'cache', 'projects'),  // Cache pro projekty
+      path.join(rootDir, 'cache', 'merge-requests'),  // Cache pro merge requesty
+      path.join(rootDir, 'config')  // Konfigurační soubory
     ];
 
     dirs.forEach(dir => {
@@ -460,6 +465,34 @@ class ConfigService {
         console.error(`Failed to create directory: ${dir}`, error);
       }
     });
+    
+    // Vytvoření souboru .gitignore pro data adresář
+    const gitignorePath = path.join(rootDir, 'data', '.gitignore');
+    if (!fs.existsSync(gitignorePath)) {
+      try {
+        fs.writeFileSync(gitignorePath, '# Ignore all files in this directory\n*\n!.gitignore\n');
+        console.log('Created .gitignore for data directory');
+      } catch (error) {
+        console.error('Failed to create .gitignore file:', error);
+      }
+    }
+  }
+
+  /**
+   * Get the base path for data storage
+   * @returns {string} - Data base path
+   */
+  getDataPath() {
+    return path.join(process.cwd(), 'data');
+  }
+
+  /**
+   * Get the path for a specific data type
+   * @param {string} type - Data type (e.g., 'projects', 'merge-requests')
+   * @returns {string} - Path to the data directory
+   */
+  getDataPathForType(type) {
+    return path.join(this.getDataPath(), type);
   }
 
   /**
@@ -472,7 +505,7 @@ class ConfigService {
 
   /**
    * Get the path for a specific cache type
-   * @param {string} type - Cache type (e.g., 'projects', 'merge-requests')
+   * @param {string} type - Cache type
    * @returns {string} - Path to the cache directory
    */
   getCachePathForType(type) {

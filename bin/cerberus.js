@@ -7,6 +7,7 @@ const codeReviewCommands = require('../src/commands/codeReview');
 const menuController = require('../src/controllers/menuController');
 const logger = require('../src/utils/logger');
 const config = require('../src/utils/config');
+const { clearTerminal } = require('../src/utils/terminal');
 
 // Global options
 program
@@ -15,6 +16,7 @@ program
   .version('1.0.0')
   .option('-d, --debug', 'Enable debug mode')
   .option('-c, --config', 'Show current configuration')
+  .option('-n, --no-clear', 'Do not clear terminal on startup')
   .hook('preAction', (thisCommand, actionCommand) => {
     // Set debug mode if flag is provided
     if (thisCommand.opts().debug) {
@@ -23,6 +25,15 @@ program
       logger.debug('Debug mode enabled');
     }
   });
+
+// Process options
+program.parse(process.argv);
+const options = program.opts();
+
+// Clear the terminal screen (unless --no-clear is provided)
+if (options.clear !== false) {
+  clearTerminal();
+}
 
 // Display banner
 displayBanner();
@@ -38,7 +49,7 @@ program
   .action(menuController.configureSettings);
 
 // If --config flag is set, show configuration
-if (program.opts().config) {
+if (options.config) {
   menuController.showConfiguration();
 }
 

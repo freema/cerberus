@@ -7,6 +7,7 @@ const Project = require('../../models/Project');
 const { projectPrompts } = require('../../cli/prompts');
 const config = require('../../utils/config');
 const logger = require('../../utils/logger');
+const { generateDirectoryLink } = require('../../utils/pathUtils');
 
 // Extension groups for different file types
 const FILE_EXTENSION_GROUPS = {
@@ -284,6 +285,15 @@ async function collectFiles(projectName) {
     
     copySpinner.succeed(`Copied ${copiedFiles.length} files to project: ${projectName}`);
     
+    // Show link to the project directory
+    const projectDir = project.getProjectPath();
+    const dirLink = generateDirectoryLink(projectDir);
+
+    console.log(chalk.cyan('\nFiles collected to: '));
+    console.log(chalk.blue.underline(dirLink));
+    console.log(chalk.yellow('You can click the link above to open the directory or copy the path below:'));
+    console.log(chalk.white(projectDir));
+    
     // Ask if user wants to analyze the project now
     const { analyzeNow } = await inquirer.prompt([
       {
@@ -302,6 +312,11 @@ async function collectFiles(projectName) {
       console.log(chalk.yellow('\n========= DIRECTORY STRUCTURE ========='));
       console.log(directoryStructure);
       console.log(chalk.yellow('========= END OF DIRECTORY STRUCTURE ========='));
+      
+      // Add the directory link again for convenience
+      console.log(chalk.cyan('\nProject directory: '));
+      console.log(chalk.blue.underline(dirLink));
+      console.log(chalk.white(projectDir));
     }
     
     return project;
@@ -350,17 +365,13 @@ async function getFilesInDirectory(dirPath, extensions = null, excludeDirs = [])
 }
 
 /**
- * Copy files to the project cache directory
+ * Copy files to the project directory
  * @param {Array} files - Array of file objects
  * @param {Project} project - Project to copy files to
  * @returns {Promise<Object>} - Results of the copy operation
  */
 async function copyFilesToProject(files, project) {
-  // Data project directory is for metadata
-  const dataDir = project.getProjectDataPath();
-  // Cache project directory is for actual project files
-  const cacheDir = project.getProjectCachePath();
-  
+  const projectDir = project.getProjectPath();
   const copiedFiles = [];
   
   // Create a map of existing files for quick lookup
@@ -398,7 +409,7 @@ async function copyFilesToProject(files, project) {
       
       // Copy the file if it's new or changed
       if (fileChanged) {
-        const targetPath = path.join(cacheDir, flattenedName);
+        const targetPath = path.join(projectDir, flattenedName);
         await fs.copy(file.fullPath, targetPath);
         
         const stats = await fs.stat(file.fullPath);

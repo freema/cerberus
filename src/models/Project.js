@@ -23,19 +23,20 @@ class Project {
   }
 
   /**
-   * Get the project path for persistent data
-   * @returns {string} - Path to the project directory in data folder
+   * Get the project path
+   * @returns {string} - Path to the project directory
    */
-  getProjectDataPath() {
-    return path.join(config.getDataPathForType('projects'), this.name);
+  getProjectPath() {
+    // Updated to use the data directory instead of cache
+    return path.join(config.getDataPath(), 'projects', this.name);
   }
 
   /**
-   * Get the project path for cached files
-   * @returns {string} - Path to the project directory in cache folder
+   * Get the analysis file path
+   * @returns {string} - Path to the analysis file
    */
-  getProjectCachePath() {
-    return path.join(config.getCachePath(), 'projects', this.name);
+  getAnalysisPath() {
+    return path.join(this.getProjectPath(), 'analysis.txt');
   }
 
   /**
@@ -45,19 +46,8 @@ class Project {
   async save() {
     try {
       this.lastUpdated = new Date().toISOString();
-      
-      // Ensure data directory exists
-      const dataPath = this.getProjectDataPath();
-      await fileSystem.ensureDir(dataPath);
-      
-      // Save metadata to data directory
-      const metadataPath = path.join(dataPath, 'metadata.json');
+      const metadataPath = path.join(this.getProjectPath(), 'metadata.json');
       await fileSystem.saveToJson(metadataPath, this.toJSON());
-      
-      // Also create cache directory if it doesn't exist
-      await fileSystem.ensureDir(this.getProjectCachePath());
-      
-      logger.debug(`Project metadata saved to ${metadataPath}`);
     } catch (error) {
       logger.error(`Error saving project metadata for ${this.name}:`, error);
       throw error;
@@ -112,6 +102,14 @@ class Project {
    */
   setInstructions(instructions) {
     this.instructions = instructions;
+    
+    // Also save the instructions to an analysis.txt file
+    try {
+      fileSystem.writeFile(this.getAnalysisPath(), instructions);
+      logger.debug(`Saved analysis to ${this.getAnalysisPath()}`);
+    } catch (error) {
+      logger.error(`Error saving analysis file for ${this.name}:`, error);
+    }
   }
 
   /**
@@ -121,32 +119,9 @@ class Project {
    */
   static async load(name) {
     try {
-      // First try to load from data directory
-      const metadataPath = path.join(config.getDataPathForType('projects'), name, 'metadata.json');
-      
-      try {
-        const data = await fileSystem.readJson(metadataPath);
-        return new Project(name, data);
-      } catch (dataError) {
-        // If not found in data directory, try old cache directory
-        logger.debug(`Project not found in data directory, trying cache directory...`);
-        const oldMetadataPath = path.join(
-          config.getCachePathForType('projects'), 
-          name, 
-          'metadata.json'
-        );
-        
-        const data = await fileSystem.readJson(oldMetadataPath);
-        
-        // Create a new project with this data
-        const project = new Project(name, data);
-        
-        // Migrate this project to the new data location
-        logger.info(`Migrating project ${name} from cache to data directory...`);
-        await project.save();
-        
-        return project;
-      }
+      const metadataPath = path.join(config.getDataPath(), 'projects', name, 'metadata.json');
+      const data = await fileSystem.readJson(metadataPath);
+      return new Project(name, data);
     } catch (error) {
       logger.error(`Error loading project ${name}:`, error);
       throw error;
@@ -159,26 +134,7 @@ class Project {
    */
   static async listAll() {
     try {
-      // Get projects from both data and cache directories
-      let dataProjects = [];
-      let cacheProjects = [];
-      
-      try {
-        dataProjects = await fileSystem.listFiles(config.getDataPathForType('projects'));
-      } catch (error) {
-        logger.debug('No data projects directory or error reading it:', error);
-      }
-      
-      try {
-        cacheProjects = await fileSystem.listFiles(config.getCachePathForType('projects'));
-      } catch (error) {
-        logger.debug('No cache projects directory or error reading it:', error);
-      }
-      
-      // Combine and deduplicate projects
-      const allProjects = [...new Set([...dataProjects, ...cacheProjects])];
-      
-      return allProjects;
+      return await fileSystem.listFiles(path.join(config.getDataPath(), 'projects'));
     } catch (error) {
       logger.error('Error listing projects:', error);
       return [];
@@ -192,12 +148,8 @@ class Project {
    */
   static async create(name) {
     try {
-      const projectPath = path.join(config.getDataPathForType('projects'), name);
+      const projectPath = path.join(config.getDataPath(), 'projects', name);
       await fileSystem.ensureDir(projectPath);
-      
-      // Also create the cache directory
-      const projectCachePath = path.join(config.getCachePath(), 'projects', name);
-      await fileSystem.ensureDir(projectCachePath);
       
       const project = new Project(name);
       await project.save();

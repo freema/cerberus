@@ -4,6 +4,7 @@ const ora = require('ora');
 const Project = require('../../models/Project');
 const claudeService = require('../../services/claudeService');
 const logger = require('../../utils/logger');
+const { generateDirectoryLink } = require('../../utils/pathUtils');
 
 /**
  * Analyze a project and generate Claude instructions
@@ -100,6 +101,14 @@ async function analyzeProject(projectName) {
           console.log(project.directoryStructure);
           console.log(chalk.yellow('========= END OF DIRECTORY STRUCTURE ========='));
           
+          // Add the directory link for easy navigation
+          const projectDir = project.getProjectPath();
+          const dirLink = generateDirectoryLink(projectDir);
+          
+          console.log(chalk.cyan('\nProject directory: '));
+          console.log(chalk.blue.underline(dirLink));
+          console.log(chalk.white(projectDir));
+          
           console.log(chalk.blue('\nCopy this directory structure to use with Claude.'));
           return;
         }
@@ -108,6 +117,14 @@ async function analyzeProject(projectName) {
         console.log(chalk.yellow('\n========= DIRECTORY STRUCTURE ========='));
         console.log(project.directoryStructure);
         console.log(chalk.yellow('========= END OF DIRECTORY STRUCTURE ========='));
+        
+        // Add the directory link for easy navigation
+        const projectDir = project.getProjectPath();
+        const dirLink = generateDirectoryLink(projectDir);
+        
+        console.log(chalk.cyan('\nProject directory: '));
+        console.log(chalk.blue.underline(dirLink));
+        console.log(chalk.white(projectDir));
         
         console.log(chalk.blue('\nCopy this directory structure to use with Claude.'));
         return;
@@ -213,6 +230,20 @@ function displayInstructions(project) {
   console.log(chalk.yellow('\n========= CLAUDE PROJECT INSTRUCTIONS ========='));
   console.log(project.instructions);
   console.log(chalk.yellow('========= END OF INSTRUCTIONS ========='));
+  
+  // Show links to the project directory and analysis file
+  const projectDir = project.getProjectPath();
+  const analysisPath = project.getAnalysisPath();
+  const projectLink = generateDirectoryLink(projectDir);
+  const analysisLink = generateDirectoryLink(analysisPath);
+
+  console.log(chalk.cyan('\nProject directory: '));
+  console.log(chalk.blue.underline(projectLink));
+  console.log(chalk.white(projectDir));
+
+  console.log(chalk.cyan('\nAnalysis file: '));
+  console.log(chalk.blue.underline(analysisLink));
+  console.log(chalk.white(analysisPath));
   
   // Ask if user wants to copy the instructions to clipboard
   inquirer.prompt([

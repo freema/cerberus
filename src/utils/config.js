@@ -241,6 +241,9 @@ class ConfigService {
       // Generate encryption key
       const encryptionKey = this.getEncryptionKey();
       
+      // Ensure required directories exist
+      this.ensureDirectories();
+      
       // Setup configuration stores
       this.appConfig = new SimpleConfig({
         name: 'app',
@@ -261,10 +264,10 @@ class ConfigService {
         }
       });
 
-      // Credentials store with encryption
+      // Credentials store with encryption - MOVED TO CACHE DIRECTORY
       this.credentialsConfig = new SimpleConfig({
         name: 'credentials',
-        dir: path.join(process.cwd(), 'config'),
+        dir: path.join(this.getCachePath(), 'security'), // Store in cache/security instead of config
         defaults: {
           gitlabToken: null,
           claudeApiKey: null
@@ -277,9 +280,6 @@ class ConfigService {
       console.error('Error initializing configuration:', error);
       throw error;
     }
-
-    // Ensure required directories exist
-    this.ensureDirectories();
   }
   
   /**
@@ -450,12 +450,13 @@ class ConfigService {
   ensureDirectories() {
     const rootDir = path.resolve(process.cwd());
     const dirs = [
-      path.join(rootDir, 'data', 'projects'),  // Trvalá data projektů
-      path.join(rootDir, 'data', 'merge-requests'), // Trvalá data code review
-      path.join(rootDir, 'cache'),  // Dočasná cache
-      path.join(rootDir, 'cache', 'projects'),  // Cache pro projekty
-      path.join(rootDir, 'cache', 'merge-requests'),  // Cache pro merge requesty
-      path.join(rootDir, 'config')  // Konfigurační soubory
+      // Cache directories
+      path.join(rootDir, 'cache', 'merge-requests'),
+      path.join(rootDir, 'cache', 'security'),
+      // Data directories
+      path.join(rootDir, 'data', 'projects'),
+      // Config directory
+      path.join(rootDir, 'config')
     ];
 
     dirs.forEach(dir => {
@@ -465,34 +466,6 @@ class ConfigService {
         console.error(`Failed to create directory: ${dir}`, error);
       }
     });
-    
-    // Vytvoření souboru .gitignore pro data adresář
-    const gitignorePath = path.join(rootDir, 'data', '.gitignore');
-    if (!fs.existsSync(gitignorePath)) {
-      try {
-        fs.writeFileSync(gitignorePath, '# Ignore all files in this directory\n*\n!.gitignore\n');
-        console.log('Created .gitignore for data directory');
-      } catch (error) {
-        console.error('Failed to create .gitignore file:', error);
-      }
-    }
-  }
-
-  /**
-   * Get the base path for data storage
-   * @returns {string} - Data base path
-   */
-  getDataPath() {
-    return path.join(process.cwd(), 'data');
-  }
-
-  /**
-   * Get the path for a specific data type
-   * @param {string} type - Data type (e.g., 'projects', 'merge-requests')
-   * @returns {string} - Path to the data directory
-   */
-  getDataPathForType(type) {
-    return path.join(this.getDataPath(), type);
   }
 
   /**
@@ -504,12 +477,29 @@ class ConfigService {
   }
 
   /**
+   * Get the base path for data storage
+   * @returns {string} - Data base path
+   */
+  getDataPath() {
+    return path.join(process.cwd(), 'data');
+  }
+
+  /**
    * Get the path for a specific cache type
-   * @param {string} type - Cache type
+   * @param {string} type - Cache type (e.g., 'merge-requests')
    * @returns {string} - Path to the cache directory
    */
   getCachePathForType(type) {
     return path.join(this.getCachePath(), type);
+  }
+
+  /**
+   * Get the path for a specific data type
+   * @param {string} type - Data type (e.g., 'projects')
+   * @returns {string} - Path to the data directory
+   */
+  getDataPathForType(type) {
+    return path.join(this.getDataPath(), type);
   }
 }
 

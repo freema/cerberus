@@ -16,7 +16,7 @@
     "build"
   ],
   "gitlab": {
-    "baseUrl": "https://gitlab.com/api/v4",
+    "baseUrl": "https://code.denik.cz/api/v4",
     "timeout": 10000
   },
   "claude": {

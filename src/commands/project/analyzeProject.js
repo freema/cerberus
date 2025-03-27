@@ -256,23 +256,9 @@ function displayInstructions(project) {
   ]).then(({ copyToClipboard }) => {
     if (copyToClipboard) {
       try {
-        // Simple clipboard copy for modern Node.js versions
-        if (process.platform === 'darwin') {
-          // macOS
-          const proc = require('child_process').spawn('pbcopy');
-          proc.stdin.write(project.instructions);
-          proc.stdin.end();
-          logger.success('Instructions copied to clipboard.');
-        } else if (process.platform === 'win32') {
-          // Windows
-          const proc = require('child_process').spawn('clip');
-          proc.stdin.write(project.instructions);
-          proc.stdin.end();
-          logger.success('Instructions copied to clipboard.');
-        } else {
-          // Linux - requires xclip or similar
-          logger.warn('Automatic clipboard copy not supported on this platform.');
-        }
+        // Use the clipboard utility module
+        const clipboard = require('../../utils/clipboard');
+        clipboard.copyWithFeedback(project.instructions, 'Instructions copied to clipboard.');
       } catch (error) {
         logger.error('Failed to copy to clipboard:', error);
       }

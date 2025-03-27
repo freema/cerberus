@@ -177,14 +177,17 @@ async function configureClaude() {
  * Configure settings (main configuration menu)
  */
 async function configureSettings() {
+  // Import i18n service
+  const i18n = require('../utils/i18n');
+  
   // Check for missing configuration and show warning
   const gitlabToken = config.getGitlabToken();
   const claudeApiKey = config.getClaudeApiKey();
   
   if (!gitlabToken || !claudeApiKey) {
-    console.log('\n⚠️  WARNING: Some API keys are not configured:');
-    if (!gitlabToken) console.log('  - GitLab API token is missing');
-    if (!claudeApiKey) console.log('  - Claude API key is missing');
+    console.log(`\n⚠️  ${i18n.t('settings.showConfig.warning')}`);
+    if (!gitlabToken) console.log(`  ${i18n.t('settings.showConfig.gitlabTokenMissing')}`);
+    if (!claudeApiKey) console.log(`  ${i18n.t('settings.showConfig.claudeApiKeyMissing')}`);
     console.log('');
   }
   
@@ -193,13 +196,14 @@ async function configureSettings() {
       {
         type: 'list',
         name: 'configType',
-        message: 'What would you like to configure?',
+        message: i18n.t('menu.settings.title'),
         choices: [
-          { name: 'GitLab Settings', value: 'gitlab' },
-          { name: 'Claude AI Settings', value: 'claude' },
-          { name: 'Debug Mode', value: 'debug' },
-          { name: 'Show Current Configuration', value: 'show' },
-          { name: 'Back to Main Menu', value: 'back' }
+          { name: i18n.t('menu.settings.gitlab'), value: 'gitlab' },
+          { name: i18n.t('menu.settings.claude'), value: 'claude' },
+          { name: i18n.t('menu.settings.debug'), value: 'debug' },
+          { name: i18n.t('menu.settings.locale'), value: 'locale' },
+          { name: i18n.t('menu.settings.show'), value: 'show' },
+          { name: i18n.t('menu.settings.back'), value: 'back' }
         ]
       }
     ]);
@@ -213,6 +217,9 @@ async function configureSettings() {
         break;
       case 'debug':
         await configureDebug();
+        break;
+      case 'locale':
+        await configureLanguage();
         break;
       case 'show':
         showConfiguration();
@@ -329,32 +336,51 @@ async function configureDebug() {
  * Show current configuration
  */
 function showConfiguration() {
+  const i18n = require('../utils/i18n');
+  
   const gitlabConfig = config.getGitlabConfig();
   const claudeConfig = config.getClaudeConfig();
   const debugEnabled = config.isDebugMode();
   const gitlabToken = config.getGitlabToken();
   const claudeApiKey = config.getClaudeApiKey();
   
-  console.log('\n=== Current Configuration ===');
+  console.log(`\n=== ${i18n.t('settings.showConfig.title')} ===`);
   console.log('');
-  console.log('Debug Mode: ' + (debugEnabled ? 'Enabled' : 'Disabled'));
+  
+  const debugStatus = debugEnabled ? 
+    i18n.t('settings.showConfig.enabled') : 
+    i18n.t('settings.showConfig.disabled');
+  
+  console.log(i18n.t('settings.showConfig.debugMode', { status: debugStatus }));
   console.log('');
-  console.log('GitLab Configuration:');
-  console.log('  API URL: ' + gitlabConfig.baseUrl);
-  console.log('  API Token: ' + (gitlabToken ? '********' : 'Not configured ⚠️'));
+  
+  console.log(i18n.t('settings.showConfig.gitlabConfig'));
+  console.log(i18n.t('settings.showConfig.apiUrl', { url: gitlabConfig.baseUrl }));
+  
+  const gitlabTokenStatus = gitlabToken ? 
+    i18n.t('settings.showConfig.configured') : 
+    i18n.t('settings.showConfig.notConfigured');
+  
+  console.log(i18n.t('settings.showConfig.apiToken', { status: gitlabTokenStatus }));
   console.log('');
-  console.log('Claude Configuration:');
-  console.log('  Model: ' + claudeConfig.model);
-  console.log('  Max Tokens: ' + claudeConfig.maxTokens);
-  console.log('  API Key: ' + (claudeApiKey ? '********' : 'Not configured ⚠️'));
+  
+  console.log(i18n.t('settings.showConfig.claudeConfig'));
+  console.log(i18n.t('settings.showConfig.model', { model: claudeConfig.model }));
+  console.log(i18n.t('settings.showConfig.maxTokens', { maxTokens: claudeConfig.maxTokens }));
+  
+  const claudeKeyStatus = claudeApiKey ? 
+    i18n.t('settings.showConfig.configured') : 
+    i18n.t('settings.showConfig.notConfigured');
+  
+  console.log(i18n.t('settings.showConfig.apiKey', { status: claudeKeyStatus }));
   console.log('');
 
   // Show warning if keys are missing
   if (!gitlabToken || !claudeApiKey) {
-    console.log('⚠️  WARNING: Some API keys are not configured:');
-    if (!gitlabToken) console.log('  - GitLab API token is missing');
-    if (!claudeApiKey) console.log('  - Claude API key is missing');
-    console.log('\nYou can configure these using the appropriate options in the configure menu.');
+    console.log(`⚠️  ${i18n.t('settings.showConfig.warning')}`);
+    if (!gitlabToken) console.log(`  ${i18n.t('settings.showConfig.gitlabTokenMissing')}`);
+    if (!claudeApiKey) console.log(`  ${i18n.t('settings.showConfig.claudeApiKeyMissing')}`);
+    console.log(`\n${i18n.t('settings.showConfig.configureMessage')}`);
     console.log('');
   }
 }
@@ -439,13 +465,51 @@ async function startInteractiveMenu() {
         await configureSettings();
       }
       else if (choice === 'exit') {
-        console.log('Goodbye!');
+        const i18n = require('../utils/i18n');
+        console.log(i18n.t('farewell'));
         process.exit(0);
       }
     }
   } catch (error) {
     console.error('An error occurred:', error);
     process.exit(1);
+  }
+}
+
+/**
+ * Configure language settings
+ */
+async function configureLanguage() {
+  const i18n = require('../utils/i18n');
+  
+  console.log('\n=== ' + i18n.t('settings.languageSettings.title') + ' ===');
+  
+  const currentLocale = i18n.getCurrentLocale();
+  const localeNames = {
+    'en': 'English',
+    'cs': 'Čeština (Czech)'
+  };
+  
+  console.log(i18n.t('settings.languageSettings.currentLanguage', { language: localeNames[currentLocale] }));
+  
+  const { newLocale } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'newLocale',
+      message: i18n.t('settings.languageSettings.selectLanguage'),
+      choices: [
+        { name: 'English', value: 'en' },
+        { name: 'Čeština (Czech)', value: 'cs' }
+      ],
+      default: currentLocale
+    }
+  ]);
+  
+  if (newLocale !== currentLocale) {
+    const success = i18n.setLocale(newLocale);
+    if (success) {
+      console.log(i18n.t('settings.languageSettings.languageChanged', { language: localeNames[newLocale] }));
+    }
   }
 }
 
@@ -457,5 +521,6 @@ module.exports = {
   configureGitlab,
   configureSettings,
   configureDebug,
+  configureLanguage,
   showConfiguration
 };

@@ -21,16 +21,18 @@ function displayBanner() {
  * @returns {Promise<string>} User's choice
  */
 async function mainMenu() {
+  const i18n = require('../utils/i18n');
+  
   const { choice } = await inquirer.prompt([
     {
       type: 'list',
       name: 'choice',
-      message: 'What would you like to do?',
+      message: i18n.t('menu.main.title'),
       choices: [
-        { name: 'Collect and prepare project files for Claude AI', value: 'project' },
-        { name: 'Work with GitLab code reviews', value: 'codeReview' },
-        { name: 'Configure settings', value: 'configure' },
-        { name: 'Exit', value: 'exit' }
+        { name: i18n.t('menu.main.project'), value: 'project' },
+        { name: i18n.t('menu.main.codeReview'), value: 'codeReview' },
+        { name: i18n.t('menu.main.configure'), value: 'configure' },
+        { name: i18n.t('menu.main.exit'), value: 'exit' }
       ]
     }
   ]);
@@ -47,7 +49,8 @@ async function mainMenu() {
  * @returns {Array} Choices with back option
  */
 function withBackOption(choices) {
-  return [...choices, { name: 'Go back', value: 'back' }];
+  const i18n = require('../utils/i18n');
+  return [...choices, { name: i18n.t('common.goBack'), value: 'back' }];
 }
 
 module.exports = {

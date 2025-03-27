@@ -199,25 +199,9 @@ function displayReview(mergeRequest) {
   ]).then(({ copyToClipboard }) => {
     if (copyToClipboard) {
       try {
-        // Simple clipboard copy for modern Node.js versions
-        const proc = require('child_process');
-        
-        if (process.platform === 'darwin') {
-          // macOS
-          const proc = require('child_process').spawn('pbcopy');
-          proc.stdin.write(mergeRequest.review);
-          proc.stdin.end();
-          logger.success('Review copied to clipboard.');
-        } else if (process.platform === 'win32') {
-          // Windows
-          const proc = require('child_process').spawn('clip');
-          proc.stdin.write(mergeRequest.review);
-          proc.stdin.end();
-          logger.success('Review copied to clipboard.');
-        } else {
-          // Linux - requires xclip or similar
-          logger.warn('Automatic clipboard copy not supported on this platform.');
-        }
+        // Use the clipboard utility module
+        const clipboard = require('../../utils/clipboard');
+        clipboard.copyWithFeedback(mergeRequest.review, 'Review copied to clipboard.');
       } catch (error) {
         logger.error('Failed to copy to clipboard:', error);
       }

@@ -23,5 +23,6 @@
     "model": "claude-3-opus-20240229",
     "maxTokens": 4000
   },
-  "debug": false
+  "debug": false,
+  "locale": "cs"
 }

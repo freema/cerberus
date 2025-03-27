@@ -10,16 +10,18 @@ const projectPrompts = {
    * @returns {Promise<Object>} User's choice
    */
   async projectChoice() {
+    const i18n = require('../utils/i18n');
+    
     const { choice } = await inquirer.prompt([
       {
         type: 'list',
         name: 'choice',
-        message: 'Project options:',
+        message: i18n.t('menu.project.title'),
         choices: withBackOption([
-          { name: 'Create a new project', value: 'new' },
-          { name: 'Work with existing project', value: 'existing' },
-          { name: 'Collect project files', value: 'collect' },
-          { name: 'Analyze project', value: 'analyze' }
+          { name: i18n.t('menu.project.new'), value: 'new' },
+          { name: i18n.t('menu.project.existing'), value: 'existing' },
+          { name: i18n.t('menu.project.collect'), value: 'collect' },
+          { name: i18n.t('menu.project.analyze'), value: 'analyze' }
         ])
       }
     ]);
@@ -71,15 +73,17 @@ const codeReviewPrompts = {
    * @returns {Promise<Object>} User's choice
    */
   async codeReviewChoice() {
+    const i18n = require('../utils/i18n');
+    
     const { choice } = await inquirer.prompt([
       {
         type: 'list',
         name: 'choice',
-        message: 'Code review options:',
+        message: i18n.t('menu.codeReview.title'),
         choices: withBackOption([
-          { name: 'Fetch merge requests', value: 'fetch' },
-          { name: 'Analyze merge request', value: 'review' },
-          { name: 'Generate AI review', value: 'generate' }
+          { name: i18n.t('menu.codeReview.fetch'), value: 'fetch' },
+          { name: i18n.t('menu.codeReview.review'), value: 'review' },
+          { name: i18n.t('menu.codeReview.generate'), value: 'generate' }
         ])
       }
     ]);

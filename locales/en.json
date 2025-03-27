@@ -1,0 +1,126 @@
+{
+  "common": {
+    "back": "Go back",
+    "goBack": "Go back",
+    "exit": "Exit",
+    "yes": "Yes",
+    "no": "No",
+    "save": "Save",
+    "cancel": "Cancel",
+    "continue": "Continue",
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning"
+  },
+  "menu": {
+    "main": {
+      "title": "What would you like to do?",
+      "project": "Collect and prepare project files for Claude AI",
+      "codeReview": "Work with GitLab code reviews",
+      "configure": "Configure settings",
+      "exit": "Exit"
+    },
+    "project": {
+      "title": "Project options:",
+      "new": "Create a new project",
+      "existing": "Work with existing project",
+      "collect": "Collect project files",
+      "analyze": "Analyze project"
+    },
+    "codeReview": {
+      "title": "Code review options:",
+      "fetch": "Fetch merge requests",
+      "review": "Analyze merge request",
+      "generate": "Generate AI review"
+    },
+    "settings": {
+      "title": "What would you like to configure?",
+      "gitlab": "GitLab Settings",
+      "claude": "Claude AI Settings",
+      "debug": "Debug Mode",
+      "locale": "Language Settings",
+      "show": "Show Current Configuration",
+      "back": "Back to Main Menu"
+    }
+  },
+  "settings": {
+    "languageSettings": {
+      "title": "Language Settings",
+      "selectLanguage": "Select language:",
+      "currentLanguage": "Current language: {{language}}",
+      "languageChanged": "Language changed to {{language}}"
+    },
+    "claude": {
+      "title": "Claude AI Configuration",
+      "apiKeyMissing": "WARNING: Claude API key is not configured. AI features will not work properly.",
+      "configOption": "What would you like to configure?",
+      "apiKey": "Claude API Key",
+      "model": "Claude Model",
+      "maxTokens": "Max Tokens",
+      "test": "Test Connection",
+      "enterApiKey": "Enter Claude API key:",
+      "apiKeyUpdated": "Claude API key updated.",
+      "selectModel": "Select Claude model:",
+      "modelUpdated": "Claude model updated to {{model}}.",
+      "enterMaxTokens": "Enter maximum output tokens:",
+      "maxTokensUpdated": "Max tokens updated to {{maxTokens}}.",
+      "testingConnection": "Testing Claude API connection...",
+      "connectionSuccess": "Successfully connected to Claude API!",
+      "connectionFailed": "Failed to connect to Claude API. Please check your configuration."
+    },
+    "gitlab": {
+      "title": "GitLab Configuration",
+      "apiTokenMissing": "WARNING: GitLab API token is not configured. Some features may not work properly.",
+      "configOption": "What would you like to configure?",
+      "url": "GitLab API URL",
+      "token": "GitLab API Token",
+      "test": "Test Connection",
+      "enterUrl": "Enter GitLab API URL:",
+      "urlUpdated": "GitLab API URL updated.",
+      "enterToken": "Enter GitLab API token:",
+      "tokenUpdated": "GitLab API token updated.",
+      "testingConnection": "Testing GitLab API connection...",
+      "connectionSuccess": "Successfully connected to GitLab API!",
+      "connectionFailed": "Failed to connect to GitLab API. Please check your configuration."
+    },
+    "debug": {
+      "title": "Debug Configuration",
+      "enableDebug": "Enable debug mode?",
+      "enabled": "Debug mode enabled.",
+      "disabled": "Debug mode disabled."
+    },
+    "showConfig": {
+      "title": "Current Configuration",
+      "debugMode": "Debug Mode: {{status}}",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "gitlabConfig": "GitLab Configuration:",
+      "apiUrl": "API URL: {{url}}",
+      "apiToken": "API Token: {{status}}",
+      "claudeConfig": "Claude Configuration:",
+      "model": "Model: {{model}}",
+      "maxTokens": "Max Tokens: {{maxTokens}}",
+      "apiKey": "API Key: {{status}}",
+      "configured": "********",
+      "notConfigured": "Not configured ⚠️",
+      "warning": "WARNING: Some API keys are not configured:",
+      "gitlabTokenMissing": "- GitLab API token is missing",
+      "claudeApiKeyMissing": "- Claude API key is missing",
+      "configureMessage": "You can configure these using the appropriate options in the configure menu."
+    }
+  },
+  "warnings": {
+    "claudeApiKeyMissing": "WARNING: Claude AI API key is not configured!",
+    "claudeFeaturesLimited": "Some features that require Claude AI will not work without this key.",
+    "apiKeysMissing": "WARNING: Required API keys are not configured!",
+    "gitlabTokenMissing": "- GitLab API token is missing",
+    "codeReviewRequirements": "The code review functionality requires these API keys.",
+    "whatToDo": "What would you like to do?",
+    "configureClaude": "Configure Claude AI",
+    "configureApiKeys": "Configure API keys",
+    "continueProject": "Continue to Project menu (some features may be limited)",
+    "continueCodeReview": "Continue to Code Review menu anyway",
+    "goBackToMain": "Go back to main menu"
+  },
+  "farewell": "Goodbye!"
+}

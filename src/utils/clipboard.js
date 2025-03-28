@@ -24,9 +24,25 @@ function copyToClipboard(text) {
       proc.stdin.end();
       return true;
     } else {
-      // Linux - requires xclip or similar
-      // Could try to detect and use xclip or xsel here
-      return false;
+      // Linux - try xclip (X11) or wl-copy (Wayland)
+      try {
+        // Try xclip for X11 first
+        const xclipProc = spawn('xclip', ['-selection', 'clipboard']);
+        xclipProc.stdin.write(text);
+        xclipProc.stdin.end();
+        return true;
+      } catch (xclipError) {
+        try {
+          // Try wl-copy for Wayland as fallback
+          const wlProc = spawn('wl-copy');
+          wlProc.stdin.write(text);
+          wlProc.stdin.end();
+          return true;
+        } catch (wlError) {
+          logger.debug('Linux clipboard utilities not available: xclip or wl-copy required');
+          return false;
+        }
+      }
     }
   } catch (error) {
     logger.error('Failed to copy to clipboard:', error);
@@ -38,9 +54,9 @@ function copyToClipboard(text) {
  * Copy text to clipboard and log the result
  * @param {string} text - Text to copy
  * @param {string} [successMessage='Copied to clipboard.'] - Message on success
- * @param {string} [failMessage='Automatic clipboard copy not supported on this platform.'] - Message on failure
+ * @param {string} [failMessage='Automatic clipboard copy failed. On Linux, install xclip or wl-copy.'] - Message on failure
  */
-function copyWithFeedback(text, successMessage = 'Copied to clipboard.', failMessage = 'Automatic clipboard copy not supported on this platform.') {
+function copyWithFeedback(text, successMessage = 'Copied to clipboard.', failMessage = 'Automatic clipboard copy failed. On Linux, install xclip or wl-copy.') {
   const success = copyToClipboard(text);
   
   if (success) {

@@ -1,98 +1,58 @@
 const inquirer = require('inquirer');
 const chalk = require('chalk');
 const ora = require('ora');
+const path = require('path');
 const Project = require('../../models/Project');
 const claudeService = require('../../services/claudeService');
 const logger = require('../../utils/logger');
+const fileSystem = require('../../utils/fileSystem');
 const { generateDirectoryLink } = require('../../utils/pathUtils');
 
 /**
  * Generate a detailed project structure analysis 
  * @param {Project} project - Project object
- * @returns {string} - Detailed project analysis text
+ * @returns {Promise<string>} - Detailed project analysis text
  */
-function generateProjectStructureAnalysis(project) {
-  let analysis = `# Project Structure Analysis: ${project.name}\n\n`;
-  
-  // Add directory structure
-  analysis += `## Directory Structure\n\n\`\`\`\n${project.directoryStructure || 'No directory structure available.'}\`\`\`\n\n`;
-  
-  // Add file statistics
-  const filesByExt = {};
-  project.files.forEach(file => {
-    const ext = path.extname(file.originalPath).toLowerCase();
-    filesByExt[ext] = (filesByExt[ext] || 0) + 1;
-  });
-  
-  analysis += `## File Statistics\n\n`;
-  analysis += `Total files: ${project.files.length}\n\n`;
-  analysis += `### Files by Type\n\n`;
-  
-  Object.entries(filesByExt)
-    .sort((a, b) => b[1] - a[1])
-    .forEach(([ext, count]) => {
-      analysis += `- ${ext || '(no extension)'}: ${count} files\n`;
-    });
-  
-  // Add source directories
-  if (project.sourceDirectories && project.sourceDirectories.length > 0) {
-    analysis += `\n## Source Directories\n\n`;
-    project.sourceDirectories.forEach(dir => {
-      analysis += `- ${dir}\n`;
-    });
-  }
-  
-  // Add file mapping information
-  analysis += `\n## File Mapping Information\n\n`;
-  analysis += `This section shows the mapping between original file locations and their paths in the project.\n\n`;
-  
-  // Group files by source directory for better organization
-  const filesByDir = {};
-  project.files.forEach(file => {
-    if (file.originalDirectory) {
-      if (!filesByDir[file.originalDirectory]) {
-        filesByDir[file.originalDirectory] = [];
-      }
-      filesByDir[file.originalDirectory].push(file);
-    }
-  });
-  
-  // Only show mapping if we have directory information
-  if (Object.keys(filesByDir).length > 0) {
-    Object.keys(filesByDir).sort().forEach(dir => {
-      analysis += `### ${dir}\n\n`;
-      filesByDir[dir]
-        .sort((a, b) => path.basename(a.originalPath).localeCompare(path.basename(b.originalPath)))
-        .forEach(file => {
-          analysis += `- \`${path.basename(file.originalPath)}\` → \`${file.newPath}\`\n`;
+async function generateProjectStructureAnalysis(project) {
+  try {
+    // Try to read the structure.txt if it exists
+    if (await fileSystem.fileExists(project.getStructurePath())) {
+      // Use this as the base and add some additional information
+      const structureContent = await fileSystem.readFile(project.getStructurePath());
+      
+      // Add our analysis header and instructions for using this text as a context
+      let analysis = `# Project Structure Analysis: ${project.name}\n\n`;
+      analysis += `## Instructions for using this structure file\n\n`;
+      analysis += `This file contains the complete mapping between original file locations and their `;
+      analysis += `paths in the project directory. You can use this information as a system context `;
+      analysis += `when working with AI systems like Claude.\n\n`;
+      analysis += `When referring to files, always use the original file path and explain that it is mapped to `;
+      analysis += `the project path in the structure.txt file.\n\n`;
+      
+      // Append the full structure content
+      analysis += structureContent;
+      
+      return analysis;
+    } else {
+      // Create a basic fallback analysis
+      let analysis = `# Project Structure Analysis: ${project.name}\n\n`;
+      analysis += `This project appears to be missing structure information. `;
+      analysis += `Please run the collection process again to generate file structure details.\n\n`;
+      
+      // Add basic source directories if available
+      if (project.sourceDirectories && project.sourceDirectories.length > 0) {
+        analysis += `## Source Directories\n\n`;
+        project.sourceDirectories.forEach(dir => {
+          analysis += `- ${dir}\n`;
         });
-      analysis += '\n';
-    });
-  } else {
-    // Fallback if no directory grouping is available
-    analysis += `### All Files\n\n`;
-    
-    // Sort files alphabetically for easier reference
-    const sortedFiles = [...project.files].sort((a, b) => 
-      a.originalPath.localeCompare(b.originalPath)
-    );
-    
-    sortedFiles.forEach(file => {
-      analysis += `- \`${file.originalPath}\` → \`${file.newPath}\`\n`;
-    });
+      }
+      
+      return analysis;
+    }
+  } catch (error) {
+    logger.error('Error generating project structure analysis:', error);
+    return `# Project Structure Analysis: ${project.name}\n\nError generating analysis: ${error.message}`;
   }
-  
-  // Add project summary
-  analysis += `\n## Project Summary\n\n`;
-  analysis += `This is a codebase summary that can be used for analysis and understanding the project structure. `;
-  analysis += `The directory structure above shows how files are organized, which can help identify the architecture `;
-  analysis += `and primary components of the system. When working with this project, consider the relationships `;
-  analysis += `between different files and directories to understand the overall design.\n\n`;
-  
-  analysis += `To make reference to files in this project, you can use either the original path or the project path `;
-  analysis += `from the mapping information above. The project paths are used in the actual files stored in the project.`;
-  
-  return analysis;
 }
 
 /**
@@ -187,7 +147,7 @@ async function analyzeProject(projectName) {
           logger.error('Could not connect to Claude API with the provided key. Falling back to basic analysis.');
           
           // Generate and save basic project structure analysis
-          const analysisText = generateProjectStructureAnalysis(project);
+          const analysisText = await generateProjectStructureAnalysis(project);
           project.setInstructions(analysisText);
           await project.save();
           
@@ -197,7 +157,7 @@ async function analyzeProject(projectName) {
         }
       } else {
         // Generate and save basic project structure analysis
-        const analysisText = generateProjectStructureAnalysis(project);
+        const analysisText = await generateProjectStructureAnalysis(project);
         project.setInstructions(analysisText);
         await project.save();
         
@@ -269,11 +229,12 @@ async function analyzeProject(projectName) {
     // Generate instructions with Claude
     const spinner = ora('Generating project instructions with Claude AI...').start();
     
+    // Use structure.txt directly as context for Claude
+    const structureContent = await fileSystem.readFile(project.getStructurePath());
+    
     const projectData = {
-      directoryStructure: project.directoryStructure,
-      files: project.files,
-      name: project.name,
-      sourceDirectories: project.sourceDirectories
+      structureContent: structureContent,
+      name: project.name
     };
     
     const instructions = await claudeService.generateProjectInstructions(projectData);

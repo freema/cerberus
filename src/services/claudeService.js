@@ -82,7 +82,7 @@ class ClaudeService {
 
   /**
    * Generate project instructions from source code structure
-   * @param {Object} projectData - Project data including directory structure
+   * @param {Object} projectData - Project data including structure content
    * @returns {Promise<string|null>} - Generated instructions or null if error
    */
   async generateProjectInstructions(projectData) {
@@ -100,14 +100,16 @@ class ClaudeService {
             role: 'user',
             content: `I need to generate clear and comprehensive instructions for an AI system about the following project structure. The goal is to create instructions that would help an AI understand the project's organization and purpose.
 
-Here's the directory structure:
-${projectData.directoryStructure}
+Here's the project structure information, including original file paths and their mappings:
+
+${projectData.structureContent}
 
 Please generate instructions that:
-1. Explain the overall purpose and structure of this codebase
+1. Explain the overall purpose and structure of this codebase based on the file types and organization
 2. Highlight the key directories and their functions
 3. Note any important relationships between different parts of the code
 4. Provide guidance on how the AI should approach understanding and working with this code
+5. Include information about how to reference files using their mappings
 
 The instructions should be clear, precise, and focused on helping an AI system effectively work with this codebase.`
           }

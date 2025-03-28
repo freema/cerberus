@@ -44,11 +44,12 @@ function getDataPathForType(type) {
 function ensureDirectories() {
   const rootDir = path.resolve(process.cwd());
   const dirs = [
-    // Cache directories
+    // Cache directories - ONLY for temporary files
     path.join(rootDir, 'cache', 'merge-requests'),
     path.join(rootDir, 'cache', 'security'),
-    path.join(rootDir, 'cache', 'projects'),  // Added projects directory in cache
-    // Data directories
+    path.join(rootDir, 'cache', 'projects'),  // For temporary project metadata used for updates
+    path.join(rootDir, 'cache', 'temp'),  // For other temporary files
+    // Data directories - For persistent project data
     path.join(rootDir, 'data', 'projects'),
     // Config directory
     path.join(rootDir, 'config')

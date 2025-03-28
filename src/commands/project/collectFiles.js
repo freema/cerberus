@@ -44,6 +44,7 @@ async function collectFiles(projectName) {
             choices: [
               { name: 'Create a new project', value: 'create' },
               { name: 'Select an existing project', value: 'select' },
+              { name: 'Update an existing project', value: 'update' },
               { name: 'Go back', value: 'back' }
             ]
           }
@@ -59,18 +60,40 @@ async function collectFiles(projectName) {
           if (!project) return;
           
           projectName = project.name;
-        } else {
+        } else if (projectAction === 'select' || projectAction === 'update') {
           const { selectedProject } = await inquirer.prompt([
             {
               type: 'list',
               name: 'selectedProject',
-              message: 'Select a project:',
+              message: `Select a project to ${projectAction === 'update' ? 'update' : 'use'}:`,
               choices: existingProjects
             }
           ]);
           
           projectName = selectedProject;
           project = await Project.load(projectName);
+          
+          if (projectAction === 'update') {
+            // Show existing project info before updating
+            logger.info(`Updating project: ${projectName}`);
+            logger.info(`Current files: ${project.files.length}`);
+            logger.info(`Source directories: ${project.sourceDirectories.join(', ') || 'None'}`);
+            
+            // Confirm update
+            const { confirmUpdate } = await inquirer.prompt([
+              {
+                type: 'confirm',
+                name: 'confirmUpdate',
+                message: 'This will add new files to the existing project. Continue?',
+                default: true
+              }
+            ]);
+            
+            if (!confirmUpdate) {
+              logger.warn('Update cancelled.');
+              return;
+            }
+          }
         }
       } else {
         logger.info('No existing projects found. Creating a new project...');
@@ -111,18 +134,72 @@ async function collectFiles(projectName) {
     
     // At this point we have a valid project
     
-    // Ask for the source directory
-    const sourcePath = await projectPrompts.projectPath();
+    // Use a multi-path collection approach
+    const sourcePaths = [];
+    let continueAddingPaths = true;
     
-    // Validate source directory
-    try {
-      const stats = await fs.stat(sourcePath);
-      if (!stats.isDirectory()) {
-        logger.error('The specified path is not a directory.');
-        return;
+    while (continueAddingPaths) {
+      // Show current paths
+      if (sourcePaths.length > 0) {
+        console.log(chalk.cyan('\nCurrent source paths:'));
+        sourcePaths.forEach((p, index) => {
+          console.log(`  ${index + 1}. ${p.path} (${p.type})`);
+        });
+        console.log('');
       }
-    } catch (error) {
-      logger.error('Directory does not exist or is not accessible.');
+      
+      // Get path with auto-detection
+      const { sourcePath } = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'sourcePath',
+          message: 'Enter path (file or directory):',
+          validate: async input => {
+            try {
+              const stats = await fs.stat(input);
+              return true;
+            } catch (error) {
+              return 'Path does not exist or is not accessible.';
+            }
+          }
+        }
+      ]);
+      
+      // Auto-detect if it's a file or directory
+      try {
+        const stats = await fs.stat(sourcePath);
+        const pathType = stats.isDirectory() ? 'directory' : 'file';
+        
+        // Add to paths list
+        sourcePaths.push({
+          path: sourcePath,
+          type: pathType
+        });
+        
+        logger.info(`Added ${pathType}: ${sourcePath}`);
+      } catch (error) {
+        logger.error(`Error detecting path type: ${error.message}`);
+        continue;
+      }
+      
+      // Ask if user wants to add more (only if at least one path is added)
+      if (sourcePaths.length > 0) {
+        const { addMore } = await inquirer.prompt([
+          {
+            type: 'confirm',
+            name: 'addMore',
+            message: 'Would you like to add more paths?',
+            default: true
+          }
+        ]);
+        
+        continueAddingPaths = addMore;
+      }
+    }
+    
+    // If no paths were added, exit
+    if (sourcePaths.length === 0) {
+      logger.warn('No source paths specified. Operation cancelled.');
       return;
     }
     
@@ -154,23 +231,48 @@ async function collectFiles(projectName) {
     
     const excludeList = excludeDirs.split(',').map(dir => dir.trim()).filter(Boolean);
     
-    // Start scanning for files
+    // Process all paths and collect files
+    const allFiles = [];
+    const directories = [];
+    let totalSize = 0;
+    
     const spinner = ora('Scanning for files...').start();
     
-    const files = await getFilesInDirectory(sourcePath, selectedExtensions, excludeList);
+    // Process each path
+    for (const sourcePath of sourcePaths) {
+      if (sourcePath.type === 'directory') {
+        // Handle directory
+        directories.push(sourcePath.path);
+        const dirFiles = await getFilesInDirectory(sourcePath.path, selectedExtensions, excludeList);
+        allFiles.push(...dirFiles);
+        
+        // Add to project source directories
+        project.addSourceDirectory(sourcePath.path);
+      } else {
+        // Handle specific file
+        const fileExt = path.extname(sourcePath.path).toLowerCase();
+        if (selectedExtensions.includes(fileExt)) {
+          const relPath = path.basename(sourcePath.path);
+          allFiles.push({
+            fullPath: sourcePath.path,
+            relativePath: relPath
+          });
+        }
+      }
+    }
     
-    if (files.length === 0) {
+    if (allFiles.length === 0) {
       spinner.fail('No matching files found.');
       return;
     }
     
-    const totalSize = await calculateTotalSize(files);
+    totalSize = await calculateTotalSize(allFiles);
     
-    spinner.succeed(`Found ${files.length} files (${formatFileSize(totalSize)}).`);
+    spinner.succeed(`Found ${allFiles.length} files (${formatFileSize(totalSize)}).`);
     
     // Group files by extension for display
     const filesByExt = {};
-    files.forEach(file => {
+    allFiles.forEach(file => {
       const ext = path.extname(file.relativePath).toLowerCase();
       filesByExt[ext] = (filesByExt[ext] || 0) + 1;
     });
@@ -187,7 +289,7 @@ async function collectFiles(projectName) {
       {
         type: 'confirm',
         name: 'confirmCopy',
-        message: `Copy ${files.length} files to project "${projectName}"?`,
+        message: `Copy ${allFiles.length} files to project "${projectName}"?`,
         default: true
       }
     ]);
@@ -197,84 +299,11 @@ async function collectFiles(projectName) {
       return;
     }
     
-    // Ask if user wants to add another directory
-    const { addAnother } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'addAnother',
-        message: 'Would you like to add files from another directory to this project?',
-        default: false
-      }
-    ]);
-    
-    let additionalFiles = [];
-    
-    if (addAnother) {
-      // Get additional directory
-      const { additionalDir } = await inquirer.prompt([
-        {
-          type: 'input',
-          name: 'additionalDir',
-          message: 'Enter the additional source directory path:',
-          validate: async input => {
-            try {
-              const stats = await fs.stat(input);
-              if (!stats.isDirectory()) return 'This is not a directory';
-              return true;
-            } catch (error) {
-              return 'Directory does not exist';
-            }
-          }
-        }
-      ]);
-      
-      const additionalSpinner = ora(`Scanning ${additionalDir} for files...`).start();
-      
-      // Get additional files
-      additionalFiles = await getFilesInDirectory(additionalDir, selectedExtensions, excludeList);
-      
-      if (additionalFiles.length === 0) {
-        additionalSpinner.fail('No matching files found in the additional directory.');
-      } else {
-        const additionalSize = await calculateTotalSize(additionalFiles);
-        
-        additionalSpinner.succeed(`Found ${additionalFiles.length} additional files (${formatFileSize(additionalSize)}).`);
-        
-        // Update file counts by extension
-        additionalFiles.forEach(file => {
-          const ext = path.extname(file.relativePath).toLowerCase();
-          filesByExt[ext] = (filesByExt[ext] || 0) + 1;
-        });
-        
-        // Update total size
-        const newTotalSize = totalSize + additionalSize;
-        
-        console.log(chalk.cyan('\nUpdated files by type:'));
-        Object.entries(filesByExt)
-          .sort((a, b) => b[1] - a[1])
-          .forEach(([ext, count]) => {
-            console.log(`  ${ext || '(no extension)'}: ${count} files`);
-          });
-        
-        console.log(chalk.green(`\nTotal files to copy: ${files.length + additionalFiles.length} (${formatFileSize(newTotalSize)})`));
-      }
-    }
-    
     // Copy files
     const copySpinner = ora(`Copying files to project ${projectName}...`).start();
     
-    // Combine all files
-    const allFiles = [...files, ...additionalFiles];
-    
     // Copy the files
     const { copiedFiles } = await copyFilesToProject(allFiles, project);
-    
-    // Add source directories to project
-    project.addSourceDirectory(sourcePath);
-    if (addAnother && additionalFiles.length > 0) {
-      const { additionalDir } = inquirer.answers;
-      project.addSourceDirectory(additionalDir);
-    }
     
     // Generate directory structure
     const directoryStructure = generateDirectoryStructure(copiedFiles);
@@ -414,12 +443,15 @@ async function copyFilesToProject(files, project) {
         
         const stats = await fs.stat(file.fullPath);
         
-        // Store mapping information
+        // Store mapping information with additional source information
         const fileInfo = {
           originalPath: file.relativePath,
+          fullOriginalPath: file.fullPath,  // Store the full path for better context
           newPath: flattenedName,
           size: stats.size,
-          mtime: stats.mtime.toISOString()
+          mtime: stats.mtime.toISOString(),
+          originalDirectory: path.dirname(file.fullPath),
+          mappingInfo: `${file.fullPath} -> ${flattenedName}`  // For easy reference
         };
         
         copiedFiles.push(fileInfo);
@@ -479,43 +511,77 @@ function formatFileSize(bytes) {
  * @returns {string} - Formatted directory structure
  */
 function generateDirectoryStructure(files) {
-  let directoryStructure = `Directory structure for this project:\n\n`;
+  let directoryStructure = `# Project Structure and File Mapping\n\n`;
   
-  // Create a map of directories from the original paths
-  const directories = new Map();
+  // Part 1: Original directory structure by source directory
+  directoryStructure += `## Original Directory Structure\n\n`;
+  
+  // Group files by their original directories
+  const filesBySourceDir = {};
   
   files.forEach(file => {
-    const dirName = path.dirname(file.originalPath);
-    if (dirName !== '.') {
-      if (!directories.has(dirName)) {
-        directories.set(dirName, []);
-      }
-      directories.get(dirName).push(path.basename(file.originalPath));
+    // Skip if missing source information
+    if (!file.originalDirectory) return;
+    
+    if (!filesBySourceDir[file.originalDirectory]) {
+      filesBySourceDir[file.originalDirectory] = [];
     }
+    
+    filesBySourceDir[file.originalDirectory].push(file);
   });
   
-  // Sort directories for nicer output
-  const sortedDirs = Array.from(directories.keys()).sort();
-  
-  // Build the directory structure string
-  sortedDirs.forEach(dir => {
-    directoryStructure += `- ${dir}/\n`;
-    directories.get(dir).forEach(file => {
-      directoryStructure += `  - ${file}\n`;
+  // Output organized by source directories
+  Object.keys(filesBySourceDir).sort().forEach(dir => {
+    directoryStructure += `### ${dir}\n\n`;
+    
+    const filesInDir = filesBySourceDir[dir].sort((a, b) => 
+      path.basename(a.originalPath).localeCompare(path.basename(b.originalPath))
+    );
+    
+    filesInDir.forEach(file => {
+      const fileName = path.basename(file.originalPath);
+      directoryStructure += `- ${fileName}\n`;
     });
+    
+    directoryStructure += '\n';
   });
   
-  // Files in root directory
-  const rootFiles = files
-    .filter(file => path.dirname(file.originalPath) === '.')
-    .map(file => path.basename(file.originalPath));
+  // Part 2: Flat file structure in the project
+  directoryStructure += `## Project Files (Flattened Structure)\n\n`;
+  directoryStructure += `All files are stored with flattened names in the project directory.\n\n`;
   
-  if (rootFiles.length > 0) {
-    directoryStructure += `- Root files:\n`;
-    rootFiles.forEach(file => {
-      directoryStructure += `  - ${file}\n`;
+  // Part 3: File mapping between original and project paths
+  directoryStructure += `## File Mapping\n\n`;
+  directoryStructure += `Original Path → Project Path\n\n`;
+  
+  // Sort files alphabetically by original path for easier reference
+  const sortedFiles = [...files].sort((a, b) => {
+    const aPath = a.fullOriginalPath || a.originalPath;
+    const bPath = b.fullOriginalPath || b.originalPath;
+    return aPath.localeCompare(bPath);
+  });
+  
+  sortedFiles.forEach(file => {
+    const origPath = file.fullOriginalPath || file.originalPath;
+    directoryStructure += `- \`${origPath}\` → \`${file.newPath}\`\n`;
+  });
+  
+  // Part 4: File statistics
+  const extensions = {};
+  files.forEach(file => {
+    const ext = path.extname(file.originalPath);
+    extensions[ext] = (extensions[ext] || 0) + 1;
+  });
+  
+  directoryStructure += `\n## File Statistics\n\n`;
+  directoryStructure += `Total files: ${files.length}\n\n`;
+  directoryStructure += `Files by extension:\n`;
+  
+  Object.entries(extensions)
+    .sort((a, b) => b[1] - a[1]) // Sort by count descending
+    .forEach(([ext, count]) => {
+      directoryStructure += `- ${ext || '(no extension)'}: ${count}\n`;
     });
-  }
   
   return directoryStructure;
 }

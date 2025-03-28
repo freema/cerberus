@@ -9,8 +9,11 @@ Cerberus is a console-based Node.js application designed to streamline developme
 
 - **Project Management**
   - Create and manage projects for Claude AI
-  - Collect and organize code files from multiple directories
-  - Generate project structure documentation
+  - Collect and organize code files from multiple sources:
+    - Multiple directories at once
+    - Individual files
+    - Mixed selection of files and directories
+  - Generate project structure documentation even without Claude API
   - Analyze projects to create comprehensive Claude AI instructions
 
 - **Code Review**
@@ -19,7 +22,8 @@ Cerberus is a console-based Node.js application designed to streamline developme
   - Generate detailed code reviews with Claude AI
 
 - **Configuration**
-  - Secure storage of API credentials
+  - Secure storage of API credentials without expiration
+  - Multi-language support (English and Czech)
   - Configurable GitLab and Claude API settings
   - Customizable file extension filters
   - Debug mode for troubleshooting
@@ -36,6 +40,9 @@ npm install
 
 # Make the CLI executable
 npm link
+
+# Create required directories
+mkdir -p cache/security data/projects locales
 ```
 
 ## Usage
@@ -61,17 +68,18 @@ cerberus configure                # Configure settings
 
 ## Configuration
 
-The application stores configuration in two encrypted files:
-- `config/app.json` - Application settings
-- `config/credentials.json` - API keys and tokens
+The application stores configuration in two separate locations:
+- `config/app.json` - Application settings (language, extensions, etc.)
+- `cache/security/credentials.json` - API keys and tokens (encrypted)
 
 You can configure:
 - GitLab URL and token
 - Claude AI API key and model
 - Supported file extensions
+- Language (English/Czech)
 - Debug settings
 
-All credentials are stored securely and never exposed in code.
+All credentials are stored securely with encryption based on your machine identity and never expire or are exposed in code.
 
 ## Project Structure
 
@@ -85,11 +93,19 @@ cerberus/
 │   │   └── project/      # Project management functions
 │   ├── services/         # External API services
 │   ├── utils/            # Helper utilities
+│   │   ├── clipboard.js  # Cross-platform clipboard handling
+│   │   ├── i18n.js       # Internationalization support
+│   │   └── ...
 │   ├── models/           # Data models
 │   └── cli/              # CLI framework
 ├── cache/                # Cache storage
-│   ├── projects/         # Project cache
-│   └── merge-requests/   # Merge request cache
+│   ├── merge-requests/   # Merge request cache
+│   └── security/         # Encrypted credentials
+├── data/                 # Persistent data storage
+│   └── projects/         # Project files and analysis
+├── locales/              # Language files
+│   ├── en.json           # English translations
+│   └── cs.json           # Czech translations
 ├── config/               # Configuration files
 └── package.json
 ```

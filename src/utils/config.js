@@ -27,7 +27,6 @@ class ConfigService {
         name: 'app',
         dir: path.join(process.cwd(), 'config'),
         defaults: {
-          cacheTTL: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
           supportedExtensions: ['.php', '.js', '.jsx', '.ts', '.tsx', '.py'],
           excludedDirs: ['node_modules', 'vendor', '.git', 'dist', 'build'],
           gitlab: {

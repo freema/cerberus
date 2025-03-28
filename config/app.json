@@ -1,5 +1,4 @@
 {
-  "cacheTTL": 86400000,
   "supportedExtensions": [
     ".php",
     ".js",

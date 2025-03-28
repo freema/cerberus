@@ -47,6 +47,7 @@ function ensureDirectories() {
     // Cache directories
     path.join(rootDir, 'cache', 'merge-requests'),
     path.join(rootDir, 'cache', 'security'),
+    path.join(rootDir, 'cache', 'projects'),  // Added projects directory in cache
     // Data directories
     path.join(rootDir, 'data', 'projects'),
     // Config directory

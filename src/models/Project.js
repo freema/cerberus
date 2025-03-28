@@ -27,8 +27,8 @@ class Project {
    * @returns {string} - Path to the project directory
    */
   getProjectPath() {
-    // Updated to use the data directory instead of cache
-    return path.join(config.getDataPath(), 'projects', this.name);
+    // Use cache directory for project files
+    return path.join(config.getCachePath(), 'projects', this.name);
   }
 
   /**
@@ -119,7 +119,7 @@ class Project {
    */
   static async load(name) {
     try {
-      const metadataPath = path.join(config.getDataPath(), 'projects', name, 'metadata.json');
+      const metadataPath = path.join(config.getCachePath(), 'projects', name, 'metadata.json');
       const data = await fileSystem.readJson(metadataPath);
       return new Project(name, data);
     } catch (error) {
@@ -134,7 +134,7 @@ class Project {
    */
   static async listAll() {
     try {
-      return await fileSystem.listFiles(path.join(config.getDataPath(), 'projects'));
+      return await fileSystem.listFiles(path.join(config.getCachePath(), 'projects'));
     } catch (error) {
       logger.error('Error listing projects:', error);
       return [];
@@ -148,7 +148,7 @@ class Project {
    */
   static async create(name) {
     try {
-      const projectPath = path.join(config.getDataPath(), 'projects', name);
+      const projectPath = path.join(config.getCachePath(), 'projects', name);
       await fileSystem.ensureDir(projectPath);
       
       const project = new Project(name);

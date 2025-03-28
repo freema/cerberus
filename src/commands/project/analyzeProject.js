@@ -7,6 +7,95 @@ const logger = require('../../utils/logger');
 const { generateDirectoryLink } = require('../../utils/pathUtils');
 
 /**
+ * Generate a detailed project structure analysis 
+ * @param {Project} project - Project object
+ * @returns {string} - Detailed project analysis text
+ */
+function generateProjectStructureAnalysis(project) {
+  let analysis = `# Project Structure Analysis: ${project.name}\n\n`;
+  
+  // Add directory structure
+  analysis += `## Directory Structure\n\n\`\`\`\n${project.directoryStructure || 'No directory structure available.'}\`\`\`\n\n`;
+  
+  // Add file statistics
+  const filesByExt = {};
+  project.files.forEach(file => {
+    const ext = path.extname(file.originalPath).toLowerCase();
+    filesByExt[ext] = (filesByExt[ext] || 0) + 1;
+  });
+  
+  analysis += `## File Statistics\n\n`;
+  analysis += `Total files: ${project.files.length}\n\n`;
+  analysis += `### Files by Type\n\n`;
+  
+  Object.entries(filesByExt)
+    .sort((a, b) => b[1] - a[1])
+    .forEach(([ext, count]) => {
+      analysis += `- ${ext || '(no extension)'}: ${count} files\n`;
+    });
+  
+  // Add source directories
+  if (project.sourceDirectories && project.sourceDirectories.length > 0) {
+    analysis += `\n## Source Directories\n\n`;
+    project.sourceDirectories.forEach(dir => {
+      analysis += `- ${dir}\n`;
+    });
+  }
+  
+  // Add file mapping information
+  analysis += `\n## File Mapping Information\n\n`;
+  analysis += `This section shows the mapping between original file locations and their paths in the project.\n\n`;
+  
+  // Group files by source directory for better organization
+  const filesByDir = {};
+  project.files.forEach(file => {
+    if (file.originalDirectory) {
+      if (!filesByDir[file.originalDirectory]) {
+        filesByDir[file.originalDirectory] = [];
+      }
+      filesByDir[file.originalDirectory].push(file);
+    }
+  });
+  
+  // Only show mapping if we have directory information
+  if (Object.keys(filesByDir).length > 0) {
+    Object.keys(filesByDir).sort().forEach(dir => {
+      analysis += `### ${dir}\n\n`;
+      filesByDir[dir]
+        .sort((a, b) => path.basename(a.originalPath).localeCompare(path.basename(b.originalPath)))
+        .forEach(file => {
+          analysis += `- \`${path.basename(file.originalPath)}\` → \`${file.newPath}\`\n`;
+        });
+      analysis += '\n';
+    });
+  } else {
+    // Fallback if no directory grouping is available
+    analysis += `### All Files\n\n`;
+    
+    // Sort files alphabetically for easier reference
+    const sortedFiles = [...project.files].sort((a, b) => 
+      a.originalPath.localeCompare(b.originalPath)
+    );
+    
+    sortedFiles.forEach(file => {
+      analysis += `- \`${file.originalPath}\` → \`${file.newPath}\`\n`;
+    });
+  }
+  
+  // Add project summary
+  analysis += `\n## Project Summary\n\n`;
+  analysis += `This is a codebase summary that can be used for analysis and understanding the project structure. `;
+  analysis += `The directory structure above shows how files are organized, which can help identify the architecture `;
+  analysis += `and primary components of the system. When working with this project, consider the relationships `;
+  analysis += `between different files and directories to understand the overall design.\n\n`;
+  
+  analysis += `To make reference to files in this project, you can use either the original path or the project path `;
+  analysis += `from the mapping information above. The project paths are used in the actual files stored in the project.`;
+  
+  return analysis;
+}
+
+/**
  * Analyze a project and generate Claude instructions
  * @param {string} [projectName] - Optional project name
  */
@@ -64,14 +153,15 @@ async function analyzeProject(projectName) {
     }
     
     // Check if Claude API is configured
-    if (!claudeService.isConfigured()) {
-      logger.error('Claude API key not configured.');
+    const claudeConfigured = claudeService.isConfigured();
+    if (!claudeConfigured) {
+      logger.warn('Claude API key not configured. Analysis will be limited to project structure.');
       
       const { addApiKey } = await inquirer.prompt([
         {
           type: 'confirm',
           name: 'addApiKey',
-          message: 'Would you like to configure a Claude API key now?',
+          message: 'Would you like to configure a Claude API key now for enhanced analysis?',
           default: true
         }
       ]);
@@ -94,40 +184,26 @@ async function analyzeProject(projectName) {
         const isConnected = await claudeService.testConnection();
         
         if (!isConnected) {
-          logger.error('Could not connect to Claude API with the provided key. Please check your configuration.');
+          logger.error('Could not connect to Claude API with the provided key. Falling back to basic analysis.');
           
-          // Show directory structure without Claude analysis
-          console.log(chalk.yellow('\n========= DIRECTORY STRUCTURE ========='));
-          console.log(project.directoryStructure);
-          console.log(chalk.yellow('========= END OF DIRECTORY STRUCTURE ========='));
+          // Generate and save basic project structure analysis
+          const analysisText = generateProjectStructureAnalysis(project);
+          project.setInstructions(analysisText);
+          await project.save();
           
-          // Add the directory link for easy navigation
-          const projectDir = project.getProjectPath();
-          const dirLink = generateDirectoryLink(projectDir);
-          
-          console.log(chalk.cyan('\nProject directory: '));
-          console.log(chalk.blue.underline(dirLink));
-          console.log(chalk.white(projectDir));
-          
-          console.log(chalk.blue('\nCopy this directory structure to use with Claude.'));
-          return;
+          // Display the instructions
+          displayInstructions(project);
+          return project;
         }
       } else {
-        // Show directory structure without Claude analysis
-        console.log(chalk.yellow('\n========= DIRECTORY STRUCTURE ========='));
-        console.log(project.directoryStructure);
-        console.log(chalk.yellow('========= END OF DIRECTORY STRUCTURE ========='));
+        // Generate and save basic project structure analysis
+        const analysisText = generateProjectStructureAnalysis(project);
+        project.setInstructions(analysisText);
+        await project.save();
         
-        // Add the directory link for easy navigation
-        const projectDir = project.getProjectPath();
-        const dirLink = generateDirectoryLink(projectDir);
-        
-        console.log(chalk.cyan('\nProject directory: '));
-        console.log(chalk.blue.underline(dirLink));
-        console.log(chalk.white(projectDir));
-        
-        console.log(chalk.blue('\nCopy this directory structure to use with Claude.'));
-        return;
+        // Display the instructions
+        displayInstructions(project);
+        return project;
       }
     }
     

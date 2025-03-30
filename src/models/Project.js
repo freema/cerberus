@@ -74,37 +74,122 @@ class Project extends BaseModel {
    * @returns {Promise<void>}
    */
   async saveToStorage() {
-    // Generate structure text content
-    let structureContent = `# Project: ${this.name}\n`;
-    structureContent += `# Last Updated: ${this.lastUpdated}\n`;
-    structureContent += `# Source Directories: ${this.sourceDirectories.join(', ')}\n\n`;
+    // Generate highly optimized structure text content
+    let structureContent = `# Project: ${this.name}\n\n`;
+    structureContent += `# File Mapping Format: [Original Path] → [Project Path]\n\n`;
     
-    // Add file mapping
-    structureContent += `# File Mapping (Original Path → Project Path)\n\n`;
+    // Find common prefixes in file paths to reduce redundancy
+    const sortedFiles = [...this.files]
+      .filter(file => file.fullOriginalPath) // Only include files with complete path info
+      .sort((a, b) => a.fullOriginalPath.localeCompare(b.fullOriginalPath));
     
-    // Sort files by original path for consistency
-    const sortedFiles = [...this.files].sort((a, b) => {
-      const aPath = a.fullOriginalPath || a.originalPath;
-      const bPath = b.fullOriginalPath || b.originalPath;
-      return aPath.localeCompare(bPath);
-    });
-    
-    for (const file of sortedFiles) {
-      const origPath = file.fullOriginalPath || file.originalPath;
-      structureContent += `${origPath} → ${file.newPath}\n`;
+    if (sortedFiles.length === 0) {
+      structureContent += "No files with path information available.\n";
+      await fileSystem.writeFile(this.getStructurePath(), structureContent);
+      
+      // Save metadata to cache
+      await this.saveProjectInfoToCache();
+      
+      // Save analysis if it exists
+      if (this.instructions) {
+        await fileSystem.writeFile(this.getAnalysisPath(), this.instructions);
+      }
+      
+      return;
     }
     
-    // If we have directory structure, add it
-    if (this.directoryStructure) {
-      structureContent += `\n# Directory Structure\n\n${this.directoryStructure}\n`;
+    // Group files by directory for more efficient representation
+    const filesByDir = {};
+    
+    for (const file of sortedFiles) {
+      const origPath = file.fullOriginalPath;
+      const origDir = path.dirname(origPath);
+      
+      if (!filesByDir[origDir]) {
+        filesByDir[origDir] = [];
+      }
+      
+      filesByDir[origDir].push({
+        filename: path.basename(origPath),
+        newPath: file.newPath,
+        fullPath: origPath
+      });
+    }
+    
+    // Find the common prefix of all directories to further reduce redundancy
+    const allDirs = Object.keys(filesByDir);
+    let commonPrefix = "";
+    
+    if (allDirs.length > 0) {
+      // Find common prefix among all directories
+      const firstDir = allDirs[0];
+      const dirParts = firstDir.split(path.sep);
+      
+      for (let i = 0; i < dirParts.length; i++) {
+        const prefix = dirParts.slice(0, i + 1).join(path.sep);
+        
+        if (allDirs.every(dir => dir === prefix || dir.startsWith(prefix + path.sep))) {
+          commonPrefix = prefix;
+        } else {
+          break;
+        }
+      }
+    }
+    
+    // Add common prefix information if found
+    if (commonPrefix) {
+      structureContent += `## Common Path Prefix: ${commonPrefix}\n`;
+      structureContent += "All paths below are relative to this prefix unless they start with '/'\n\n";
+    }
+    
+    // Format directories and files, removing common prefix
+    const sortedDirs = Object.keys(filesByDir).sort();
+    
+    for (const dir of sortedDirs) {
+      // Create relative directory path by removing common prefix
+      let relDir = dir;
+      if (commonPrefix && dir.startsWith(commonPrefix)) {
+        relDir = dir.substring(commonPrefix.length);
+        if (relDir.startsWith(path.sep)) {
+          relDir = relDir.substring(1);
+        }
+        if (!relDir) {
+          relDir = '.'; // Root directory
+        }
+      }
+      
+      // Only add directory headers for directories with multiple files
+      if (filesByDir[dir].length > 1) {
+        structureContent += `## ${relDir || '.'}\n`;
+      }
+      
+      // Add files with short paths
+      for (const file of filesByDir[dir]) {
+        const displayPath = relDir ? `${relDir}/${file.filename}` : file.filename;
+        structureContent += `${displayPath} → ${file.newPath}\n`;
+        
+        // Also add full mapping for completeness and to ensure we can parse it later
+        structureContent += `# Full: ${file.fullPath} → ${file.newPath}\n`;
+      }
+      
+      structureContent += '\n';
+    }
+    
+    // Add source directories information (important for updating)
+    if (this.sourceDirectories && this.sourceDirectories.length > 0) {
+      structureContent += `# Source Directories:\n`;
+      this.sourceDirectories.forEach(dir => {
+        structureContent += `# - ${dir}\n`;
+      });
+      structureContent += '\n';
     }
     
     // Save to structure.txt
     await fileSystem.writeFile(this.getStructurePath(), structureContent);
     
-    // Save metadata to cache instead of project directory
+    // Save metadata to cache
     await this.saveProjectInfoToCache();
-
+    
     // Save analysis if it exists
     if (this.instructions) {
       await fileSystem.writeFile(this.getAnalysisPath(), this.instructions);

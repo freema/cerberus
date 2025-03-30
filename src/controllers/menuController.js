@@ -4,6 +4,8 @@ const ProjectMenuController = require('./ProjectMenuController');
 const CodeReviewMenuController = require('./CodeReviewMenuController');
 const ConfigMenuController = require('./ConfigMenuController');
 const config = require('../utils/config');
+const UIHelper = require('../utils/UIHelper');
+const ApiConfigService = require('../utils/ApiConfigService');
 
 class MenuController {
   constructor() {
@@ -52,34 +54,8 @@ class MenuController {
    * @returns {Promise<boolean>} - Whether to proceed
    */
   async checkClaudeAPIKey() {
-    const claudeApiKey = config.getClaudeApiKey();
-
-    if (!claudeApiKey) {
-      console.log('\n⚠️  WARNING: Claude AI API key is not configured!');
-      console.log('Some features that require Claude AI will not work without this key.');
-
-      const { action } = await inquirer.prompt([
-        {
-          type: 'list',
-          name: 'action',
-          message: 'What would you like to do?',
-          choices: [
-            { name: 'Configure Claude AI', value: 'configure' },
-            { name: 'Continue to Project menu (some features may be limited)', value: 'continue' },
-            { name: 'Go back to main menu', value: 'back' },
-          ],
-        },
-      ]);
-
-      if (action === 'configure') {
-        await this.configMenuController.claudeConfigController.handleConfig();
-        return false; // Return to main menu after configuration
-      } else if (action === 'back') {
-        return false;
-      }
-    }
-
-    return true;
+    // Delegate to ApiConfigService for this check
+    return ApiConfigService.checkClaudeApiKey();
   }
 
   /**
@@ -87,37 +63,8 @@ class MenuController {
    * @returns {Promise<boolean>} - Whether to proceed
    */
   async checkRequiredAPIKeys() {
-    const gitlabToken = config.getGitlabToken();
-    const claudeApiKey = config.getClaudeApiKey();
-
-    if (!gitlabToken || !claudeApiKey) {
-      console.log('\n⚠️  WARNING: Required API keys are not configured!');
-      if (!gitlabToken) console.log('- GitLab API token is missing');
-      if (!claudeApiKey) console.log('- Claude AI API key is missing');
-      console.log('The code review functionality requires these API keys.');
-
-      const { action } = await inquirer.prompt([
-        {
-          type: 'list',
-          name: 'action',
-          message: 'What would you like to do?',
-          choices: [
-            { name: 'Configure API keys', value: 'configure' },
-            { name: 'Continue to Code Review menu anyway', value: 'continue' },
-            { name: 'Go back to main menu', value: 'back' },
-          ],
-        },
-      ]);
-
-      if (action === 'configure') {
-        await this.configMenuController.handleMenu();
-        return false; // Return to main menu after configuration
-      } else if (action === 'back') {
-        return false;
-      }
-    }
-
-    return true;
+    // Delegate to ApiConfigService for this check
+    return ApiConfigService.checkRequiredApiKeys();
   }
 
   /**

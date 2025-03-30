@@ -78,7 +78,7 @@ async function handleCodeReviewMenu() {
  * This function is exported from original cerberus.js
  */
 async function configureClaude() {
-  const claudeService = require('../services/claudeService');
+  const claudeService = require('../services/ClaudeService');
   
   const claudeConfig = config.getClaudeConfig();
   const currentApiKey = config.getClaudeApiKey();
@@ -234,7 +234,7 @@ async function configureSettings() {
  * Configure GitLab settings
  */
 async function configureGitlab() {
-  const gitlabService = require('../services/gitlabService');
+  const gitlabService = require('../services/GitlabService');
   
   const gitlabConfig = config.getGitlabConfig();
   const currentToken = config.getGitlabToken();

@@ -2,7 +2,7 @@ const inquirer = require('inquirer');
 const chalk = require('chalk');
 const ora = require('ora');
 const MergeRequest = require('../../models/MergeRequest');
-const claudeService = require('../../services/claudeService');
+const claudeService = require('../../services/ClaudeService');
 const logger = require('../../utils/logger');
 
 /**

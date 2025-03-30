@@ -1,18 +1,20 @@
+/**
+ * MergeRequest model class
+ */
 const path = require('path');
+const BaseModel = require('./BaseModel');
 const config = require('../utils/config');
 const fileSystem = require('../utils/fileSystem');
 const logger = require('../utils/logger');
 
-/**
- * MergeRequest model class
- */
-class MergeRequest {
+class MergeRequest extends BaseModel {
   /**
    * Create a new MergeRequest instance
    * @param {Object} data - Merge request data
    */
   constructor(data = {}) {
-    this.id = data.id || `mr_${Date.now()}`;
+    const id = data.id || `mr_${Date.now()}`;
+    super('merge-requests', id, data);
     this.url = data.url || '';
     this.projectId = data.projectId || null;
     this.projectPath = data.projectPath || '';
@@ -54,31 +56,12 @@ class MergeRequest {
   }
 
   /**
-   * Save the merge request
-   * @returns {Promise<void>}
-   */
-  async save() {
-    try {
-      // Ensure data directory exists
-      await fileSystem.ensureDir(config.getDataPathForType('merge-requests'));
-      
-      // Save to data directory
-      await fileSystem.saveToJson(this.getFilePath(), this.toJSON());
-      
-      logger.debug(`Merge request ${this.id} saved to ${this.getFilePath()}`);
-    } catch (error) {
-      logger.error(`Error saving merge request ${this.id}:`, error);
-      throw error;
-    }
-  }
-
-  /**
    * Convert to JSON representation
    * @returns {Object} - JSON representation of the merge request
    */
   toJSON() {
     return {
-      id: this.id,
+      ...super.toJSON(),
       url: this.url,
       projectId: this.projectId,
       projectPath: this.projectPath,

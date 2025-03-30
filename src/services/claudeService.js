@@ -1,13 +1,13 @@
-const axios = require('axios');
-const logger = require('../utils/logger');
-const config = require('../utils/config');
-
 /**
  * Service for interacting with Claude AI API
  */
-class ClaudeService {
+const BaseApiService = require('./BaseApiService');
+const logger = require('../utils/logger');
+const config = require('../utils/config');
+
+class ClaudeService extends BaseApiService {
   constructor() {
-    this.initializeClient();
+    super('Claude');
   }
 
   /**
@@ -16,39 +16,24 @@ class ClaudeService {
   initializeClient() {
     this.apiKey = config.getClaudeApiKey();
     this.claudeConfig = config.getClaudeConfig();
-    this.baseUrl = 'https://api.anthropic.com/v1';
+    const baseUrl = 'https://api.anthropic.com/v1';
     
-    // Create Claude API client if API key is available
     if (this.apiKey) {
-      this.client = axios.create({
-        baseURL: this.baseUrl,
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': this.apiKey,
-          'anthropic-version': '2023-06-01'
-        }
+      this.createClient(baseUrl, {
+        'x-api-key': this.apiKey,
+        'anthropic-version': '2023-06-01'
       });
     }
   }
 
   /**
-   * Test the Claude API connection
-   * @returns {Promise<boolean>} - Whether the connection is working
+   * Perform test request for the Claude API
+   * @returns {Promise<Object>} - API response
    */
-  async testConnection() {
-    if (!this.isConfigured()) {
-      return false;
-    }
-
-    try {
-      // A simple models request to test the API
-      const response = await this.client.get('/models');
-      logger.debug(`Claude API models: ${JSON.stringify(response.data)}`);
-      return true;
-    } catch (error) {
-      logger.error('Failed to connect to Claude API:', error);
-      return false;
-    }
+  async performTestRequest() {
+    const response = await this.client.get('/models');
+    logger.debug(`Claude API models: ${JSON.stringify(response.data)}`);
+    return response;
   }
 
   /**
@@ -91,14 +76,15 @@ class ClaudeService {
       return null;
     }
 
-    try {
-      const response = await this.client.post('/messages', {
-        model: this.claudeConfig.model,
-        max_tokens: this.claudeConfig.maxTokens,
-        messages: [
-          {
-            role: 'user',
-            content: `I need to generate clear and comprehensive instructions for an AI system about the following project structure. The goal is to create instructions that would help an AI understand the project's organization and purpose.
+    return await this.executeRequest(
+      async () => {
+        const response = await this.client.post('/messages', {
+          model: this.claudeConfig.model,
+          max_tokens: this.claudeConfig.maxTokens,
+          messages: [
+            {
+              role: 'user',
+              content: `I need to generate clear and comprehensive instructions for an AI system about the following project structure. The goal is to create instructions that would help an AI understand the project's organization and purpose.
 
 Here's the project structure information, including original file paths and their mappings:
 
@@ -112,15 +98,15 @@ Please generate instructions that:
 5. Include information about how to reference files using their mappings
 
 The instructions should be clear, precise, and focused on helping an AI system effectively work with this codebase.`
-          }
-        ]
-      });
+            }
+          ]
+        });
 
-      return response.data.content[0].text;
-    } catch (error) {
-      logger.error('Error generating project instructions:', error);
-      return null;
-    }
+        return response.data.content[0].text;
+      },
+      'Error generating project instructions',
+      null
+    );
   }
 
   /**
@@ -134,27 +120,28 @@ The instructions should be clear, precise, and focused on helping an AI system e
       return null;
     }
 
-    try {
-      // Prepare the merge request data for Claude
-      let changesText = '';
-      mergeRequestData.changes.forEach(change => {
-        changesText += `\nFile: ${change.path}\nChange Type: ${change.type}\n`;
-        if (change.diff) {
-          changesText += `Diff:\n${change.diff}\n`;
-        }
-        if (change.fullFileContent) {
-          changesText += `\nFull File Content:\n${change.fullFileContent.substring(0, 2000)}${change.fullFileContent.length > 2000 ? '...(truncated)' : ''}\n`;
-        }
-        changesText += '\n---\n';
-      });
+    return await this.executeRequest(
+      async () => {
+        // Prepare the merge request data for Claude
+        let changesText = '';
+        mergeRequestData.changes.forEach(change => {
+          changesText += `\nFile: ${change.path}\nChange Type: ${change.type}\n`;
+          if (change.diff) {
+            changesText += `Diff:\n${change.diff}\n`;
+          }
+          if (change.fullFileContent) {
+            changesText += `\nFull File Content:\n${change.fullFileContent.substring(0, 2000)}${change.fullFileContent.length > 2000 ? '...(truncated)' : ''}\n`;
+          }
+          changesText += '\n---\n';
+        });
 
-      const response = await this.client.post('/messages', {
-        model: this.claudeConfig.model,
-        max_tokens: this.claudeConfig.maxTokens,
-        messages: [
-          {
-            role: 'user',
-            content: `Please review the following code changes for a merge request in GitLab.
+        const response = await this.client.post('/messages', {
+          model: this.claudeConfig.model,
+          max_tokens: this.claudeConfig.maxTokens,
+          messages: [
+            {
+              role: 'user',
+              content: `Please review the following code changes for a merge request in GitLab.
 
 Merge Request Information:
 Title: ${mergeRequestData.title}
@@ -175,15 +162,15 @@ Please provide a comprehensive code review that includes:
 6. Suggestions for improvement
 
 Format your review in a clear, professional manner with specific examples from the code.`
-          }
-        ]
-      });
+            }
+          ]
+        });
 
-      return response.data.content[0].text;
-    } catch (error) {
-      logger.error('Error generating code review:', error);
-      return null;
-    }
+        return response.data.content[0].text;
+      },
+      'Error generating code review',
+      null
+    );
   }
 }
 

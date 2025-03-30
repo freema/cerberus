@@ -3,7 +3,7 @@ const chalk = require('chalk');
 const ora = require('ora');
 const path = require('path');
 const MergeRequest = require('../../models/MergeRequest');
-const gitlabService = require('../../services/gitlabService');
+const gitlabService = require('../../services/GitlabService');
 const config = require('../../utils/config');
 const logger = require('../../utils/logger');
 

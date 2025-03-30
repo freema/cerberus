@@ -1,21 +1,21 @@
+/**
+ * Project model class
+ */
 const path = require('path');
+const BaseModel = require('./BaseModel');
 const config = require('../utils/config');
 const fileSystem = require('../utils/fileSystem');
 const logger = require('../utils/logger');
 
-/**
- * Project model class
- */
-class Project {
+class Project extends BaseModel {
   /**
    * Create a new Project instance
    * @param {string} name - Project name
    * @param {Object} data - Project data
    */
   constructor(name, data = {}) {
+    super('projects', name, data);
     this.name = name;
-    this.createdAt = data.createdAt || new Date().toISOString();
-    this.lastUpdated = data.lastUpdated || new Date().toISOString();
     this.files = data.files || [];
     this.sourceDirectories = data.sourceDirectories || [];
     this.directoryStructure = data.directoryStructure || '';
@@ -27,7 +27,6 @@ class Project {
    * @returns {string} - Path to the project directory
    */
   getProjectPath() {
-    // Use data directory for project files - cache is only for temporary files
     return path.join(config.getDataPath(), 'projects', this.name);
   }
 
@@ -48,59 +47,86 @@ class Project {
   }
 
   /**
-   * Save the project structure to a text file
+   * Get the file extension for this entity type
+   * @returns {string} - File extension including dot
+   */
+  getFileExtension() {
+    return ''; // Project is a directory, not a file
+  }
+
+  /**
+   * Get the entity path
+   * @returns {string} - Path to the entity directory
+   */
+  getPath() {
+    return this.getProjectPath();
+  }
+
+  /**
+   * Save to storage - implementation for Project
+   * @param {string} filePath - Path to save to
    * @returns {Promise<void>}
    */
-  async save() {
-    try {
-      this.lastUpdated = new Date().toISOString();
-      
-      // Generate structure text content
-      let structureContent = `# Project: ${this.name}\n`;
-      structureContent += `# Last Updated: ${this.lastUpdated}\n`;
-      structureContent += `# Source Directories: ${this.sourceDirectories.join(', ')}\n\n`;
-      
-      // Add file mapping
-      structureContent += `# File Mapping (Original Path → Project Path)\n\n`;
-      
-      // Sort files by original path for consistency
-      const sortedFiles = [...this.files].sort((a, b) => {
-        const aPath = a.fullOriginalPath || a.originalPath;
-        const bPath = b.fullOriginalPath || b.originalPath;
-        return aPath.localeCompare(bPath);
-      });
-      
-      for (const file of sortedFiles) {
-        const origPath = file.fullOriginalPath || file.originalPath;
-        structureContent += `${origPath} → ${file.newPath}\n`;
-      }
-      
-      // If we have directory structure, add it
-      if (this.directoryStructure) {
-        structureContent += `\n# Directory Structure\n\n${this.directoryStructure}\n`;
-      }
-      
-      // Save to structure.txt
-      await fileSystem.writeFile(this.getStructurePath(), structureContent);
-      
-      // Also save minimal metadata as a simple backup
-      const minimalData = {
-        name: this.name,
-        lastUpdated: this.lastUpdated,
-        fileCount: this.files.length,
-        sourceDirectories: this.sourceDirectories
-      };
-      
-      const metaFilePath = path.join(this.getProjectPath(), 'project-info.json');
-      await fileSystem.saveToJson(metaFilePath, minimalData);
-      
-      logger.debug(`Saved project structure for ${this.name}`);
-    } catch (error) {
-      logger.error(`Error saving project structure for ${this.name}:`, error);
-      throw error;
+  async saveToStorage() {
+    // Generate structure text content
+    let structureContent = `# Project: ${this.name}\n`;
+    structureContent += `# Last Updated: ${this.lastUpdated}\n`;
+    structureContent += `# Source Directories: ${this.sourceDirectories.join(', ')}\n\n`;
+    
+    // Add file mapping
+    structureContent += `# File Mapping (Original Path → Project Path)\n\n`;
+    
+    // Sort files by original path for consistency
+    const sortedFiles = [...this.files].sort((a, b) => {
+      const aPath = a.fullOriginalPath || a.originalPath;
+      const bPath = b.fullOriginalPath || b.originalPath;
+      return aPath.localeCompare(bPath);
+    });
+    
+    for (const file of sortedFiles) {
+      const origPath = file.fullOriginalPath || file.originalPath;
+      structureContent += `${origPath} → ${file.newPath}\n`;
+    }
+    
+    // If we have directory structure, add it
+    if (this.directoryStructure) {
+      structureContent += `\n# Directory Structure\n\n${this.directoryStructure}\n`;
+    }
+    
+    // Save to structure.txt
+    await fileSystem.writeFile(this.getStructurePath(), structureContent);
+    
+    // Also save minimal metadata as a simple backup
+    const minimalData = {
+      name: this.name,
+      lastUpdated: this.lastUpdated,
+      fileCount: this.files.length,
+      sourceDirectories: this.sourceDirectories
+    };
+    
+    const metaFilePath = path.join(this.getProjectPath(), 'project-info.json');
+    await fileSystem.saveToJson(metaFilePath, minimalData);
+
+    // Save analysis if it exists
+    if (this.instructions) {
+      await fileSystem.writeFile(this.getAnalysisPath(), this.instructions);
     }
   }
 
+  /**
+   * Convert to JSON representation
+   * @returns {Object} - JSON representation of the entity
+   */
+  toJSON() {
+    return {
+      ...super.toJSON(),
+      name: this.name,
+      files: this.files,
+      sourceDirectories: this.sourceDirectories,
+      directoryStructure: this.directoryStructure,
+      instructions: this.instructions
+    };
+  }
 
   /**
    * Add files to the project
@@ -134,14 +160,6 @@ class Project {
    */
   setInstructions(instructions) {
     this.instructions = instructions;
-    
-    // Also save the instructions to an analysis.txt file
-    try {
-      fileSystem.writeFile(this.getAnalysisPath(), instructions);
-      logger.debug(`Saved analysis to ${this.getAnalysisPath()}`);
-    } catch (error) {
-      logger.error(`Error saving analysis file for ${this.name}:`, error);
-    }
   }
 
   /**
@@ -241,12 +259,7 @@ class Project {
    * @returns {Promise<string[]>} - Array of project names
    */
   static async listAll() {
-    try {
-      return await fileSystem.listFiles(path.join(config.getDataPath(), 'projects'));
-    } catch (error) {
-      logger.error('Error listing projects:', error);
-      return [];
-    }
+    return super.listAll('projects');
   }
 
   /**
@@ -256,8 +269,7 @@ class Project {
    */
   static async create(name) {
     try {
-      const projectPath = path.join(config.getDataPath(), 'projects', name);
-      await fileSystem.ensureDir(projectPath);
+      await fileSystem.ensureDir(path.join(config.getDataPath(), 'projects', name));
       
       const project = new Project(name);
       await project.save();

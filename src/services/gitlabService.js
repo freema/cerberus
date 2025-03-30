@@ -1,13 +1,13 @@
-const axios = require('axios');
-const logger = require('../utils/logger');
-const config = require('../utils/config');
-
 /**
  * Service for interacting with GitLab API
  */
-class GitlabService {
+const BaseApiService = require('./BaseApiService');
+const logger = require('../utils/logger');
+const config = require('../utils/config');
+
+class GitlabService extends BaseApiService {
   constructor() {
-    this.initializeClient();
+    super('GitLab');
   }
 
   /**
@@ -16,34 +16,23 @@ class GitlabService {
   initializeClient() {
     const token = config.getGitlabToken();
     const gitlabConfig = config.getGitlabConfig();
-
     this.baseUrl = gitlabConfig.baseUrl;
     
-    // Create GitLab API client
-    this.client = axios.create({
-      baseURL: this.baseUrl,
-      timeout: gitlabConfig.timeout || 10000,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-      }
-    });
+    this.createClient(
+      this.baseUrl,
+      token ? { 'Authorization': `Bearer ${token}` } : {},
+      { timeout: gitlabConfig.timeout || 10000 }
+    );
   }
 
   /**
-   * Test the GitLab API connection
-   * @returns {Promise<boolean>} - Whether the connection is working
+   * Perform test request for the GitLab API
+   * @returns {Promise<Object>} - API response
    */
-  async testConnection() {
-    try {
-      // A simple endpoint that should be available on any GitLab instance
-      const response = await this.client.get('/version');
-      logger.debug(`GitLab API version: ${JSON.stringify(response.data)}`);
-      return true;
-    } catch (error) {
-      logger.error('Failed to connect to GitLab API:', error);
-      return false;
-    }
+  async performTestRequest() {
+    const response = await this.client.get('/version');
+    logger.debug(`GitLab API version: ${JSON.stringify(response.data)}`);
+    return response;
   }
 
   /**
@@ -85,14 +74,15 @@ class GitlabService {
    * @returns {Promise<number|null>} - Project ID or null if not found
    */
   async getProjectId(projectPath) {
-    try {
-      const encodedPath = encodeURIComponent(projectPath);
-      const response = await this.client.get(`/projects/${encodedPath}`);
-      return response.data.id;
-    } catch (error) {
-      logger.error(`Error getting project ID for ${projectPath}:`, error);
-      return null;
-    }
+    return this.executeRequest(
+      async () => {
+        const encodedPath = encodeURIComponent(projectPath);
+        const response = await this.client.get(`/projects/${encodedPath}`);
+        return response.data.id;
+      },
+      `Error getting project ID for ${projectPath}`,
+      null
+    );
   }
 
   /**
@@ -102,13 +92,14 @@ class GitlabService {
    * @returns {Promise<Object|null>} - Merge request details or null if not found
    */
   async getMergeRequest(projectId, mergeRequestIid) {
-    try {
-      const response = await this.client.get(`/projects/${projectId}/merge_requests/${mergeRequestIid}`);
-      return response.data;
-    } catch (error) {
-      logger.error(`Error getting merge request #${mergeRequestIid}:`, error);
-      return null;
-    }
+    return this.executeRequest(
+      async () => {
+        const response = await this.client.get(`/projects/${projectId}/merge_requests/${mergeRequestIid}`);
+        return response.data;
+      },
+      `Error getting merge request #${mergeRequestIid}`,
+      null
+    );
   }
 
   /**
@@ -118,13 +109,14 @@ class GitlabService {
    * @returns {Promise<Array|null>} - Array of changes or null if error
    */
   async getMergeRequestChanges(projectId, mergeRequestIid) {
-    try {
-      const response = await this.client.get(`/projects/${projectId}/merge_requests/${mergeRequestIid}/changes`);
-      return response.data.changes;
-    } catch (error) {
-      logger.error(`Error getting changes for merge request #${mergeRequestIid}:`, error);
-      return null;
-    }
+    return this.executeRequest(
+      async () => {
+        const response = await this.client.get(`/projects/${projectId}/merge_requests/${mergeRequestIid}/changes`);
+        return response.data.changes;
+      },
+      `Error getting changes for merge request #${mergeRequestIid}`,
+      null
+    );
   }
 
   /**
@@ -135,15 +127,16 @@ class GitlabService {
    * @returns {Promise<string|null>} - File content or null if error
    */
   async getFileContent(projectId, filePath, ref = 'master') {
-    try {
-      const response = await this.client.get(`/projects/${projectId}/repository/files/${encodeURIComponent(filePath)}/raw`, {
-        params: { ref }
-      });
-      return response.data;
-    } catch (error) {
-      logger.error(`Error getting file content for ${filePath} (${ref}):`, error);
-      return null;
-    }
+    return this.executeRequest(
+      async () => {
+        const response = await this.client.get(`/projects/${projectId}/repository/files/${encodeURIComponent(filePath)}/raw`, {
+          params: { ref }
+        });
+        return response.data;
+      },
+      `Error getting file content for ${filePath} (${ref})`,
+      null
+    );
   }
 
   /**

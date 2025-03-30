@@ -1,6 +1,3 @@
-/**
- * Project model class
- */
 const path = require('path');
 const BaseModel = require('./BaseModel');
 const config = require('../utils/config');
@@ -20,6 +17,7 @@ class Project extends BaseModel {
     this.sourceDirectories = data.sourceDirectories || [];
     this.directoryStructure = data.directoryStructure || '';
     this.instructions = data.instructions || '';
+    this.lastUpdated = data.lastUpdated || new Date().toISOString();
   }
 
   /**
@@ -44,6 +42,14 @@ class Project extends BaseModel {
    */
   getStructurePath() {
     return path.join(this.getProjectPath(), 'structure.txt');
+  }
+
+  /**
+   * Get path to project metadata cache file
+   * @returns {string} - Path to the project-info.json in cache
+   */
+  getProjectCachePath() {
+    return path.join(config.getCachePathForType('projects'), `${this.name}-info.json`);
   }
 
   /**
@@ -96,21 +102,44 @@ class Project extends BaseModel {
     // Save to structure.txt
     await fileSystem.writeFile(this.getStructurePath(), structureContent);
     
-    // Also save minimal metadata as a simple backup
-    const minimalData = {
-      name: this.name,
-      lastUpdated: this.lastUpdated,
-      fileCount: this.files.length,
-      sourceDirectories: this.sourceDirectories
-    };
-    
-    const metaFilePath = path.join(this.getProjectPath(), 'project-info.json');
-    await fileSystem.saveToJson(metaFilePath, minimalData);
+    // Save metadata to cache instead of project directory
+    await this.saveProjectInfoToCache();
 
     // Save analysis if it exists
     if (this.instructions) {
       await fileSystem.writeFile(this.getAnalysisPath(), this.instructions);
     }
+  }
+
+  /**
+   * Save project metadata to cache directory
+   * @returns {Promise<void>}
+   */
+  async saveProjectInfoToCache() {
+    // Create detailed project info with all data needed for updates
+    const projectInfo = {
+      name: this.name,
+      lastUpdated: this.lastUpdated,
+      createdAt: this.createdAt,
+      fileCount: this.files.length,
+      sourceDirectories: this.sourceDirectories,
+      files: this.files.map(file => ({
+        originalPath: file.originalPath,
+        fullOriginalPath: file.fullOriginalPath,
+        newPath: file.newPath,
+        originalDirectory: file.originalDirectory,
+        size: file.size,
+        mtime: file.mtime
+      }))
+    };
+    
+    // Ensure cache directory exists
+    await fileSystem.ensureDir(config.getCachePathForType('projects'));
+    
+    // Save to cache
+    const cachePath = this.getProjectCachePath();
+    await fileSystem.saveToJson(cachePath, projectInfo);
+    logger.debug(`Project metadata saved to cache: ${cachePath}`);
   }
 
   /**
@@ -163,6 +192,31 @@ class Project extends BaseModel {
   }
 
   /**
+   * Load a project from cache info
+   * @returns {Promise<boolean>} - Whether the project info was loaded from cache
+   */
+  async loadFromCache() {
+    try {
+      const cachePath = this.getProjectCachePath();
+      if (await fileSystem.fileExists(cachePath)) {
+        const cacheData = await fileSystem.readJson(cachePath);
+        
+        // Update project with cache data
+        this.lastUpdated = cacheData.lastUpdated;
+        this.createdAt = cacheData.createdAt || this.createdAt;
+        this.files = cacheData.files || [];
+        this.sourceDirectories = cacheData.sourceDirectories || [];
+        
+        logger.debug(`Project loaded from cache: ${cachePath}`);
+        return true;
+      }
+    } catch (error) {
+      logger.debug(`Failed to load project from cache: ${error.message}`);
+    }
+    return false;
+  }
+
+  /**
    * Load a project by name
    * @param {string} name - Project name
    * @returns {Promise<Project>} - Loaded project
@@ -170,74 +224,84 @@ class Project extends BaseModel {
   static async load(name) {
     try {
       const project = new Project(name);
-      const structurePath = project.getStructurePath();
       
-      // Check if structure.txt exists
-      const structureExists = await fileSystem.fileExists(structurePath);
+      // Try to load from cache first
+      const loadedFromCache = await project.loadFromCache();
       
-      if (structureExists) {
-        // Load structure.txt
-        const structureContent = await fileSystem.readFile(structurePath);
+      // If not in cache or cache load failed, check structure.txt
+      if (!loadedFromCache) {
+        const structurePath = project.getStructurePath();
         
-        // Parse file mapping
-        const files = [];
-        const lines = structureContent.split('\n');
-        let inFileMapping = false;
+        // Check if structure.txt exists
+        const structureExists = await fileSystem.fileExists(structurePath);
         
-        for (const line of lines) {
-          if (line.startsWith('# File Mapping')) {
-            inFileMapping = true;
-            continue;
-          }
+        if (structureExists) {
+          // Load structure.txt
+          const structureContent = await fileSystem.readFile(structurePath);
           
-          if (inFileMapping && line.includes(' → ')) {
-            const [origPath, newPath] = line.split(' → ');
-            files.push({
-              originalPath: path.basename(origPath),
-              fullOriginalPath: origPath.trim(),
-              newPath: newPath.trim(),
-              originalDirectory: path.dirname(origPath.trim())
-            });
-          }
+          // Parse file mapping
+          const files = [];
+          const lines = structureContent.split('\n');
+          let inFileMapping = false;
           
-          // Extract directory structure if present
-          if (line.startsWith('# Directory Structure')) {
-            const structureIndex = lines.indexOf(line);
-            if (structureIndex >= 0 && structureIndex + 1 < lines.length) {
-              project.directoryStructure = lines.slice(structureIndex + 1).join('\n');
+          for (const line of lines) {
+            if (line.startsWith('# File Mapping')) {
+              inFileMapping = true;
+              continue;
             }
-            break;
-          }
-        }
-        
-        // Extract source directories
-        const sourceDirsLine = lines.find(line => line.startsWith('# Source Directories:'));
-        if (sourceDirsLine) {
-          const dirs = sourceDirsLine.replace('# Source Directories:', '').trim();
-          project.sourceDirectories = dirs.split(', ').filter(d => d.length > 0);
-        }
-        
-        project.files = files;
-      } else {
-        // Try to load legacy metadata.json as fallback
-        try {
-          const legacyPath = path.join(config.getDataPath(), 'projects', name, 'metadata.json');
-          if (await fileSystem.fileExists(legacyPath)) {
-            const data = await fileSystem.readJson(legacyPath);
-            project.files = data.files || [];
-            project.sourceDirectories = data.sourceDirectories || [];
-            project.directoryStructure = data.directoryStructure || '';
-            project.instructions = data.instructions || '';
-            project.createdAt = data.createdAt || new Date().toISOString();
-            project.lastUpdated = data.lastUpdated || new Date().toISOString();
             
-            // Convert to new format
-            await project.save();
-            logger.info(`Converted project ${name} from legacy format to new format`);
+            if (inFileMapping && line.includes(' → ')) {
+              const [origPath, newPath] = line.split(' → ');
+              files.push({
+                originalPath: path.basename(origPath),
+                fullOriginalPath: origPath.trim(),
+                newPath: newPath.trim(),
+                originalDirectory: path.dirname(origPath.trim())
+              });
+            }
+            
+            // Extract directory structure if present
+            if (line.startsWith('# Directory Structure')) {
+              const structureIndex = lines.indexOf(line);
+              if (structureIndex >= 0 && structureIndex + 1 < lines.length) {
+                project.directoryStructure = lines.slice(structureIndex + 1).join('\n');
+              }
+              break;
+            }
           }
-        } catch (legacyError) {
-          // Just create a new empty project
-          logger.debug(`No legacy metadata found for ${name}, starting with empty project`);
+          
+          // Extract source directories
+          const sourceDirsLine = lines.find(line => line.startsWith('# Source Directories:'));
+          if (sourceDirsLine) {
+            const dirs = sourceDirsLine.replace('# Source Directories:', '').trim();
+            project.sourceDirectories = dirs.split(', ').filter(d => d.length > 0);
+          }
+          
+          project.files = files;
+          
+          // Save to cache for future use
+          await project.saveProjectInfoToCache();
+        } else {
+          // Try to load legacy metadata.json as fallback
+          try {
+            const legacyPath = path.join(config.getDataPath(), 'projects', name, 'metadata.json');
+            if (await fileSystem.fileExists(legacyPath)) {
+              const data = await fileSystem.readJson(legacyPath);
+              project.files = data.files || [];
+              project.sourceDirectories = data.sourceDirectories || [];
+              project.directoryStructure = data.directoryStructure || '';
+              project.instructions = data.instructions || '';
+              project.createdAt = data.createdAt || new Date().toISOString();
+              project.lastUpdated = data.lastUpdated || new Date().toISOString();
+              
+              // Convert to new format and save to cache
+              await project.saveProjectInfoToCache();
+              logger.info(`Converted project ${name} from legacy format to new format`);
+            }
+          } catch (legacyError) {
+            // Just create a new empty project
+            logger.debug(`No legacy metadata found for ${name}, starting with empty project`);
+          }
         }
       }
       
@@ -259,7 +323,30 @@ class Project extends BaseModel {
    * @returns {Promise<string[]>} - Array of project names
    */
   static async listAll() {
-    return super.listAll('projects');
+    // Get project names from both data directory and cache
+    try {
+      const dataProjects = await super.listAll('projects');
+      
+      // Also check cache for any projects that might be there but not in data dir
+      const cacheDir = config.getCachePathForType('projects');
+      let cacheFiles = [];
+      try {
+        cacheFiles = await fileSystem.listFiles(cacheDir);
+      } catch (error) {
+        logger.debug('No cache projects directory or error reading it');
+      }
+      
+      // Extract project names from cache files (format: name-info.json)
+      const cacheProjects = cacheFiles
+        .filter(file => file.endsWith('-info.json'))
+        .map(file => file.replace('-info.json', ''));
+      
+      // Combine both sources and remove duplicates
+      return [...new Set([...dataProjects, ...cacheProjects])];
+    } catch (error) {
+      logger.error('Error listing projects:', error);
+      return [];
+    }
   }
 
   /**

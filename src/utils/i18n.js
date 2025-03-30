@@ -12,7 +12,7 @@ class I18nService {
     this.defaultLocale = 'en';
     this.locale = this.defaultLocale;
     this.translations = {};
-    
+
     // Initialize translations
     this.loadTranslations();
   }
@@ -24,13 +24,13 @@ class I18nService {
     try {
       // Get the locales directory
       const localesDir = path.join(process.cwd(), 'locales');
-      
+
       // Ensure locales directory exists
       fs.ensureDirSync(localesDir);
-      
+
       // Read available locale files
       const files = fs.readdirSync(localesDir);
-      
+
       // Process each locale file
       files.forEach(file => {
         if (file.endsWith('.json')) {
@@ -45,7 +45,7 @@ class I18nService {
           }
         }
       });
-      
+
       // Create default locale files if they don't exist
       if (!this.translations['en']) {
         logger.info('Creating default English locale file');
@@ -56,7 +56,7 @@ class I18nService {
           'utf8'
         );
       }
-      
+
       if (!this.translations['cs']) {
         logger.info('Creating default Czech locale file');
         this.translations['cs'] = require('../../locales/cs.default.json');
@@ -66,22 +66,22 @@ class I18nService {
           'utf8'
         );
       }
-      
+
       // Get current locale from config or use default
       this.locale = config.get('locale', this.defaultLocale);
-      
+
       // Validate locale
       if (!this.translations[this.locale]) {
         logger.warn(`Locale ${this.locale} not available, falling back to ${this.defaultLocale}`);
         this.locale = this.defaultLocale;
       }
-      
+
       logger.info(`Using locale: ${this.locale}`);
     } catch (error) {
       logger.error('Error initializing translations:', error);
       // Set fallback translations
       this.translations = {
-        'en': require('../../locales/en.default.json')
+        en: require('../../locales/en.default.json'),
       };
     }
   }
@@ -111,20 +111,20 @@ class I18nService {
   t(key, vars = {}) {
     // Split key by dots to handle nested objects
     const keys = key.split('.');
-    
+
     // Try to get translation from current locale
     let translation = this.getNestedTranslation(this.translations[this.locale], keys);
-    
+
     // If not found in current locale, fall back to default locale
     if (!translation && this.locale !== this.defaultLocale) {
       translation = this.getNestedTranslation(this.translations[this.defaultLocale], keys);
     }
-    
+
     // If still not found, return the key itself
     if (!translation) {
       return key;
     }
-    
+
     // Replace variables in the string
     return this.replaceVariables(translation, vars);
   }
@@ -137,16 +137,16 @@ class I18nService {
    */
   getNestedTranslation(obj, keys) {
     if (!obj) return null;
-    
+
     let current = obj;
-    
+
     for (const key of keys) {
       if (current[key] === undefined) {
         return null;
       }
       current = current[key];
     }
-    
+
     return typeof current === 'string' ? current : null;
   }
 

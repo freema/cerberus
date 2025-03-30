@@ -56,19 +56,23 @@ function copyToClipboard(text) {
  * @param {string} [successMessage='Copied to clipboard.'] - Message on success
  * @param {string} [failMessage='Automatic clipboard copy failed. On Linux, install xclip or wl-copy.'] - Message on failure
  */
-function copyWithFeedback(text, successMessage = 'Copied to clipboard.', failMessage = 'Automatic clipboard copy failed. On Linux, install xclip or wl-copy.') {
+function copyWithFeedback(
+  text,
+  successMessage = 'Copied to clipboard.',
+  failMessage = 'Automatic clipboard copy failed. On Linux, install xclip or wl-copy.'
+) {
   const success = copyToClipboard(text);
-  
+
   if (success) {
     logger.success(successMessage);
   } else {
     logger.warn(failMessage);
   }
-  
+
   return success;
 }
 
 module.exports = {
   copyToClipboard,
-  copyWithFeedback
+  copyWithFeedback,
 };

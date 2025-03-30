@@ -13,27 +13,27 @@ async function openProject(projectName) {
 
   try {
     const existingProjects = await Project.listAll();
-    
+
     if (existingProjects.length === 0) {
       logger.warn('No projects found. Please create a new project first.');
-      
+
       const { createNew } = await inquirer.prompt([
         {
           type: 'confirm',
           name: 'createNew',
           message: 'Would you like to create a new project?',
-          default: true
-        }
+          default: true,
+        },
       ]);
-      
+
       if (createNew) {
         const createProject = require('./createProject');
         return await createProject();
       }
-      
+
       return null;
     }
-    
+
     // If a project name was provided, try to open it directly
     if (projectName) {
       if (existingProjects.includes(projectName)) {
@@ -43,25 +43,25 @@ async function openProject(projectName) {
         // Continue to prompt for a project
       }
     }
-    
+
     // Prompt user to select a project
     const { selectedProject } = await inquirer.prompt([
       {
         type: 'list',
         name: 'selectedProject',
         message: 'Select a project to open:',
-        choices: [...existingProjects, { name: 'Cancel', value: 'cancel' }]
-      }
+        choices: [...existingProjects, { name: 'Cancel', value: 'cancel' }],
+      },
     ]);
-    
+
     if (selectedProject === 'cancel') {
       logger.info('Operation cancelled.');
       return null;
     }
-    
+
     const project = await Project.load(selectedProject);
     logger.success(`Project "${selectedProject}" opened.`);
-    
+
     // Ask what the user wants to do with this project
     const { action } = await inquirer.prompt([
       {
@@ -72,11 +72,11 @@ async function openProject(projectName) {
           { name: 'Collect more files', value: 'collect' },
           { name: 'Analyze project (generate Claude instructions)', value: 'analyze' },
           { name: 'View project details', value: 'view' },
-          { name: 'Close project', value: 'close' }
-        ]
-      }
+          { name: 'Close project', value: 'close' },
+        ],
+      },
     ]);
-    
+
     switch (action) {
       case 'collect':
         const collectFiles = require('./collectFiles');
@@ -93,7 +93,7 @@ async function openProject(projectName) {
         logger.info('Project closed.');
         break;
     }
-    
+
     return project;
   } catch (error) {
     logger.error('Error opening project:', error);
@@ -108,31 +108,40 @@ async function openProject(projectName) {
 function displayProjectDetails(project) {
   const createdDate = new Date(project.createdAt).toLocaleString();
   const updatedDate = new Date(project.lastUpdated).toLocaleString();
-  
+
   console.log(chalk.cyan('\n=== Project Details ==='));
   console.log(chalk.white(`Name: ${chalk.yellow(project.name)}`));
   console.log(chalk.white(`Created: ${chalk.yellow(createdDate)}`));
   console.log(chalk.white(`Last Updated: ${chalk.yellow(updatedDate)}`));
   console.log(chalk.white(`Files: ${chalk.yellow(project.files.length)}`));
   console.log(chalk.white(`Source Directories: ${chalk.yellow(project.sourceDirectories.length)}`));
-  
+
   if (project.sourceDirectories.length > 0) {
     console.log(chalk.cyan('\nSource Directories:'));
     project.sourceDirectories.forEach((dir, index) => {
       console.log(chalk.yellow(`  ${index + 1}. ${dir}`));
     });
   }
-  
+
   if (project.directoryStructure) {
     console.log(chalk.cyan('\nDirectory Structure:'));
-    console.log(chalk.gray(project.directoryStructure.substring(0, 500) + (project.directoryStructure.length > 500 ? '...' : '')));
+    console.log(
+      chalk.gray(
+        project.directoryStructure.substring(0, 500) +
+          (project.directoryStructure.length > 500 ? '...' : '')
+      )
+    );
   }
-  
+
   if (project.instructions) {
     console.log(chalk.cyan('\nClaude Instructions:'));
-    console.log(chalk.gray(project.instructions.substring(0, 500) + (project.instructions.length > 500 ? '...' : '')));
+    console.log(
+      chalk.gray(
+        project.instructions.substring(0, 500) + (project.instructions.length > 500 ? '...' : '')
+      )
+    );
   }
-  
+
   console.log(''); // Add a blank line for better readability
 }
 

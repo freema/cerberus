@@ -41,12 +41,14 @@ class UIManager {
    * @returns {Promise<string>} - Selected choice value
    */
   async showMenu(message, choices) {
-    const { selected } = await inquirer.prompt([{
-      type: 'list',
-      name: 'selected',
-      message,
-      choices
-    }]);
+    const { selected } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'selected',
+        message,
+        choices,
+      },
+    ]);
     return selected;
   }
 
@@ -57,12 +59,14 @@ class UIManager {
    * @returns {Promise<boolean>} - User confirmation
    */
   async confirm(message, defaultValue = true) {
-    const { confirmed } = await inquirer.prompt([{
-      type: 'confirm',
-      name: 'confirmed',
-      message,
-      default: defaultValue
-    }]);
+    const { confirmed } = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'confirmed',
+        message,
+        default: defaultValue,
+      },
+    ]);
     return confirmed;
   }
 
@@ -74,13 +78,15 @@ class UIManager {
    * @returns {Promise<string>} - User input
    */
   async getInput(message, validate = null, defaultValue = '') {
-    const { input } = await inquirer.prompt([{
-      type: 'input',
-      name: 'input',
-      message,
-      validate,
-      default: defaultValue
-    }]);
+    const { input } = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'input',
+        message,
+        validate,
+        default: defaultValue,
+      },
+    ]);
     return input;
   }
 
@@ -90,11 +96,13 @@ class UIManager {
    * @returns {Promise<string>} - User input
    */
   async getPassword(message) {
-    const { password } = await inquirer.prompt([{
-      type: 'password',
-      name: 'password',
-      message
-    }]);
+    const { password } = await inquirer.prompt([
+      {
+        type: 'password',
+        name: 'password',
+        message,
+      },
+    ]);
     return password;
   }
 
@@ -107,12 +115,12 @@ class UIManager {
     if (this.currentSpinner) {
       this.stopSpinner();
     }
-    
+
     this.currentSpinner = ora({
       text,
-      color: 'cyan'
+      color: 'cyan',
     }).start();
-    
+
     return this.currentSpinner;
   }
 
@@ -192,18 +200,18 @@ class UIManager {
       });
       return maxWidth + 2; // Add padding
     });
-    
+
     // Print header
     let headerRow = '';
     headers.forEach((header, idx) => {
       headerRow += chalk.cyan(header.padEnd(widths[idx]));
     });
     console.log(headerRow);
-    
+
     // Print separator
     const separator = widths.map(width => '-'.repeat(width)).join('');
     console.log(chalk.gray(separator));
-    
+
     // Print rows
     rows.forEach(row => {
       let rowStr = '';

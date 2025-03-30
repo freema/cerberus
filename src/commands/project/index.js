@@ -3,7 +3,7 @@ const createProject = require('./createProject');
 const openProject = require('./openProject');
 const collectFiles = require('./collectFiles');
 const analyzeProject = require('./analyzeProject');
-const logger = require('../../utils/logger');
+const updateFiles = require('./updateFiles');
 
 /**
  * Register project commands
@@ -48,6 +48,11 @@ function registerCommands(program) {
     .command('analyze')
     .description('Analyze a project to improve Claude instructions')
     .action(analyzeProject);
+    
+  projectCommand
+    .command('update')
+    .description('Update project files from original sources')
+    .action(updateFiles);
 
   return program;
 }
@@ -61,10 +66,9 @@ async function handleProjectMenu() {
   const config = require('../../utils/config');
 
   while (true) {
-    const choice = await projectPrompts.projectChoice();
-    
-    // We only check requirements at point of feature use, not pre-emptively
-    // This allows users to use features that don't need certain credentials
+    // Get new extended choices with update option
+    const extendedChoices = await getExtendedProjectChoices();
+    const choice = await projectPrompts.projectChoice(extendedChoices);
     
     switch (choice) {
       case 'new':
@@ -79,6 +83,9 @@ async function handleProjectMenu() {
       case 'analyze':
         await analyzeProject();
         break;
+      case 'update':
+        await updateFiles();
+        break;
       case 'back':
         // Return to main menu
         return;
@@ -86,4 +93,21 @@ async function handleProjectMenu() {
   }
 }
 
+/**
+ * Get extended project menu choices including the update option
+ * @returns {Promise<Array>} Extended choices array
+ */
+async function getExtendedProjectChoices() {
+  const i18n = require('../../utils/i18n');
+  
+  return [
+    { name: i18n.t('menu.project.new'), value: 'new' },
+    { name: i18n.t('menu.project.existing'), value: 'existing' },
+    { name: i18n.t('menu.project.collect'), value: 'collect' },
+    { name: i18n.t('menu.project.analyze'), value: 'analyze' },
+    { name: i18n.t('menu.project.update') || 'Update project files', value: 'update' }
+  ];
+}
+
 module.exports = registerCommands;
+module.exports.handleProjectMenu = handleProjectMenu;

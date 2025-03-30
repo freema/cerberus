@@ -7,10 +7,7 @@ module.exports = {
   collectCoverage: true,
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov'],
-  collectCoverageFrom: [
-    'src/**/*.js',
-    '!**/node_modules/**',
-  ],
+  collectCoverageFrom: ['src/**/*.js', '!**/node_modules/**'],
   testMatch: ['**/tests/**/*.test.js'],
   rootDir: '.',
   verbose: true,

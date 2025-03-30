@@ -3,5 +3,5 @@ const codeReviewCommands = require('./codeReview');
 
 module.exports = {
   projectCommands,
-  codeReviewCommands
+  codeReviewCommands,
 };

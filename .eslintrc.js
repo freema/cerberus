@@ -5,12 +5,7 @@ module.exports = {
     es2021: true,
     jest: true,
   },
-  extends: [
-    'eslint:recommended',
-    'plugin:node/recommended',
-    'plugin:jest/recommended',
-    'prettier',
-  ],
+  extends: ['eslint:recommended', 'plugin:node/recommended', 'plugin:jest/recommended', 'prettier'],
   parserOptions: {
     ecmaVersion: 2022,
   },

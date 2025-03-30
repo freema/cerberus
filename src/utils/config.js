@@ -14,14 +14,14 @@ class ConfigService {
   constructor() {
     // Ensure logger is initialized first to avoid circular dependency
     this.initializeLogger();
-    
+
     try {
       // Generate encryption key
       const encryptionKey = encryption.getEncryptionKey();
-      
+
       // Ensure required directories exist
       pathHelper.ensureDirectories();
-      
+
       // Setup configuration stores
       this.appConfig = new SimpleConfig({
         name: 'app',
@@ -31,14 +31,14 @@ class ConfigService {
           excludedDirs: ['node_modules', 'vendor', '.git', 'dist', 'build'],
           gitlab: {
             baseUrl: 'https://gitlab.com/api/v4',
-            timeout: 10000
+            timeout: 10000,
           },
           claude: {
             model: 'claude-3-opus-20240229',
-            maxTokens: 4000
+            maxTokens: 4000,
           },
-          debug: false
-        }
+          debug: false,
+        },
       });
 
       // Credentials store with encryption - MOVED TO VAR/CACHE DIRECTORY
@@ -47,18 +47,18 @@ class ConfigService {
         dir: path.join(pathHelper.getCachePath(), 'security'), // Store in var/cache/security instead of config
         defaults: {
           gitlabToken: null,
-          claudeApiKey: null
+          claudeApiKey: null,
         },
-        encryptionKey: encryptionKey
+        encryptionKey: encryptionKey,
       });
-      
+
       this.logger.info('Configuration initialized successfully');
     } catch (error) {
       console.error('Error initializing configuration:', error);
       throw error;
     }
   }
-  
+
   /**
    * Initialize logger to avoid circular dependencies
    */
@@ -66,11 +66,11 @@ class ConfigService {
     // If logger is used within this file, we'll use console instead
     // to avoid circular dependencies
     this.logger = {
-      info: (msg) => console.log(msg),
+      info: msg => console.log(msg),
       error: (msg, err) => console.error(msg, err),
-      warn: (msg) => console.warn(msg),
-      success: (msg) => console.log(msg),
-      debug: (msg) => console.debug(msg)
+      warn: msg => console.warn(msg),
+      success: msg => console.log(msg),
+      debug: msg => console.debug(msg),
     };
   }
 
@@ -166,7 +166,7 @@ class ConfigService {
   getGitlabConfig() {
     return this.get('gitlab', {
       baseUrl: 'https://gitlab.com/api/v4',
-      timeout: 10000
+      timeout: 10000,
     });
   }
 
@@ -177,7 +177,7 @@ class ConfigService {
   setGitlabConfig(config) {
     this.set('gitlab', {
       ...this.getGitlabConfig(),
-      ...config
+      ...config,
     });
   }
 
@@ -188,7 +188,7 @@ class ConfigService {
   getClaudeConfig() {
     return this.get('claude', {
       model: 'claude-3-opus-20240229',
-      maxTokens: 4000
+      maxTokens: 4000,
     });
   }
 
@@ -199,7 +199,7 @@ class ConfigService {
   setClaudeConfig(config) {
     this.set('claude', {
       ...this.getClaudeConfig(),
-      ...config
+      ...config,
     });
   }
 

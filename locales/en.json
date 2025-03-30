@@ -25,7 +25,8 @@
       "new": "Create a new project",
       "existing": "Work with existing project",
       "collect": "Collect project files",
-      "analyze": "Analyze project"
+      "analyze": "Analyze project",
+      "update": "Update project files from original sources"
     },
     "codeReview": {
       "title": "Code review options:",

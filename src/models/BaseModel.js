@@ -53,7 +53,7 @@ class BaseModel {
       id: this.id,
       type: this.type,
       createdAt: this.createdAt,
-      lastUpdated: this.lastUpdated
+      lastUpdated: this.lastUpdated,
     };
   }
 
@@ -64,14 +64,14 @@ class BaseModel {
   async save() {
     try {
       this.updateTimestamp();
-      
+
       // Ensure data directory exists
       await fileSystem.ensureDir(config.getDataPathForType(this.type));
-      
+
       // Save to data directory
       const filePath = `${this.getPath()}${this.getFileExtension()}`;
       await this.saveToStorage(filePath);
-      
+
       logger.debug(`Entity ${this.id} saved to ${filePath}`);
     } catch (error) {
       logger.error(`Error saving entity ${this.id}:`, error);
@@ -130,17 +130,15 @@ class BaseModel {
       // Try to list entities from data directory
       const dataPath = config.getDataPathForType(type);
       let files = [];
-      
+
       try {
         files = await fileSystem.listFiles(dataPath);
       } catch (error) {
         logger.debug(`No ${type} directory or error reading it`);
       }
-      
+
       // Filter and remove extension
-      return files
-        .filter(file => file.endsWith('.json'))
-        .map(file => file.replace('.json', ''));
+      return files.filter(file => file.endsWith('.json')).map(file => file.replace('.json', ''));
     } catch (error) {
       logger.error(`Error listing ${type}:`, error);
       return [];

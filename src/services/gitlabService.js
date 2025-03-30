@@ -17,12 +17,10 @@ class GitlabService extends BaseApiService {
     const token = config.getGitlabToken();
     const gitlabConfig = config.getGitlabConfig();
     this.baseUrl = gitlabConfig.baseUrl;
-    
-    this.createClient(
-      this.baseUrl,
-      token ? { 'Authorization': `Bearer ${token}` } : {},
-      { timeout: gitlabConfig.timeout || 10000 }
-    );
+
+    this.createClient(this.baseUrl, token ? { Authorization: `Bearer ${token}` } : {}, {
+      timeout: gitlabConfig.timeout || 10000,
+    });
   }
 
   /**
@@ -50,12 +48,12 @@ class GitlabService extends BaseApiService {
    */
   updateBaseUrl(baseUrl) {
     // Make sure the URL ends with /api/v4
-    const normalizedUrl = baseUrl.endsWith('/api/v4') 
-      ? baseUrl 
-      : baseUrl.endsWith('/') 
-        ? `${baseUrl}api/v4` 
+    const normalizedUrl = baseUrl.endsWith('/api/v4')
+      ? baseUrl
+      : baseUrl.endsWith('/')
+        ? `${baseUrl}api/v4`
         : `${baseUrl}/api/v4`;
-    
+
     config.setGitlabConfig({ ...config.getGitlabConfig(), baseUrl: normalizedUrl });
     this.initializeClient();
   }
@@ -94,7 +92,9 @@ class GitlabService extends BaseApiService {
   async getMergeRequest(projectId, mergeRequestIid) {
     return this.executeRequest(
       async () => {
-        const response = await this.client.get(`/projects/${projectId}/merge_requests/${mergeRequestIid}`);
+        const response = await this.client.get(
+          `/projects/${projectId}/merge_requests/${mergeRequestIid}`
+        );
         return response.data;
       },
       `Error getting merge request #${mergeRequestIid}`,
@@ -111,7 +111,9 @@ class GitlabService extends BaseApiService {
   async getMergeRequestChanges(projectId, mergeRequestIid) {
     return this.executeRequest(
       async () => {
-        const response = await this.client.get(`/projects/${projectId}/merge_requests/${mergeRequestIid}/changes`);
+        const response = await this.client.get(
+          `/projects/${projectId}/merge_requests/${mergeRequestIid}/changes`
+        );
         return response.data.changes;
       },
       `Error getting changes for merge request #${mergeRequestIid}`,
@@ -129,9 +131,12 @@ class GitlabService extends BaseApiService {
   async getFileContent(projectId, filePath, ref = 'master') {
     return this.executeRequest(
       async () => {
-        const response = await this.client.get(`/projects/${projectId}/repository/files/${encodeURIComponent(filePath)}/raw`, {
-          params: { ref }
-        });
+        const response = await this.client.get(
+          `/projects/${projectId}/repository/files/${encodeURIComponent(filePath)}/raw`,
+          {
+            params: { ref },
+          }
+        );
         return response.data;
       },
       `Error getting file content for ${filePath} (${ref})`,
@@ -148,23 +153,23 @@ class GitlabService extends BaseApiService {
     try {
       // Parse URL string
       const urlObj = new URL(url);
-      
+
       // Extract path parts
       const pathParts = urlObj.pathname.split('/').filter(part => part.length > 0);
-      
+
       // Check if it's a merge request URL
       if (pathParts.length < 4 || pathParts[pathParts.length - 2] !== 'merge_requests') {
         logger.error('Invalid merge request URL format');
         return null;
       }
-      
+
       // Extract merge request IID
       const mergeRequestIid = parseInt(pathParts[pathParts.length - 1], 10);
       if (isNaN(mergeRequestIid)) {
         logger.error('Invalid merge request ID');
         return null;
       }
-      
+
       // Extract project path
       const projectPathIndex = pathParts.findIndex(part => part === '-');
       if (projectPathIndex === -1) {

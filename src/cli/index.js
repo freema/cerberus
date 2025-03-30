@@ -6,14 +6,16 @@ const inquirer = require('inquirer');
  * Displays the application banner
  */
 function displayBanner() {
-  console.log(chalk.red(`
+  console.log(
+    chalk.red(`
    ██████╗███████╗██████╗ ██████╗ ███████╗██████╗ ██╗   ██╗███████╗
   ██╔════╝██╔════╝██╔══██╗██╔══██╗██╔════╝██╔══██╗██║   ██║██╔════╝
   ██║     █████╗  ██████╔╝██████╔╝█████╗  ██████╔╝██║   ██║███████╗
   ██║     ██╔══╝  ██╔══██╗██╔══██╗██╔══╝  ██╔══██╗██║   ██║╚════██║
   ╚██████╗███████╗██║  ██║██████╔╝███████╗██║  ██║╚██████╔╝███████║
    ╚═════╝╚══════╝╚═╝  ╚═╝╚═════╝ ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝
-  `));
+  `)
+  );
 }
 
 /**
@@ -22,7 +24,7 @@ function displayBanner() {
  */
 async function mainMenu() {
   const i18n = require('../utils/i18n');
-  
+
   const { choice } = await inquirer.prompt([
     {
       type: 'list',
@@ -32,14 +34,14 @@ async function mainMenu() {
         { name: i18n.t('menu.main.project'), value: 'project' },
         { name: i18n.t('menu.main.codeReview'), value: 'codeReview' },
         { name: i18n.t('menu.main.configure'), value: 'configure' },
-        { name: i18n.t('menu.main.exit'), value: 'exit' }
-      ]
-    }
+        { name: i18n.t('menu.main.exit'), value: 'exit' },
+      ],
+    },
   ]);
-  
+
   // We'll handle 'configure' in the main app flow instead
   // of executing it directly here
-  
+
   return choice;
 }
 
@@ -56,5 +58,5 @@ function withBackOption(choices) {
 module.exports = {
   displayBanner,
   mainMenu,
-  withBackOption
+  withBackOption,
 };

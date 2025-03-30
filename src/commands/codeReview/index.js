@@ -14,7 +14,7 @@ function registerCommands(program) {
     .description('Code review commands for GitLab merge requests')
     .action(async () => {
       const choice = await mainMenu();
-      
+
       switch (choice) {
         case 'project':
           program.commands.find(cmd => cmd.name() === 'project').action();
@@ -56,10 +56,10 @@ async function handleCodeReviewMenu() {
 
   while (true) {
     const choice = await codeReviewPrompts.codeReviewChoice();
-    
+
     // Feature-specific requirements will be checked inside each function
     // This allows the menu to be displayed without blocking access
-    
+
     // Now proceed with the actual commands
     switch (choice) {
       case 'fetch':

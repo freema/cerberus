@@ -14,19 +14,19 @@ async function analyzeMergeRequest(mergeRequestId) {
     // If no ID provided, let user select one
     if (!mergeRequestId) {
       const mergeRequests = await MergeRequest.listAll();
-      
+
       if (mergeRequests.length === 0) {
         logger.warn('No merge requests found. Please fetch a merge request first.');
-        
+
         const { fetchNow } = await inquirer.prompt([
           {
             type: 'confirm',
             name: 'fetchNow',
             message: 'Would you like to fetch a merge request now?',
-            default: true
-          }
+            default: true,
+          },
         ]);
-        
+
         if (fetchNow) {
           const fetchMergeRequests = require('./fetchMergeRequests');
           await fetchMergeRequests();
@@ -35,25 +35,25 @@ async function analyzeMergeRequest(mergeRequestId) {
           return;
         }
       }
-      
+
       const { selectedMergeRequest } = await inquirer.prompt([
         {
           type: 'list',
           name: 'selectedMergeRequest',
           message: 'Select a merge request to analyze:',
-          choices: mergeRequests
-        }
+          choices: mergeRequests,
+        },
       ]);
-      
+
       mergeRequestId = selectedMergeRequest;
     }
-    
+
     // Load the merge request
     const mergeRequest = await MergeRequest.load(mergeRequestId);
-    
+
     // Display merge request details
     displayMergeRequestDetails(mergeRequest);
-    
+
     // Ask what action to take
     const { action } = await inquirer.prompt([
       {
@@ -64,11 +64,11 @@ async function analyzeMergeRequest(mergeRequestId) {
           { name: 'List changed files', value: 'listFiles' },
           { name: 'Show file details', value: 'showFile' },
           { name: 'Generate code review', value: 'review' },
-          { name: 'Go back', value: 'back' }
-        ]
-      }
+          { name: 'Go back', value: 'back' },
+        ],
+      },
     ]);
-    
+
     switch (action) {
       case 'listFiles':
         listChangedFiles(mergeRequest);
@@ -83,7 +83,7 @@ async function analyzeMergeRequest(mergeRequestId) {
       case 'back':
         return;
     }
-    
+
     return mergeRequest;
   } catch (error) {
     logger.error('Error analyzing merge request:', error);
@@ -103,17 +103,24 @@ function displayMergeRequestDetails(mergeRequest) {
   console.log(chalk.white(`Source Branch: ${chalk.yellow(mergeRequest.sourceBranch)}`));
   console.log(chalk.white(`Target Branch: ${chalk.yellow(mergeRequest.targetBranch)}`));
   console.log(chalk.white(`Total Files Changed: ${chalk.yellow(mergeRequest.totalChangedFiles)}`));
-  console.log(chalk.white(`Supported Files Processed: ${chalk.yellow(mergeRequest.supportedChangedFiles)}`));
-  
+  console.log(
+    chalk.white(`Supported Files Processed: ${chalk.yellow(mergeRequest.supportedChangedFiles)}`)
+  );
+
   if (mergeRequest.description) {
     console.log(chalk.cyan('\nDescription:'));
-    console.log(chalk.gray(mergeRequest.description.substring(0, 500) + (mergeRequest.description.length > 500 ? '...' : '')));
+    console.log(
+      chalk.gray(
+        mergeRequest.description.substring(0, 500) +
+          (mergeRequest.description.length > 500 ? '...' : '')
+      )
+    );
   }
-  
+
   if (mergeRequest.review) {
     console.log(chalk.cyan('\nAI Review Available: ') + chalk.green('✓'));
   }
-  
+
   console.log(''); // Add a blank line for better readability
 }
 
@@ -123,33 +130,33 @@ function displayMergeRequestDetails(mergeRequest) {
  */
 function listChangedFiles(mergeRequest) {
   console.log(chalk.cyan('\n=== Changed Files ==='));
-  
+
   // Group by change type
   const addedFiles = mergeRequest.changes.filter(change => change.type === 'added');
   const modifiedFiles = mergeRequest.changes.filter(change => change.type === 'modified');
   const deletedFiles = mergeRequest.changes.filter(change => change.type === 'deleted');
-  
+
   if (addedFiles.length > 0) {
     console.log(chalk.green('\nAdded Files:'));
     addedFiles.forEach((file, index) => {
       console.log(`  ${index + 1}. ${file.path}`);
     });
   }
-  
+
   if (modifiedFiles.length > 0) {
     console.log(chalk.blue('\nModified Files:'));
     modifiedFiles.forEach((file, index) => {
       console.log(`  ${index + 1}. ${file.path}`);
     });
   }
-  
+
   if (deletedFiles.length > 0) {
     console.log(chalk.red('\nDeleted Files:'));
     deletedFiles.forEach((file, index) => {
       console.log(`  ${index + 1}. ${file.path}`);
     });
   }
-  
+
   console.log(''); // Add a blank line for better readability
 }
 
@@ -162,51 +169,51 @@ async function showFileDetails(mergeRequest) {
     logger.warn('No files to display.');
     return;
   }
-  
+
   // Prepare choices for file selection
   const fileChoices = mergeRequest.changes.map((change, index) => ({
     name: `${change.type} - ${change.path}`,
-    value: index
+    value: index,
   }));
-  
+
   const { fileIndex } = await inquirer.prompt([
     {
       type: 'list',
       name: 'fileIndex',
       message: 'Select a file to view:',
-      choices: [...fileChoices, { name: 'Go back', value: -1 }]
-    }
+      choices: [...fileChoices, { name: 'Go back', value: -1 }],
+    },
   ]);
-  
+
   if (fileIndex === -1) {
     return;
   }
-  
+
   const selectedFile = mergeRequest.changes[fileIndex];
-  
+
   console.log(chalk.cyan(`\n=== File: ${selectedFile.path} (${selectedFile.type}) ===`));
-  
+
   if (selectedFile.diff) {
     console.log(chalk.yellow('\nDiff:'));
     console.log(selectedFile.diff);
   }
-  
+
   if (selectedFile.fullFileContent) {
     const { showFullContent } = await inquirer.prompt([
       {
         type: 'confirm',
         name: 'showFullContent',
         message: 'Would you like to see the full file content?',
-        default: false
-      }
+        default: false,
+      },
     ]);
-    
+
     if (showFullContent) {
       console.log(chalk.yellow('\nFull File Content:'));
       console.log(selectedFile.fullFileContent);
     }
   }
-  
+
   console.log(''); // Add a blank line for better readability
 }
 

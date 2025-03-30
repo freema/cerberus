@@ -17,11 +17,11 @@ class ClaudeService extends BaseApiService {
     this.apiKey = config.getClaudeApiKey();
     this.claudeConfig = config.getClaudeConfig();
     const baseUrl = 'https://api.anthropic.com/v1';
-    
+
     if (this.apiKey) {
       this.createClient(baseUrl, {
         'x-api-key': this.apiKey,
-        'anthropic-version': '2023-06-01'
+        'anthropic-version': '2023-06-01',
       });
     }
   }
@@ -52,7 +52,7 @@ class ClaudeService extends BaseApiService {
   updateConfig(claudeConfig) {
     config.setClaudeConfig({
       ...config.getClaudeConfig(),
-      ...claudeConfig
+      ...claudeConfig,
     });
     this.claudeConfig = config.getClaudeConfig();
   }
@@ -97,9 +97,9 @@ Please generate instructions that:
 4. Provide guidance on how the AI should approach understanding and working with this code
 5. Include information about how to reference files using their mappings
 
-The instructions should be clear, precise, and focused on helping an AI system effectively work with this codebase.`
-            }
-          ]
+The instructions should be clear, precise, and focused on helping an AI system effectively work with this codebase.`,
+            },
+          ],
         });
 
         return response.data.content[0].text;
@@ -161,9 +161,9 @@ Please provide a comprehensive code review that includes:
 5. Performance implications
 6. Suggestions for improvement
 
-Format your review in a clear, professional manner with specific examples from the code.`
-            }
-          ]
+Format your review in a clear, professional manner with specific examples from the code.`,
+            },
+          ],
         });
 
         return response.data.content[0].text;

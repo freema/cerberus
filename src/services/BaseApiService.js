@@ -34,9 +34,9 @@ class BaseApiService {
       baseURL: baseUrl,
       headers: {
         'Content-Type': 'application/json',
-        ...headers
+        ...headers,
       },
-      ...options
+      ...options,
     });
   }
 
@@ -74,7 +74,7 @@ class BaseApiService {
   isConfigured() {
     throw new Error('isConfigured() must be implemented by child classes');
   }
-  
+
   /**
    * Execute API request with error handling
    * @param {Function} requestFn - Function that executes the request

@@ -20,14 +20,14 @@ class SimpleConfig {
     this.defaults = options.defaults || {};
     this.encryptionKey = options.encryptionKey || null;
     this.store = { ...this.defaults };
-    
+
     // Create directory if it doesn't exist
     fs.ensureDirSync(this.dir);
-    
+
     // Try to load existing config
     this.load();
   }
-  
+
   /**
    * Get full path to the config file
    * @returns {string} - Full path
@@ -35,7 +35,7 @@ class SimpleConfig {
   getFilePath() {
     return path.join(this.dir, `${this.name}.json`);
   }
-  
+
   /**
    * Load configuration from disk
    */
@@ -44,17 +44,17 @@ class SimpleConfig {
       const filePath = this.getFilePath();
       if (fs.existsSync(filePath)) {
         let data = fs.readFileSync(filePath, 'utf8');
-        
+
         // Decrypt if necessary
         if (this.encryptionKey && this.isEncrypted(data)) {
           data = this.decrypt(data);
         }
-        
+
         // Parse and merge with defaults
         const parsed = JSON.parse(data);
         this.store = {
           ...this.defaults,
-          ...parsed
+          ...parsed,
         };
       }
     } catch (error) {
@@ -63,7 +63,7 @@ class SimpleConfig {
       this.store = { ...this.defaults };
     }
   }
-  
+
   /**
    * Save configuration to disk
    */
@@ -71,18 +71,18 @@ class SimpleConfig {
     try {
       const filePath = this.getFilePath();
       let data = JSON.stringify(this.store, null, 2);
-      
+
       // Encrypt if necessary
       if (this.encryptionKey) {
         data = this.encrypt(data);
       }
-      
+
       fs.writeFileSync(filePath, data);
     } catch (error) {
       console.error(`Error saving configuration to ${this.getFilePath()}:`, error.message);
     }
   }
-  
+
   /**
    * Check if data is encrypted
    * @param {string} data - Data to check
@@ -96,7 +96,7 @@ class SimpleConfig {
       return true; // If we can't parse it as JSON, assume it's encrypted
     }
   }
-  
+
   /**
    * Encrypt data
    * @param {string} data - Data to encrypt
@@ -105,25 +105,29 @@ class SimpleConfig {
   encrypt(data) {
     try {
       if (!this.encryptionKey) return data;
-      
+
       const iv = crypto.randomBytes(16);
-      const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(this.encryptionKey.slice(0, 32)), iv);
-      
+      const cipher = crypto.createCipheriv(
+        'aes-256-cbc',
+        Buffer.from(this.encryptionKey.slice(0, 32)),
+        iv
+      );
+
       let encrypted = cipher.update(data, 'utf8', 'hex');
       encrypted += cipher.final('hex');
-      
+
       // Return JSON object with encrypted data
       return JSON.stringify({
         encrypted: true,
         iv: iv.toString('hex'),
-        data: encrypted
+        data: encrypted,
       });
     } catch (error) {
       console.error('Encryption error:', error.message);
       return data; // Return original data on error
     }
   }
-  
+
   /**
    * Decrypt data
    * @param {string} encrypted - Encrypted data
@@ -132,25 +136,29 @@ class SimpleConfig {
   decrypt(encrypted) {
     try {
       if (!this.encryptionKey) return encrypted;
-      
+
       const json = JSON.parse(encrypted);
       if (!json.encrypted) return encrypted;
-      
+
       const iv = Buffer.from(json.iv, 'hex');
       const encryptedData = json.data;
-      
-      const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(this.encryptionKey.slice(0, 32)), iv);
-      
+
+      const decipher = crypto.createDecipheriv(
+        'aes-256-cbc',
+        Buffer.from(this.encryptionKey.slice(0, 32)),
+        iv
+      );
+
       let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
       decrypted += decipher.final('utf8');
-      
+
       return decrypted;
     } catch (error) {
       console.error('Decryption error:', error.message);
       return encrypted; // Return original data on error
     }
   }
-  
+
   /**
    * Get a configuration value
    * @param {string} key - Key to get
@@ -160,17 +168,17 @@ class SimpleConfig {
   get(key, defaultValue = undefined) {
     const keys = key.split('.');
     let value = this.store;
-    
+
     for (const k of keys) {
       if (value === undefined || value === null || typeof value !== 'object') {
         return defaultValue;
       }
       value = value[k];
     }
-    
+
     return value !== undefined ? value : defaultValue;
   }
-  
+
   /**
    * Set a configuration value
    * @param {string} key - Key to set
@@ -179,7 +187,7 @@ class SimpleConfig {
   set(key, value) {
     const keys = key.split('.');
     let target = this.store;
-    
+
     // Navigate to the right nested object
     for (let i = 0; i < keys.length - 1; i++) {
       const k = keys[i];
@@ -188,14 +196,14 @@ class SimpleConfig {
       }
       target = target[k];
     }
-    
+
     // Set the value
     target[keys[keys.length - 1]] = value;
-    
+
     // Save to disk
     this.save();
   }
-  
+
   /**
    * Delete a configuration value
    * @param {string} key - Key to delete
@@ -203,7 +211,7 @@ class SimpleConfig {
   delete(key) {
     const keys = key.split('.');
     let target = this.store;
-    
+
     // Navigate to the right nested object
     for (let i = 0; i < keys.length - 1; i++) {
       const k = keys[i];
@@ -212,14 +220,14 @@ class SimpleConfig {
       }
       target = target[k];
     }
-    
+
     // Delete the value
     delete target[keys[keys.length - 1]];
-    
+
     // Save to disk
     this.save();
   }
-  
+
   /**
    * Clear all configuration
    */

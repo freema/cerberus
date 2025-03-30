@@ -11,7 +11,7 @@ const path = require('path');
 function generateDirectoryLink(dirPath) {
   // Normalize the path for the current OS
   const normalizedPath = path.normalize(dirPath);
-  
+
   // Different formats depending on the OS
   if (process.platform === 'win32') {
     // Windows format: file:///C:/path/to/directory
@@ -27,5 +27,5 @@ function generateDirectoryLink(dirPath) {
 }
 
 module.exports = {
-  generateDirectoryLink
+  generateDirectoryLink,
 };

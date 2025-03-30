@@ -38,10 +38,7 @@ class MergeRequest extends BaseModel {
    * @returns {string} - Path to the merge request file
    */
   getFilePath() {
-    return path.join(
-      config.getDataPathForType('merge-requests'),
-      `${this.id}.json`
-    );
+    return path.join(config.getDataPathForType('merge-requests'), `${this.id}.json`);
   }
 
   /**
@@ -49,10 +46,7 @@ class MergeRequest extends BaseModel {
    * @returns {string} - Path to the cached merge request file
    */
   getCacheFilePath() {
-    return path.join(
-      config.getCachePathForType('merge-requests'),
-      `${this.id}.json`
-    );
+    return path.join(config.getCachePathForType('merge-requests'), `${this.id}.json`);
   }
 
   /**
@@ -77,7 +71,7 @@ class MergeRequest extends BaseModel {
       totalChangedFiles: this.totalChangedFiles,
       supportedChangedFiles: this.supportedChangedFiles,
       timestamp: this.timestamp,
-      review: this.review
+      review: this.review,
     };
   }
 
@@ -98,7 +92,7 @@ class MergeRequest extends BaseModel {
     try {
       // First try to load from data directory
       const filePath = path.join(config.getDataPathForType('merge-requests'), `${id}.json`);
-      
+
       try {
         const data = await fileSystem.readJson(filePath);
         return new MergeRequest(data);
@@ -106,14 +100,14 @@ class MergeRequest extends BaseModel {
         // If not in data directory, try cache directory
         logger.debug(`Merge request not found in data directory, trying cache directory...`);
         const cacheFilePath = path.join(config.getCachePathForType('merge-requests'), `${id}.json`);
-        
+
         const data = await fileSystem.readJson(cacheFilePath);
-        
+
         // Create new merge request and migrate to data directory
         const mergeRequest = new MergeRequest(data);
         logger.info(`Migrating merge request ${id} from cache to data directory...`);
         await mergeRequest.save();
-        
+
         return mergeRequest;
       }
     } catch (error) {
@@ -131,28 +125,28 @@ class MergeRequest extends BaseModel {
       // Get merge requests from both data and cache directories
       let dataFiles = [];
       let cacheFiles = [];
-      
+
       try {
         dataFiles = await fileSystem.listFiles(config.getDataPathForType('merge-requests'));
       } catch (error) {
         logger.debug('No data merge-requests directory or error reading it');
       }
-      
+
       try {
         cacheFiles = await fileSystem.listFiles(config.getCachePathForType('merge-requests'));
       } catch (error) {
         logger.debug('No cache merge-requests directory or error reading it');
       }
-      
+
       // Combine files from both directories
       const allFiles = [...dataFiles, ...cacheFiles];
-      
+
       // Filter and remove duplicates and .json extension
-      return [...new Set(
-        allFiles
-          .filter(file => file.endsWith('.json'))
-          .map(file => file.replace('.json', ''))
-      )];
+      return [
+        ...new Set(
+          allFiles.filter(file => file.endsWith('.json')).map(file => file.replace('.json', ''))
+        ),
+      ];
     } catch (error) {
       logger.error('Error listing merge requests:', error);
       return [];

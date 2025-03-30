@@ -7,22 +7,26 @@ const { withBackOption } = require('./index');
 const projectPrompts = {
   /**
    * Prompt for project choice (new/existing)
+   * @param {Array} [customChoices] - Optional custom choices array
    * @returns {Promise<Object>} User's choice
    */
-  async projectChoice() {
+  async projectChoice(customChoices) {
     const i18n = require('../utils/i18n');
+    
+    // Use custom choices if provided, otherwise use default choices
+    const choices = customChoices || [
+      { name: i18n.t('menu.project.new'), value: 'new' },
+      { name: i18n.t('menu.project.existing'), value: 'existing' },
+      { name: i18n.t('menu.project.collect'), value: 'collect' },
+      { name: i18n.t('menu.project.analyze'), value: 'analyze' }
+    ];
     
     const { choice } = await inquirer.prompt([
       {
         type: 'list',
         name: 'choice',
         message: i18n.t('menu.project.title'),
-        choices: withBackOption([
-          { name: i18n.t('menu.project.new'), value: 'new' },
-          { name: i18n.t('menu.project.existing'), value: 'existing' },
-          { name: i18n.t('menu.project.collect'), value: 'collect' },
-          { name: i18n.t('menu.project.analyze'), value: 'analyze' }
-        ])
+        choices: withBackOption(choices)
       }
     ]);
     

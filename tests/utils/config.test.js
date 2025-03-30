@@ -53,7 +53,7 @@ describe('Config Service', () => {
   test('should set and get debug mode', () => {
     config.setDebugMode(true);
     expect(config.isDebugMode()).toBe(true);
-    
+
     config.setDebugMode(false);
     expect(config.isDebugMode()).toBe(false);
   });

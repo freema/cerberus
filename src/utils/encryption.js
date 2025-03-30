@@ -12,12 +12,13 @@ const os = require('os');
 function getEncryptionKey() {
   const machineName = os.hostname();
   const userName = os.userInfo().username;
-  return crypto.createHash('sha256')
+  return crypto
+    .createHash('sha256')
     .update(`${machineName}-${userName}-cerberus`)
     .digest('hex')
     .substring(0, 32);
 }
 
 module.exports = {
-  getEncryptionKey
+  getEncryptionKey,
 };

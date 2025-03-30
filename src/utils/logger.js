@@ -14,7 +14,7 @@ class Logger {
     this.logFilePath = '';
     this.ensureLogDirectory();
   }
-  
+
   /**
    * Ensure log directory exists and set log file path
    */
@@ -22,14 +22,11 @@ class Logger {
     try {
       // Create log directory if it doesn't exist
       fs.ensureDirSync(pathHelper.getLogPath());
-      
+
       // Set log file path with current date
       const now = new Date();
       const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
-      this.logFilePath = path.join(
-        pathHelper.getLogPath(), 
-        `cerberus-${dateStr}.log`
-      );
+      this.logFilePath = path.join(pathHelper.getLogPath(), `cerberus-${dateStr}.log`);
     } catch (error) {
       console.error('Failed to setup log directory:', error);
       this.logToFile = false;
@@ -53,18 +50,18 @@ class Logger {
    */
   _writeToLogFile(level, message, error = null) {
     if (!this.logToFile || !this.logFilePath) return;
-    
+
     try {
       const timestamp = new Date().toISOString();
       let logEntry = `[${timestamp}] [${level.toUpperCase()}] ${message}\n`;
-      
+
       if (error) {
         logEntry += `[${timestamp}] [${level.toUpperCase()}] ${error.message}\n`;
         if (error.stack) {
           logEntry += `[${timestamp}] [${level.toUpperCase()}] ${error.stack}\n`;
         }
       }
-      
+
       fs.appendFileSync(this.logFilePath, logEntry);
     } catch (err) {
       console.error('Failed to write to log file:', err);

@@ -25,7 +25,8 @@
       "new": "Vytvořit nový projekt",
       "existing": "Pracovat s existujícím projektem",
       "collect": "Sbírat soubory projektu",
-      "analyze": "Analyzovat projekt"
+      "analyze": "Analyzovat projekt",
+      "update": "Update project files from original sources"
     },
     "codeReview": {
       "title": "Možnosti code review:",

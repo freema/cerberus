@@ -23,7 +23,7 @@ describe('CLI Interface', () => {
     ];
 
     const withBack = withBackOption(choices);
-    
+
     expect(withBack).toHaveLength(3);
     expect(withBack[2].value).toBe('back');
     expect(withBack[2].name).toBe('Go back');

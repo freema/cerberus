@@ -65,14 +65,14 @@ function ensureDirectories() {
     // Cache directories - ONLY for temporary files
     path.join(rootDir, 'var', 'cache', 'merge-requests'),
     path.join(rootDir, 'var', 'cache', 'security'),
-    path.join(rootDir, 'var', 'cache', 'projects'),  // For temporary project metadata used for updates
-    path.join(rootDir, 'var', 'cache', 'temp'),  // For other temporary files
+    path.join(rootDir, 'var', 'cache', 'projects'), // For temporary project metadata used for updates
+    path.join(rootDir, 'var', 'cache', 'temp'), // For other temporary files
     // Log directory
     path.join(rootDir, 'var', 'log'),
     // Data directories - For persistent project data
     path.join(rootDir, 'data', 'projects'),
     // Config directory
-    path.join(rootDir, 'config')
+    path.join(rootDir, 'config'),
   ];
 
   dirs.forEach(dir => {
@@ -91,5 +91,5 @@ module.exports = {
   getDataPath,
   getCachePathForType,
   getDataPathForType,
-  ensureDirectories
+  ensureDirectories,
 };

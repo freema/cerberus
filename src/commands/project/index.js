@@ -58,55 +58,13 @@ function registerCommands(program) {
 }
 
 /**
- * Handle project sub-menu
+ * Handle project sub-menu - delegates to ProjectMenuController
  */
 async function handleProjectMenu() {
-  const inquirer = require('inquirer');
-  const { projectPrompts } = require('../../cli/prompts');
-  const config = require('../../utils/config');
-
-  while (true) {
-    // Get new extended choices with update option
-    const extendedChoices = await getExtendedProjectChoices();
-    const choice = await projectPrompts.projectChoice(extendedChoices);
-    
-    switch (choice) {
-      case 'new':
-        await createProject();
-        break;
-      case 'existing':
-        await openProject();
-        break;
-      case 'collect':
-        await collectFiles();
-        break;
-      case 'analyze':
-        await analyzeProject();
-        break;
-      case 'update':
-        await updateFiles();
-        break;
-      case 'back':
-        // Return to main menu
-        return;
-    }
-  }
-}
-
-/**
- * Get extended project menu choices including the update option
- * @returns {Promise<Array>} Extended choices array
- */
-async function getExtendedProjectChoices() {
-  const i18n = require('../../utils/i18n');
-  
-  return [
-    { name: i18n.t('menu.project.new'), value: 'new' },
-    { name: i18n.t('menu.project.existing'), value: 'existing' },
-    { name: i18n.t('menu.project.collect'), value: 'collect' },
-    { name: i18n.t('menu.project.analyze'), value: 'analyze' },
-    { name: i18n.t('menu.project.update') || 'Update project files', value: 'update' }
-  ];
+  // Delegate to the controller implementation for consistency
+  const menuController = require('../../controllers/menuController');
+  const projectMenuController = new (require('../../controllers/ProjectMenuController'))();
+  await projectMenuController.handleMenu();
 }
 
 module.exports = registerCommands;

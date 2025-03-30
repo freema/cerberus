@@ -47,35 +47,13 @@ function registerCommands(program) {
 }
 
 /**
- * Handle code review sub-menu
+ * Handle code review sub-menu - delegates to CodeReviewMenuController
  */
 async function handleCodeReviewMenu() {
-  const inquirer = require('inquirer');
-  const { codeReviewPrompts } = require('../../cli/prompts');
-  const config = require('../../utils/config');
-
-  while (true) {
-    const choice = await codeReviewPrompts.codeReviewChoice();
-
-    // Feature-specific requirements will be checked inside each function
-    // This allows the menu to be displayed without blocking access
-
-    // Now proceed with the actual commands
-    switch (choice) {
-      case 'fetch':
-        await fetchMergeRequests();
-        break;
-      case 'review':
-        await analyzeMergeRequest();
-        break;
-      case 'generate':
-        await generateReview();
-        break;
-      case 'back':
-        // Return to main menu
-        return;
-    }
-  }
+  // Delegate to the controller implementation for consistency
+  const menuController = require('../../controllers/menuController');
+  const codeReviewMenuController = new (require('../../controllers/CodeReviewMenuController'))();
+  await codeReviewMenuController.handleMenu();
 }
 
 module.exports = registerCommands;

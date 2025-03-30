@@ -3,9 +3,15 @@
     "name": "Cerberus",
     "version": "1.0.0"
   },
-  "cache": {
-    "ttl": 86400000,
-    "cleanupInterval": 3600000
+  "var": {
+    "cache": {
+      "ttl": 86400000,
+      "cleanupInterval": 3600000
+    },
+    "log": {
+      "maxFiles": 10,
+      "maxDays": 30
+    }
   },
   "extensions": {
     "supported": [".php", ".js", ".jsx", ".ts", ".tsx", ".py"]

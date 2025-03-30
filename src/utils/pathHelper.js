@@ -5,11 +5,27 @@ const path = require('path');
 const fs = require('fs-extra');
 
 /**
+ * Get the base path for var storage
+ * @returns {string} - Var base path
+ */
+function getVarPath() {
+  return path.join(process.cwd(), 'var');
+}
+
+/**
  * Get the base path for cache storage
  * @returns {string} - Cache base path
  */
 function getCachePath() {
-  return path.join(process.cwd(), 'cache');
+  return path.join(getVarPath(), 'cache');
+}
+
+/**
+ * Get the base path for log storage
+ * @returns {string} - Log base path
+ */
+function getLogPath() {
+  return path.join(getVarPath(), 'log');
 }
 
 /**
@@ -44,11 +60,15 @@ function getDataPathForType(type) {
 function ensureDirectories() {
   const rootDir = path.resolve(process.cwd());
   const dirs = [
+    // Var directory - parent directory for cache and logs
+    path.join(rootDir, 'var'),
     // Cache directories - ONLY for temporary files
-    path.join(rootDir, 'cache', 'merge-requests'),
-    path.join(rootDir, 'cache', 'security'),
-    path.join(rootDir, 'cache', 'projects'),  // For temporary project metadata used for updates
-    path.join(rootDir, 'cache', 'temp'),  // For other temporary files
+    path.join(rootDir, 'var', 'cache', 'merge-requests'),
+    path.join(rootDir, 'var', 'cache', 'security'),
+    path.join(rootDir, 'var', 'cache', 'projects'),  // For temporary project metadata used for updates
+    path.join(rootDir, 'var', 'cache', 'temp'),  // For other temporary files
+    // Log directory
+    path.join(rootDir, 'var', 'log'),
     // Data directories - For persistent project data
     path.join(rootDir, 'data', 'projects'),
     // Config directory
@@ -65,7 +85,9 @@ function ensureDirectories() {
 }
 
 module.exports = {
+  getVarPath,
   getCachePath,
+  getLogPath,
   getDataPath,
   getCachePathForType,
   getDataPathForType,

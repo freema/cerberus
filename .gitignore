@@ -8,8 +8,8 @@ lerna-debug.log*
 .pnpm-debug.log*
 
 # Cache and data directories
-cache/
-data/
+var/
+data/*
 coverage/
 .nyc_output/
 

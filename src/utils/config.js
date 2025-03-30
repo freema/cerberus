@@ -41,10 +41,10 @@ class ConfigService {
         }
       });
 
-      // Credentials store with encryption - MOVED TO CACHE DIRECTORY
+      // Credentials store with encryption - MOVED TO VAR/CACHE DIRECTORY
       this.credentialsConfig = new SimpleConfig({
         name: 'credentials',
-        dir: path.join(pathHelper.getCachePath(), 'security'), // Store in cache/security instead of config
+        dir: path.join(pathHelper.getCachePath(), 'security'), // Store in var/cache/security instead of config
         defaults: {
           gitlabToken: null,
           claudeApiKey: null
@@ -212,11 +212,27 @@ class ConfigService {
   }
 
   /**
+   * Get the base path for var storage
+   * @returns {string} - Var base path
+   */
+  getVarPath() {
+    return pathHelper.getVarPath();
+  }
+
+  /**
    * Get the base path for cache storage
    * @returns {string} - Cache base path
    */
   getCachePath() {
     return pathHelper.getCachePath();
+  }
+
+  /**
+   * Get the base path for log storage
+   * @returns {string} - Log base path
+   */
+  getLogPath() {
+    return pathHelper.getLogPath();
   }
 
   /**

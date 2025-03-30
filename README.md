@@ -42,7 +42,7 @@ npm install
 npm link
 
 # Create required directories
-mkdir -p cache/security data/projects locales
+mkdir -p var/cache/security var/log data/projects locales
 ```
 
 ## Usage
@@ -70,7 +70,7 @@ cerberus configure                # Configure settings
 
 The application stores configuration in two separate locations:
 - `config/app.json` - Application settings (language, extensions, etc.)
-- `cache/security/credentials.json` - API keys and tokens (encrypted)
+- `var/cache/security/credentials.json` - API keys and tokens (encrypted)
 
 You can configure:
 - GitLab URL and token
@@ -98,9 +98,13 @@ cerberus/
 │   │   └── ...
 │   ├── models/           # Data models
 │   └── cli/              # CLI framework
-├── cache/                # Cache storage
-│   ├── merge-requests/   # Merge request cache
-│   └── security/         # Encrypted credentials
+├── var/                  # Variable data (logs, cache)
+│   ├── cache/            # Cache storage
+│   │   ├── merge-requests/ # Merge request cache
+│   │   ├── security/     # Encrypted credentials
+│   │   ├── projects/     # Temporary project data
+│   │   └── temp/         # Other temporary files
+│   └── log/              # Log files
 ├── data/                 # Persistent data storage
 │   └── projects/         # Project files and analysis
 ├── locales/              # Language files

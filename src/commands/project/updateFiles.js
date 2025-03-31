@@ -51,11 +51,11 @@ async function updateFiles(projectName) {
     }
     
     // Show project information
-    console.log(chalk.cyan('\n=== Project Information ==='));
-    console.log(chalk.white(`Name: ${chalk.yellow(project.name)}`));
-    console.log(chalk.white(`Last Updated: ${chalk.yellow(new Date(project.lastUpdated).toLocaleString())}`));
-    console.log(chalk.white(`Files: ${chalk.yellow(project.files.length)}`));
-    console.log(chalk.white(`Source Directories: ${chalk.yellow(project.sourceDirectories.join(', ') || 'None')}`));
+    logger.info(chalk.cyan('\n=== Project Information ==='));
+    logger.info(chalk.white(`Name: ${chalk.yellow(project.name)}`));
+    logger.info(chalk.white(`Last Updated: ${chalk.yellow(new Date(project.lastUpdated).toLocaleString())}`));
+    logger.info(chalk.white(`Files: ${chalk.yellow(project.files.length)}`));
+    logger.info(chalk.white(`Source Directories: ${chalk.yellow(project.sourceDirectories.join(', ') || 'None')}`))
     
     // Verify source directories still exist
     const validSourceDirs = [];
@@ -71,8 +71,8 @@ async function updateFiles(projectName) {
     }
     
     if (invalidSourceDirs.length > 0) {
-      console.log(chalk.yellow('\nWARNING: Some source directories no longer exist or are not accessible:'));
-      invalidSourceDirs.forEach(dir => console.log(chalk.red(`- ${dir}`)));
+      logger.warn('\nSome source directories no longer exist or are not accessible:');
+      invalidSourceDirs.forEach(dir => logger.warn(chalk.red(`- ${dir}`)));
       
       if (validSourceDirs.length === 0) {
         const { proceed } = await inquirer.prompt([
@@ -92,8 +92,8 @@ async function updateFiles(projectName) {
           return;
         }
       } else {
-        console.log(chalk.green('\nValid source directories:'));
-        validSourceDirs.forEach(dir => console.log(chalk.green(`- ${dir}`)));
+        logger.info(chalk.green('\nValid source directories:'));
+        validSourceDirs.forEach(dir => logger.info(chalk.green(`- ${dir}`)));
         
         const { removeInvalid } = await inquirer.prompt([
           {
@@ -177,9 +177,9 @@ async function updateFiles(projectName) {
     const projectDir = project.getProjectPath();
     const dirLink = generateDirectoryLink(projectDir);
 
-    console.log(chalk.cyan('\nProject directory: '));
-    console.log(chalk.blue.underline(dirLink));
-    console.log(chalk.white(projectDir));
+    logger.info(chalk.cyan('\nProject directory: '));
+    logger.info(chalk.blue.underline(dirLink));
+    logger.info(chalk.white(projectDir));
     
     return project;
   } catch (error) {
@@ -319,10 +319,10 @@ async function updateAllFiles(project) {
     }
     
     // Show update summary
-    console.log(chalk.cyan('\n=== Update Summary ==='));
-    console.log(chalk.white(`New files found: ${chalk.green(newFiles.length)}`));
-    console.log(chalk.white(`Modified files: ${chalk.yellow(modifiedFiles.length)}`));
-    console.log(chalk.white(`Unchanged files: ${chalk.blue(unchangedFiles.length)}`));
+    logger.info(chalk.cyan('\n=== Update Summary ==='));
+    logger.info(chalk.white(`New files found: ${chalk.green(newFiles.length)}`));
+    logger.info(chalk.white(`Modified files: ${chalk.yellow(modifiedFiles.length)}`));
+    logger.info(chalk.white(`Unchanged files: ${chalk.blue(unchangedFiles.length)}`));
     
     // Ask for confirmation
     const { confirmUpdate } = await inquirer.prompt([
@@ -507,10 +507,10 @@ async function updateExistingFiles(project) {
       spinner.succeed(`Found ${modifiedFiles.length} modified files, ${missingFiles.length} missing files.`);
       
       // Show update summary
-      console.log(chalk.cyan('\n=== Update Summary ==='));
-      console.log(chalk.white(`Modified files: ${chalk.yellow(modifiedFiles.length)}`));
-      console.log(chalk.white(`Missing source files: ${chalk.red(missingFiles.length)}`));
-      console.log(chalk.white(`Unchanged files: ${chalk.blue(unchangedFiles.length - missingFiles.length)}`));
+      logger.info(chalk.cyan('\n=== Update Summary ==='));
+      logger.info(chalk.white(`Modified files: ${chalk.yellow(modifiedFiles.length)}`));
+      logger.info(chalk.white(`Missing source files: ${chalk.red(missingFiles.length)}`));
+      logger.info(chalk.white(`Unchanged files: ${chalk.blue(unchangedFiles.length - missingFiles.length)}`));
       
       if (modifiedFiles.length === 0) {
         logger.info('No modified files to update.');
@@ -631,11 +631,11 @@ async function updateExistingFiles(project) {
       const unknownFiles = fileStatuses.filter(item => item.status === 'unknown');
       
       // Show summary
-      console.log(chalk.cyan('\n=== Files Status Summary ==='));
-      console.log(chalk.white(`Modified files: ${chalk.yellow(modifiedFiles.length)}`));
-      console.log(chalk.white(`Missing source files: ${chalk.red(missingFiles.length)}`));
-      console.log(chalk.white(`Unchanged files: ${chalk.blue(unchangedFiles.length)}`));
-      console.log(chalk.white(`Unknown status: ${chalk.gray(unknownFiles.length)}`));
+      logger.info(chalk.cyan('\n=== Files Status Summary ==='));
+      logger.info(chalk.white(`Modified files: ${chalk.yellow(modifiedFiles.length)}`));
+      logger.info(chalk.white(`Missing source files: ${chalk.red(missingFiles.length)}`));
+      logger.info(chalk.white(`Unchanged files: ${chalk.blue(unchangedFiles.length)}`));
+      logger.info(chalk.white(`Unknown status: ${chalk.gray(unknownFiles.length)}`));
       
       if (modifiedFiles.length === 0) {
         logger.info('No modified files to update.');

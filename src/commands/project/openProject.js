@@ -109,23 +109,23 @@ function displayProjectDetails(project) {
   const createdDate = new Date(project.createdAt).toLocaleString();
   const updatedDate = new Date(project.lastUpdated).toLocaleString();
 
-  console.log(chalk.cyan('\n=== Project Details ==='));
-  console.log(chalk.white(`Name: ${chalk.yellow(project.name)}`));
-  console.log(chalk.white(`Created: ${chalk.yellow(createdDate)}`));
-  console.log(chalk.white(`Last Updated: ${chalk.yellow(updatedDate)}`));
-  console.log(chalk.white(`Files: ${chalk.yellow(project.files.length)}`));
-  console.log(chalk.white(`Source Directories: ${chalk.yellow(project.sourceDirectories.length)}`));
+  logger.info(chalk.cyan('\n=== Project Details ==='));
+  logger.info(chalk.white(`Name: ${chalk.yellow(project.name)}`));
+  logger.info(chalk.white(`Created: ${chalk.yellow(createdDate)}`));
+  logger.info(chalk.white(`Last Updated: ${chalk.yellow(updatedDate)}`));
+  logger.info(chalk.white(`Files: ${chalk.yellow(project.files.length)}`));
+  logger.info(chalk.white(`Source Directories: ${chalk.yellow(project.sourceDirectories.length)}`));
 
   if (project.sourceDirectories.length > 0) {
-    console.log(chalk.cyan('\nSource Directories:'));
+    logger.info(chalk.cyan('\nSource Directories:'));
     project.sourceDirectories.forEach((dir, index) => {
-      console.log(chalk.yellow(`  ${index + 1}. ${dir}`));
+      logger.info(chalk.yellow(`  ${index + 1}. ${dir}`));
     });
   }
 
   if (project.directoryStructure) {
-    console.log(chalk.cyan('\nDirectory Structure:'));
-    console.log(
+    logger.info(chalk.cyan('\nDirectory Structure:'));
+    logger.info(
       chalk.gray(
         project.directoryStructure.substring(0, 500) +
           (project.directoryStructure.length > 500 ? '...' : '')
@@ -134,15 +134,15 @@ function displayProjectDetails(project) {
   }
 
   if (project.instructions) {
-    console.log(chalk.cyan('\nClaude Instructions:'));
-    console.log(
+    logger.info(chalk.cyan('\nClaude Instructions:'));
+    logger.info(
       chalk.gray(
         project.instructions.substring(0, 500) + (project.instructions.length > 500 ? '...' : '')
       )
     );
   }
 
-  console.log(''); // Add a blank line for better readability
+  logger.info(''); // Add a blank line for better readability
 }
 
 module.exports = openProject;

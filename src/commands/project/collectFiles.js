@@ -141,11 +141,11 @@ async function collectFiles(projectName) {
     while (continueAddingPaths) {
       // Show current paths
       if (sourcePaths.length > 0) {
-        console.log(chalk.cyan('\nCurrent source paths:'));
+        logger.info(chalk.cyan('\nCurrent source paths:'));
         sourcePaths.forEach((p, index) => {
-          console.log(`  ${index + 1}. ${p.path} (${p.type})`);
+          logger.info(`  ${index + 1}. ${p.path} (${p.type})`);
         });
-        console.log('');
+        logger.info('');
       }
 
       // Get path with auto-detection
@@ -284,11 +284,11 @@ async function collectFiles(projectName) {
       filesByExt[ext] = (filesByExt[ext] || 0) + 1;
     });
 
-    console.log(chalk.cyan('\nFiles by type:'));
+    logger.info(chalk.cyan('\nFiles by type:'));
     Object.entries(filesByExt)
       .sort((a, b) => b[1] - a[1])
       .forEach(([ext, count]) => {
-        console.log(`  ${ext || '(no extension)'}: ${count} files`);
+        logger.info(`  ${ext || '(no extension)'}: ${count} files`);
       });
 
     // Confirm copy operation
@@ -325,12 +325,12 @@ async function collectFiles(projectName) {
     const projectDir = project.getProjectPath();
     const dirLink = generateDirectoryLink(projectDir);
 
-    console.log(chalk.cyan('\nFiles collected to: '));
-    console.log(chalk.blue.underline(dirLink));
-    console.log(
+    logger.info(chalk.cyan('\nFiles collected to: '));
+    logger.info(chalk.blue.underline(dirLink));
+    logger.info(
       chalk.yellow('You can click the link above to open the directory or copy the path below:')
     );
-    console.log(chalk.white(projectDir));
+    logger.info(chalk.white(projectDir));
 
     // Ask if user wants to analyze the project now
     const { analyzeNow } = await inquirer.prompt([
@@ -347,14 +347,14 @@ async function collectFiles(projectName) {
       await analyzeProject(projectName);
     } else {
       // Print the directory structure to console for easy copying
-      console.log(chalk.yellow('\n========= DIRECTORY STRUCTURE ========='));
-      console.log(directoryStructure);
-      console.log(chalk.yellow('========= END OF DIRECTORY STRUCTURE ========='));
+      logger.info(chalk.yellow('\n========= DIRECTORY STRUCTURE ========='));
+      logger.info(directoryStructure);
+      logger.info(chalk.yellow('========= END OF DIRECTORY STRUCTURE ========='));
 
       // Add the directory link again for convenience
-      console.log(chalk.cyan('\nProject directory: '));
-      console.log(chalk.blue.underline(dirLink));
-      console.log(chalk.white(projectDir));
+      logger.info(chalk.cyan('\nProject directory: '));
+      logger.info(chalk.blue.underline(dirLink));
+      logger.info(chalk.white(projectDir));
     }
 
     return project;

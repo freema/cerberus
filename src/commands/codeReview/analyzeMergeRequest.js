@@ -95,21 +95,21 @@ async function analyzeMergeRequest(mergeRequestId) {
  * @param {MergeRequest} mergeRequest - Merge request to display
  */
 function displayMergeRequestDetails(mergeRequest) {
-  console.log(chalk.cyan('\n=== Merge Request Details ==='));
-  console.log(chalk.white(`Title: ${chalk.yellow(mergeRequest.title)}`));
-  console.log(chalk.white(`Project: ${chalk.yellow(mergeRequest.projectPath)}`));
-  console.log(chalk.white(`MR #: ${chalk.yellow(mergeRequest.mergeRequestIid)}`));
-  console.log(chalk.white(`Author: ${chalk.yellow(mergeRequest.author?.name || 'Unknown')}`));
-  console.log(chalk.white(`Source Branch: ${chalk.yellow(mergeRequest.sourceBranch)}`));
-  console.log(chalk.white(`Target Branch: ${chalk.yellow(mergeRequest.targetBranch)}`));
-  console.log(chalk.white(`Total Files Changed: ${chalk.yellow(mergeRequest.totalChangedFiles)}`));
-  console.log(
+  logger.info(chalk.cyan('\n=== Merge Request Details ==='));
+  logger.info(chalk.white(`Title: ${chalk.yellow(mergeRequest.title)}`));
+  logger.info(chalk.white(`Project: ${chalk.yellow(mergeRequest.projectPath)}`));
+  logger.info(chalk.white(`MR #: ${chalk.yellow(mergeRequest.mergeRequestIid)}`));
+  logger.info(chalk.white(`Author: ${chalk.yellow(mergeRequest.author?.name || 'Unknown')}`));
+  logger.info(chalk.white(`Source Branch: ${chalk.yellow(mergeRequest.sourceBranch)}`));
+  logger.info(chalk.white(`Target Branch: ${chalk.yellow(mergeRequest.targetBranch)}`));
+  logger.info(chalk.white(`Total Files Changed: ${chalk.yellow(mergeRequest.totalChangedFiles)}`));
+  logger.info(
     chalk.white(`Supported Files Processed: ${chalk.yellow(mergeRequest.supportedChangedFiles)}`)
   );
 
   if (mergeRequest.description) {
-    console.log(chalk.cyan('\nDescription:'));
-    console.log(
+    logger.info(chalk.cyan('\nDescription:'));
+    logger.info(
       chalk.gray(
         mergeRequest.description.substring(0, 500) +
           (mergeRequest.description.length > 500 ? '...' : '')
@@ -118,10 +118,10 @@ function displayMergeRequestDetails(mergeRequest) {
   }
 
   if (mergeRequest.review) {
-    console.log(chalk.cyan('\nAI Review Available: ') + chalk.green('✓'));
+    logger.info(chalk.cyan('\nAI Review Available: ') + chalk.green('✓'));
   }
 
-  console.log(''); // Add a blank line for better readability
+  logger.info(''); // Add a blank line for better readability
 }
 
 /**
@@ -129,7 +129,7 @@ function displayMergeRequestDetails(mergeRequest) {
  * @param {MergeRequest} mergeRequest - Merge request to list files from
  */
 function listChangedFiles(mergeRequest) {
-  console.log(chalk.cyan('\n=== Changed Files ==='));
+  logger.info(chalk.cyan('\n=== Changed Files ==='));
 
   // Group by change type
   const addedFiles = mergeRequest.changes.filter(change => change.type === 'added');
@@ -137,27 +137,27 @@ function listChangedFiles(mergeRequest) {
   const deletedFiles = mergeRequest.changes.filter(change => change.type === 'deleted');
 
   if (addedFiles.length > 0) {
-    console.log(chalk.green('\nAdded Files:'));
+    logger.info(chalk.green('\nAdded Files:'));
     addedFiles.forEach((file, index) => {
-      console.log(`  ${index + 1}. ${file.path}`);
+      logger.info(`  ${index + 1}. ${file.path}`);
     });
   }
 
   if (modifiedFiles.length > 0) {
-    console.log(chalk.blue('\nModified Files:'));
+    logger.info(chalk.blue('\nModified Files:'));
     modifiedFiles.forEach((file, index) => {
-      console.log(`  ${index + 1}. ${file.path}`);
+      logger.info(`  ${index + 1}. ${file.path}`);
     });
   }
 
   if (deletedFiles.length > 0) {
-    console.log(chalk.red('\nDeleted Files:'));
+    logger.info(chalk.red('\nDeleted Files:'));
     deletedFiles.forEach((file, index) => {
-      console.log(`  ${index + 1}. ${file.path}`);
+      logger.info(`  ${index + 1}. ${file.path}`);
     });
   }
 
-  console.log(''); // Add a blank line for better readability
+  logger.info(''); // Add a blank line for better readability
 }
 
 /**
@@ -191,11 +191,11 @@ async function showFileDetails(mergeRequest) {
 
   const selectedFile = mergeRequest.changes[fileIndex];
 
-  console.log(chalk.cyan(`\n=== File: ${selectedFile.path} (${selectedFile.type}) ===`));
+  logger.info(chalk.cyan(`\n=== File: ${selectedFile.path} (${selectedFile.type}) ===`));
 
   if (selectedFile.diff) {
-    console.log(chalk.yellow('\nDiff:'));
-    console.log(selectedFile.diff);
+    logger.info(chalk.yellow('\nDiff:'));
+    logger.info(selectedFile.diff);
   }
 
   if (selectedFile.fullFileContent) {
@@ -209,12 +209,12 @@ async function showFileDetails(mergeRequest) {
     ]);
 
     if (showFullContent) {
-      console.log(chalk.yellow('\nFull File Content:'));
-      console.log(selectedFile.fullFileContent);
+      logger.info(chalk.yellow('\nFull File Content:'));
+      logger.info(selectedFile.fullFileContent);
     }
   }
 
-  console.log(''); // Add a blank line for better readability
+  logger.info(''); // Add a blank line for better readability
 }
 
 module.exports = analyzeMergeRequest;

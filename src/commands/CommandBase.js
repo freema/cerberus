@@ -139,7 +139,7 @@ class CommandBase {
    * @param {string} title - Header title
    */
   displayHeader(title) {
-    console.log(chalk.cyan(`\n=== ${title} ===`));
+    logger.info(chalk.cyan(`\n=== ${title} ===`));
   }
 
   /**
@@ -148,7 +148,7 @@ class CommandBase {
    * @param {string} value - Info value
    */
   displayInfo(label, value) {
-    console.log(`${chalk.white(label)}: ${chalk.yellow(value || 'N/A')}`);
+    logger.info(`${chalk.white(label)}: ${chalk.yellow(value || 'N/A')}`);
   }
 
   /**
@@ -159,8 +159,8 @@ class CommandBase {
   displayDescription(text, maxLength = 500) {
     if (!text) return;
 
-    console.log(chalk.cyan('\nDescription:'));
-    console.log(chalk.gray(text.substring(0, maxLength) + (text.length > maxLength ? '...' : '')));
+    logger.info(chalk.cyan('\nDescription:'));
+    logger.info(chalk.gray(text.substring(0, maxLength) + (text.length > maxLength ? '...' : '')));
   }
 
   /**

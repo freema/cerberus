@@ -184,13 +184,13 @@ async function generateReview(mergeRequestId) {
  * @param {MergeRequest} mergeRequest - Merge request with review
  */
 function displayReview(mergeRequest) {
-  console.log(chalk.cyan('\n=== AI Code Review ==='));
-  console.log(
+  logger.info(chalk.cyan('\n=== AI Code Review ==='));
+  logger.info(
     chalk.yellow(`For merge request: ${mergeRequest.title} (MR #${mergeRequest.mergeRequestIid})`)
   );
-  console.log(chalk.yellow(`Project: ${mergeRequest.projectPath}`));
-  console.log('');
-  console.log(mergeRequest.review);
+  logger.info(chalk.yellow(`Project: ${mergeRequest.projectPath}`));
+  logger.info('');
+  logger.info(mergeRequest.review);
 
   // Ask if user wants to copy the review to clipboard
   inquirer

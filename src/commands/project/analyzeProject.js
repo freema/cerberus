@@ -267,9 +267,9 @@ async function analyzeProject(projectName) {
  * @param {Project} project - Project with instructions
  */
 function displayInstructions(project) {
-  console.log(chalk.yellow('\n========= CLAUDE PROJECT INSTRUCTIONS ========='));
-  console.log(project.instructions);
-  console.log(chalk.yellow('========= END OF INSTRUCTIONS ========='));
+  logger.info(chalk.yellow('\n========= CLAUDE PROJECT INSTRUCTIONS ========='));
+  logger.info(project.instructions);
+  logger.info(chalk.yellow('========= END OF INSTRUCTIONS ========='));
 
   // Show links to the project directory and analysis file
   const projectDir = project.getProjectPath();
@@ -277,13 +277,13 @@ function displayInstructions(project) {
   const projectLink = generateDirectoryLink(projectDir);
   const analysisLink = generateDirectoryLink(analysisPath);
 
-  console.log(chalk.cyan('\nProject directory: '));
-  console.log(chalk.blue.underline(projectLink));
-  console.log(chalk.white(projectDir));
+  logger.info(chalk.cyan('\nProject directory: '));
+  logger.info(chalk.blue.underline(projectLink));
+  logger.info(chalk.white(projectDir));
 
-  console.log(chalk.cyan('\nAnalysis file: '));
-  console.log(chalk.blue.underline(analysisLink));
-  console.log(chalk.white(analysisPath));
+  logger.info(chalk.cyan('\nAnalysis file: '));
+  logger.info(chalk.blue.underline(analysisLink));
+  logger.info(chalk.white(analysisPath));
 
   // Ask if user wants to copy the instructions to clipboard
   inquirer

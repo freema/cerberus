@@ -6,6 +6,7 @@ const ConfigMenuController = require('./ConfigMenuController');
 const config = require('../utils/config');
 const UIHelper = require('../utils/UIHelper');
 const ApiConfigService = require('../utils/ApiConfigService');
+const logger = require('../utils/logger');
 
 class MenuController {
   constructor() {
@@ -38,13 +39,13 @@ class MenuController {
             break;
           case 'exit':
             const i18n = require('../utils/i18n');
-            console.log(i18n.t('farewell'));
+            logger.info(i18n.t('farewell'));
             process.exit(0);
             break;
         }
       }
     } catch (error) {
-      console.error('An error occurred:', error);
+      logger.error('An error occurred:', error);
       process.exit(1);
     }
   }

@@ -4,6 +4,19 @@
 const path = require('path');
 const fs = require('fs-extra');
 
+// Import logger but handle potential circular dependency
+let logger;
+try {
+  logger = require('./logger');
+} catch (e) {
+  // Simple fallback logger in case of circular dependency
+  logger = {
+    error: (msg, err) => console.error(msg, err),
+    info: msg => console.log(msg),
+    warn: msg => console.warn(msg)
+  };
+}
+
 /**
  * Get the base path for var storage
  * @returns {string} - Var base path
@@ -79,7 +92,7 @@ function ensureDirectories() {
     try {
       fs.ensureDirSync(dir);
     } catch (error) {
-      console.error(`Failed to create directory: ${dir}`, error);
+      logger.error(`Failed to create directory: ${dir}`, error);
     }
   });
 }

@@ -2,6 +2,7 @@
  * Claude Configuration Controller
  */
 const inquirer = require('inquirer');
+const logger = require('../utils/logger');
 
 class ClaudeConfigController {
   /**
@@ -13,13 +14,11 @@ class ClaudeConfigController {
     const claudeConfig = require('../utils/config').getClaudeConfig();
     const currentApiKey = require('../utils/config').getClaudeApiKey();
 
-    console.log('\n=== Claude AI Configuration ===');
+    logger.info('\n=== Claude AI Configuration ===');
 
     // Check if Claude API key is missing and show warning
     if (!currentApiKey) {
-      console.log(
-        '⚠️  WARNING: Claude API key is not configured. AI features will not work properly.\n'
-      );
+      logger.warn('⚠️  WARNING: Claude API key is not configured. AI features will not work properly.\n');
     }
 
     while (true) {
@@ -51,7 +50,7 @@ class ClaudeConfigController {
           ]);
 
           claudeService.updateApiKey(apiKey);
-          console.log('Claude API key updated.');
+          logger.success('Claude API key updated.');
           break;
 
         case 'model':
@@ -70,7 +69,7 @@ class ClaudeConfigController {
           ]);
 
           claudeService.updateConfig({ model });
-          console.log(`Claude model updated to ${model}.`);
+          logger.success(`Claude model updated to ${model}.`);
           break;
 
         case 'maxTokens':
@@ -85,17 +84,17 @@ class ClaudeConfigController {
           ]);
 
           claudeService.updateConfig({ maxTokens });
-          console.log(`Max tokens updated to ${maxTokens}.`);
+          logger.success(`Max tokens updated to ${maxTokens}.`);
           break;
 
         case 'test':
-          console.log('Testing Claude API connection...');
+          logger.info('Testing Claude API connection...');
           const isConnected = await claudeService.testConnection();
 
           if (isConnected) {
-            console.log('Successfully connected to Claude API!');
+            logger.success('Successfully connected to Claude API!');
           } else {
-            console.log('Failed to connect to Claude API. Please check your configuration.');
+            logger.error('Failed to connect to Claude API. Please check your configuration.');
           }
           break;
 

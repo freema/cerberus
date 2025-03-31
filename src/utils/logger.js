@@ -62,7 +62,11 @@ class Logger {
   setDebugMode(enabled) {
     this.debugEnabled = enabled;
     if (enabled) {
+      // Použijeme přímo console.log, protože nemůžeme volat ještě neexistující instanci
       console.log(chalk.yellow('Debug mode is now ENABLED'));
+      
+      // Zapíšeme také do logu
+      this._writeToLogFile('info', 'Debug mode is now ENABLED');
     }
   }
 

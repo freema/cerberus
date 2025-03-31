@@ -1,6 +1,7 @@
 /**
  * Terminal utility functions
  */
+const logger = require('./logger');
 
 /**
  * Clear the terminal screen
@@ -12,7 +13,7 @@ function clearTerminal() {
     process.stdout.write('\x1Bc');
   } else {
     // For Unix-like systems (Linux, macOS)
-    console.log('\x1B[2J\x1B[0f');
+    process.stdout.write('\x1B[2J\x1B[0f\n');
   }
 }
 

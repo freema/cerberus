@@ -2,6 +2,7 @@
  * GitLab Configuration Controller
  */
 const inquirer = require('inquirer');
+const logger = require('../utils/logger');
 
 class GitlabConfigController {
   /**
@@ -13,13 +14,11 @@ class GitlabConfigController {
     const gitlabConfig = require('../utils/config').getGitlabConfig();
     const currentToken = require('../utils/config').getGitlabToken();
 
-    console.log('\n=== GitLab Configuration ===');
+    logger.info('\n=== GitLab Configuration ===');
 
     // Check if GitLab token is missing and show warning
     if (!currentToken) {
-      console.log(
-        '⚠️  WARNING: GitLab API token is not configured. Some features may not work properly.\n'
-      );
+      logger.warn('⚠️  WARNING: GitLab API token is not configured. Some features may not work properly.\n');
     }
 
     while (true) {
@@ -50,7 +49,7 @@ class GitlabConfigController {
           ]);
 
           gitlabService.updateBaseUrl(baseUrl);
-          console.log('GitLab API URL updated.');
+          logger.success('GitLab API URL updated.');
           break;
 
         case 'token':
@@ -65,17 +64,17 @@ class GitlabConfigController {
           ]);
 
           gitlabService.updateToken(token);
-          console.log('GitLab API token updated.');
+          logger.success('GitLab API token updated.');
           break;
 
         case 'test':
-          console.log('Testing GitLab API connection...');
+          logger.info('Testing GitLab API connection...');
           const isConnected = await gitlabService.testConnection();
 
           if (isConnected) {
-            console.log('Successfully connected to GitLab API!');
+            logger.success('Successfully connected to GitLab API!');
           } else {
-            console.log('Failed to connect to GitLab API. Please check your configuration.');
+            logger.error('Failed to connect to GitLab API. Please check your configuration.');
           }
           break;
 

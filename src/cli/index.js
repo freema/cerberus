@@ -1,12 +1,13 @@
 const chalk = require('chalk');
 const figlet = require('figlet');
 const inquirer = require('inquirer');
+const logger = require('../utils/logger');
 
 /**
  * Displays the application banner
  */
 function displayBanner() {
-  console.log(
+  logger.info(
     chalk.red(`
    ██████╗███████╗██████╗ ██████╗ ███████╗██████╗ ██╗   ██╗███████╗
   ██╔════╝██╔════╝██╔══██╗██╔══██╗██╔════╝██╔══██╗██║   ██║██╔════╝

@@ -2,6 +2,19 @@ const fs = require('fs-extra');
 const path = require('path');
 const crypto = require('crypto');
 
+// Import logger but handle potential circular dependency
+let logger;
+try {
+  logger = require('./logger');
+} catch (e) {
+  // Simple fallback logger in case of circular dependency
+  logger = {
+    error: (msg, err) => console.error(msg, err),
+    info: msg => console.log(msg),
+    warn: msg => console.warn(msg)
+  };
+}
+
 /**
  * Simple configuration storage that saves to JSON files
  */
@@ -58,7 +71,7 @@ class SimpleConfig {
         };
       }
     } catch (error) {
-      console.error(`Error loading configuration from ${this.getFilePath()}:`, error.message);
+      logger.error(`Error loading configuration from ${this.getFilePath()}:`, error);
       // If there's an error, use defaults
       this.store = { ...this.defaults };
     }
@@ -79,7 +92,7 @@ class SimpleConfig {
 
       fs.writeFileSync(filePath, data);
     } catch (error) {
-      console.error(`Error saving configuration to ${this.getFilePath()}:`, error.message);
+      logger.error(`Error saving configuration to ${this.getFilePath()}:`, error);
     }
   }
 
@@ -123,7 +136,7 @@ class SimpleConfig {
         data: encrypted,
       });
     } catch (error) {
-      console.error('Encryption error:', error.message);
+      logger.error('Encryption error:', error);
       return data; // Return original data on error
     }
   }
@@ -154,7 +167,7 @@ class SimpleConfig {
 
       return decrypted;
     } catch (error) {
-      console.error('Decryption error:', error.message);
+      logger.error('Decryption error:', error);
       return encrypted; // Return original data on error
     }
   }

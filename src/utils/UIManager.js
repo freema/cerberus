@@ -21,9 +21,9 @@ class UIManager {
   showBanner(text = 'CERBERUS', font = 'Standard') {
     try {
       const banner = figlet.textSync(text, { font });
-      console.log(chalk.cyan(banner));
+      logger.info(chalk.cyan(banner));
     } catch (error) {
-      console.log(chalk.cyan(`\n=== ${text} ===\n`));
+      logger.info(chalk.cyan(`\n=== ${text} ===\n`));
     }
   }
 
@@ -171,7 +171,7 @@ class UIManager {
    * @param {string} title - Section title
    */
   showHeader(title) {
-    console.log(chalk.cyan(`\n=== ${title} ===`));
+    logger.info(chalk.cyan(`\n=== ${title} ===`));
   }
 
   /**
@@ -180,7 +180,7 @@ class UIManager {
    * @param {string} value - Info value
    */
   showKeyValue(key, value) {
-    console.log(`${chalk.white(key)}: ${chalk.yellow(value || 'N/A')}`);
+    logger.info(`${chalk.white(key)}: ${chalk.yellow(value || 'N/A')}`);
   }
 
   /**
@@ -206,11 +206,11 @@ class UIManager {
     headers.forEach((header, idx) => {
       headerRow += chalk.cyan(header.padEnd(widths[idx]));
     });
-    console.log(headerRow);
+    logger.info(headerRow);
 
     // Print separator
     const separator = widths.map(width => '-'.repeat(width)).join('');
-    console.log(chalk.gray(separator));
+    logger.info(chalk.gray(separator));
 
     // Print rows
     rows.forEach(row => {
@@ -218,7 +218,7 @@ class UIManager {
       row.forEach((cell, idx) => {
         rowStr += chalk.white(String(cell || '').padEnd(widths[idx]));
       });
-      console.log(rowStr);
+      logger.info(rowStr);
     });
   }
 }

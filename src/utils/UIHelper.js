@@ -131,7 +131,7 @@ class UIHelper {
    * @param {string} title - Název sekce
    */
   displayHeader(title) {
-    console.log(chalk.cyan(`\n=== ${title} ===`));
+    logger.info(chalk.cyan(`\n=== ${title} ===`));
   }
 
   /**
@@ -140,7 +140,7 @@ class UIHelper {
    * @param {string} value - Hodnota
    */
   displayInfo(label, value) {
-    console.log(`${chalk.white(label)}: ${chalk.yellow(value || 'N/A')}`);
+    logger.info(`${chalk.white(label)}: ${chalk.yellow(value || 'N/A')}`);
   }
 
   /**
@@ -148,7 +148,7 @@ class UIHelper {
    * @param {string} message - Zpráva
    */
   displayWarning(message) {
-    console.log(chalk.yellow(`⚠️  ${message}`));
+    logger.warn(`⚠️  ${message}`);
   }
 
   /**
@@ -156,7 +156,7 @@ class UIHelper {
    * @param {string} message - Zpráva
    */
   displayError(message) {
-    console.log(chalk.red(`❌ ${message}`));
+    logger.error(`❌ ${message}`);
   }
 
   /**
@@ -164,7 +164,7 @@ class UIHelper {
    * @param {string} message - Zpráva
    */
   displaySuccess(message) {
-    console.log(chalk.green(`✓ ${message}`));
+    logger.success(`✓ ${message}`);
   }
 
   /**
@@ -175,8 +175,8 @@ class UIHelper {
   displayDescription(text, maxLength = 500) {
     if (!text) return;
     
-    console.log(chalk.cyan('\nDescription:'));
-    console.log(chalk.gray(text.substring(0, maxLength) + 
+    logger.info(chalk.cyan('\nDescription:'));
+    logger.info(chalk.gray(text.substring(0, maxLength) + 
       (text.length > maxLength ? '...' : '')));
   }
 
@@ -203,11 +203,11 @@ class UIHelper {
     headers.forEach((header, idx) => {
       headerRow += chalk.cyan(header.padEnd(widths[idx]));
     });
-    console.log(headerRow);
+    logger.info(headerRow);
     
     // Tisk oddělovače
     const separator = widths.map(width => '-'.repeat(width)).join('');
-    console.log(chalk.gray(separator));
+    logger.info(chalk.gray(separator));
     
     // Tisk řádků
     rows.forEach(row => {
@@ -215,7 +215,7 @@ class UIHelper {
       row.forEach((cell, idx) => {
         rowStr += chalk.white(String(cell || '').padEnd(widths[idx]));
       });
-      console.log(rowStr);
+      logger.info(rowStr);
     });
   }
 
@@ -227,12 +227,12 @@ class UIHelper {
   displayDirectoryLink(dirPath, label = null) {
     const dirLink = generateDirectoryLink(dirPath);
     if (label) {
-      console.log(chalk.cyan(`\n${label}: `));
+      logger.info(chalk.cyan(`\n${label}: `));
     } else {
-      console.log(chalk.cyan('\nDirectory: '));
+      logger.info(chalk.cyan('\nDirectory: '));
     }
-    console.log(chalk.blue.underline(dirLink));
-    console.log(chalk.white(dirPath));
+    logger.info(chalk.blue.underline(dirLink));
+    logger.info(chalk.white(dirPath));
   }
 
   /**

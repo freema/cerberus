@@ -408,13 +408,45 @@ class Project extends BaseModel {
    * @returns {Promise<string[]>} - Array of project names
    */
   static async listAll() {
-    // Get project names from both data directory and cache
     try {
-      const dataProjects = await super.listAll('projects');
+      const dataPath = config.getDataPathForType('projects');
+      let dataFiles = [];
       
-      // Also check cache for any projects that might be there but not in data dir
+      try {
+        dataFiles = await fileSystem.listFiles(dataPath);
+        const validProjects = [];
+        
+        for (const file of dataFiles) {
+          try {
+            const fullPath = path.join(dataPath, file);
+            const stats = await fs.stat(fullPath);
+            
+            // Only include directories
+            if (stats.isDirectory()) {
+              // A valid project should have a structure.txt file or metadata.json file
+              const hasStructure = await fileSystem.fileExists(path.join(fullPath, 'structure.txt'));
+              const hasMetadata = await fileSystem.fileExists(path.join(fullPath, 'metadata.json'));
+              
+              if (hasStructure || hasMetadata) {
+                validProjects.push(file);
+              }
+            }
+          } catch (error) {
+            // Skip this file if we can't access it
+            logger.debug(`Could not access ${file}: ${error.message}`);
+          }
+        }
+        
+        dataFiles = validProjects;
+      } catch (error) {
+        logger.debug(`No data projects directory or error reading it: ${error.message}`);
+        dataFiles = [];
+      }
+      
+      // Check for projects in the cache
       const cacheDir = config.getCachePathForType('projects');
       let cacheFiles = [];
+      
       try {
         cacheFiles = await fileSystem.listFiles(cacheDir);
       } catch (error) {
@@ -424,10 +456,15 @@ class Project extends BaseModel {
       // Extract project names from cache files (format: name-info.json)
       const cacheProjects = cacheFiles
         .filter(file => file.endsWith('-info.json'))
-        .map(file => file.replace('-info.json', ''));
+        .map(file => file.replace(/-info\.json$/, ''));
       
-      // Combine both sources and remove duplicates
-      return [...new Set([...dataProjects, ...cacheProjects])];
+      const allProjects = [...new Set([...dataFiles, ...cacheProjects])];
+      
+      logger.debug('Data projects:', dataFiles);
+      logger.debug('Cache projects:', cacheProjects);
+      logger.debug('All projects:', allProjects);
+      
+      return allProjects;
     } catch (error) {
       logger.error('Error listing projects:', error);
       return [];

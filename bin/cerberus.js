@@ -132,8 +132,8 @@ if (shouldParseArgs) {
     ]);
 
     // Update configuration
-    const gitlabService = require('../src/services/gitlabService');
-    const claudeService = require('../src/services/claudeService');
+    const gitlabService = require('../src/services/GitlabService');
+    const claudeService = require('../src/services/ClaudeService');
 
     if (gitlabUrl.trim() !== '') {
       gitlabService.updateBaseUrl(gitlabUrl);

@@ -52,17 +52,33 @@ const projectPrompts = {
   
   /**
    * Prompt for project path
-   * @returns {Promise<Object>} Project path
+   * @returns {Promise<Object|null>} Project path or null if canceled
    */
   async projectPath() {
     const { path } = await inquirer.prompt([
       {
         type: 'input',
         name: 'path',
-        message: 'Enter path to project files:',
-        validate: input => input.length > 0 ? true : 'Path cannot be empty'
+        message: 'Enter path to project files (leave empty to cancel):',
       }
     ]);
+    
+    if (!path || path.trim() === '') {
+      const { confirm } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'confirm',
+          message: 'Do you want to cancel this action?',
+          default: true
+        }
+      ]);
+      
+      if (confirm) {
+        return null;
+      } else {
+        return this.projectPath(); // Ask again if user doesn't want to cancel
+      }
+    }
     
     return path;
   }

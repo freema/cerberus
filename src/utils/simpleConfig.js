@@ -26,12 +26,14 @@ class SimpleConfig {
    * @param {string} options.dir - Directory to store the configuration
    * @param {Object} options.defaults - Default configuration values
    * @param {string} [options.encryptionKey] - Optional encryption key for sensitive data
+   * @param {number} [options.expiresIn] - Optional expiration time in milliseconds
    */
   constructor(options) {
     this.name = options.name || 'config';
     this.dir = options.dir || path.join(process.cwd(), 'config');
     this.defaults = options.defaults || {};
     this.encryptionKey = options.encryptionKey || null;
+    this.expiresIn = options.expiresIn || null;
     this.store = { ...this.defaults };
 
     // Create directory if it doesn't exist
@@ -65,6 +67,20 @@ class SimpleConfig {
 
         // Parse and merge with defaults
         const parsed = JSON.parse(data);
+        
+        // Check if the configuration has expired
+        if (this.expiresIn && parsed._timestamp) {
+          const now = Date.now();
+          const createdAt = parsed._timestamp;
+          const expirationTime = createdAt + this.expiresIn;
+          
+          if (now > expirationTime) {
+            logger.info(`Configuration ${this.name} has expired, using defaults`);
+            this.store = { ...this.defaults };
+            return;
+          }
+        }
+        
         this.store = {
           ...this.defaults,
           ...parsed,
@@ -83,6 +99,12 @@ class SimpleConfig {
   save() {
     try {
       const filePath = this.getFilePath();
+      
+      // Add timestamp for expiration check
+      if (this.expiresIn) {
+        this.store._timestamp = Date.now();
+      }
+      
       let data = JSON.stringify(this.store, null, 2);
 
       // Encrypt if necessary

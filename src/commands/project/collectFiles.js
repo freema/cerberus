@@ -233,6 +233,21 @@ async function collectFiles(projectName) {
       .split(',')
       .map(dir => dir.trim())
       .filter(Boolean);
+      
+    // Files to exclude by extension
+    const { excludeExtensions } = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'excludeExtensions',
+        message: 'Enter file extensions to exclude (comma-separated, include the dot):',
+        default: '.lock',
+      },
+    ]);
+    
+    const excludeExtensionsList = excludeExtensions
+      .split(',')
+      .map(ext => ext.trim())
+      .filter(Boolean);
 
     // Process all paths and collect files
     const allFiles = [];
@@ -249,7 +264,8 @@ async function collectFiles(projectName) {
         const dirFiles = await getFilesInDirectory(
           sourcePath.path,
           selectedExtensions,
-          excludeList
+          excludeList,
+          excludeExtensionsList
         );
         allFiles.push(...dirFiles);
 
@@ -258,6 +274,13 @@ async function collectFiles(projectName) {
       } else {
         // Handle specific file
         const fileExt = path.extname(sourcePath.path).toLowerCase();
+        
+        // Skip excluded extensions for individual files too
+        if (excludeExtensionsList.includes(fileExt)) {
+          logger.info(chalk.yellow(`Skipping excluded file extension: ${sourcePath.path}`));
+          continue;
+        }
+        
         if (selectedExtensions.includes(fileExt)) {
           const relPath = path.basename(sourcePath.path);
           allFiles.push({
@@ -368,9 +391,10 @@ async function collectFiles(projectName) {
  * @param {string} dirPath - Directory path
  * @param {Array} extensions - File extensions to include
  * @param {Array} excludeDirs - Directories to exclude
+ * @param {Array} excludeExtensions - File extensions to exclude
  * @returns {Promise<Array>} - Array of file objects
  */
-async function getFilesInDirectory(dirPath, extensions = null, excludeDirs = []) {
+async function getFilesInDirectory(dirPath, extensions = null, excludeDirs = [], excludeExtensions = []) {
   const files = [];
 
   async function scanDirectory(currentPath, relativePath = '') {
@@ -388,6 +412,13 @@ async function getFilesInDirectory(dirPath, extensions = null, excludeDirs = [])
         await scanDirectory(fullPath, relPath);
       } else if (entry.isFile()) {
         const ext = path.extname(entry.name).toLowerCase();
+        
+        // Skip excluded extensions
+        if (excludeExtensions.includes(ext)) {
+          continue;
+        }
+        
+        // Check if file matches included extensions
         if (!extensions || extensions.includes(ext)) {
           files.push({
             fullPath,

@@ -26,7 +26,8 @@
       "existing": "Work with existing project",
       "collect": "Collect project files",
       "analyze": "Analyze project",
-      "update": "Update project files from original sources"
+      "update": "Update project files from original sources",
+      "existingOrUpdate": "Open or update existing project"
     },
     "codeReview": {
       "title": "Code review options:",

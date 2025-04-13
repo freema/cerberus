@@ -50,6 +50,7 @@ class ConfigService {
           claudeApiKey: null,
         },
         encryptionKey: encryptionKey,
+        expiresIn: 365 * 24 * 60 * 60 * 1000, // 1 year in milliseconds
       });
 
       this.logger.info('Configuration initialized successfully');

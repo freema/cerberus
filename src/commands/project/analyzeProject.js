@@ -1,59 +1,14 @@
+/**
+ * Analyze a project and generate Claude instructions
+ */
 const inquirer = require('inquirer');
 const chalk = require('chalk');
 const ora = require('ora');
-const path = require('path');
 const Project = require('../../models/Project');
-const claudeService = require('../../services/ClaudeService');
 const logger = require('../../utils/logger');
-const fileSystem = require('../../utils/fileSystem');
-const { generateDirectoryLink } = require('../../utils/pathUtils');
-
-/**
- * Generate a detailed project structure analysis
- * @param {Project} project - Project object
- * @returns {Promise<string>} - Detailed project analysis text
- */
-async function generateProjectStructureAnalysis(project) {
-  try {
-    // Try to read the structure.txt if it exists
-    if (await fileSystem.fileExists(project.getStructurePath())) {
-      // Use this as the base and add some additional information
-      const structureContent = await fileSystem.readFile(project.getStructurePath());
-
-      // Add our analysis header and instructions for using this text as a context
-      let analysis = `# Project Structure Analysis: ${project.name}\n\n`;
-      analysis += `## Instructions for using this structure file\n\n`;
-      analysis += `This file contains the complete mapping between original file locations and their `;
-      analysis += `paths in the project directory. You can use this information as a system context `;
-      analysis += `when working with AI systems like Claude.\n\n`;
-      analysis += `When referring to files, always use the original file path and explain that it is mapped to `;
-      analysis += `the project path in the structure.txt file.\n\n`;
-
-      // Append the full structure content
-      analysis += structureContent;
-
-      return analysis;
-    } else {
-      // Create a basic fallback analysis
-      let analysis = `# Project Structure Analysis: ${project.name}\n\n`;
-      analysis += `This project appears to be missing structure information. `;
-      analysis += `Please run the collection process again to generate file structure details.\n\n`;
-
-      // Add basic source directories if available
-      if (project.sourceDirectories && project.sourceDirectories.length > 0) {
-        analysis += `## Source Directories\n\n`;
-        project.sourceDirectories.forEach(dir => {
-          analysis += `- ${dir}\n`;
-        });
-      }
-
-      return analysis;
-    }
-  } catch (error) {
-    logger.error('Error generating project structure analysis:', error);
-    return `# Project Structure Analysis: ${project.name}\n\nError generating analysis: ${error.message}`;
-  }
-}
+const config = require('../../utils/config');
+const clipboard = require('../../utils/clipboard');
+const aiServiceProvider = require('../../services/AIServiceFactory');
 
 /**
  * Analyze a project and generate Claude instructions
@@ -65,12 +20,12 @@ async function analyzeProject(projectName) {
   try {
     let project;
 
-    // If no project name provided, let user select one
+    // If no project name provided, prompt user to select one
     if (!projectName) {
       const existingProjects = await Project.listAll();
 
       if (existingProjects.length === 0) {
-        logger.warn('No projects found. Please create and collect files for a project first.');
+        logger.warn('No projects found. Please create a project first.');
         return;
       }
 
@@ -89,9 +44,9 @@ async function analyzeProject(projectName) {
     // Load the project
     project = await Project.load(projectName);
 
-    // Check if we have files to analyze
+    // Ensure project has files
     if (!project.files || project.files.length === 0) {
-      logger.warn('This project has no files. Please collect files first.');
+      logger.warn('Project has no files. Please collect files first.');
 
       const { collectNow } = await inquirer.prompt([
         {
@@ -104,157 +59,123 @@ async function analyzeProject(projectName) {
 
       if (collectNow) {
         const collectFiles = require('./collectFiles');
-        await collectFiles(projectName);
-        // Reload the project after collecting files
-        project = await Project.load(projectName);
+        project = await collectFiles(projectName);
+        if (!project) return;
       } else {
         return;
       }
     }
 
-    // Check if Claude API is configured
-    const claudeConfigured = claudeService.isConfigured();
-    if (!claudeConfigured) {
-      logger.warn('Claude API key not configured. Analysis will be limited to project structure.');
-
-      const { addApiKey } = await inquirer.prompt([
+    // Get active AI service adapter
+    const activeAdapter = aiServiceProvider.getActiveAdapter();
+    
+    if (!activeAdapter || !activeAdapter.isConfigured()) {
+      logger.warn(`Active AI service (${activeAdapter ? activeAdapter.serviceName : 'None'}) is not properly configured.`);
+      
+      const { configureNow } = await inquirer.prompt([
         {
           type: 'confirm',
-          name: 'addApiKey',
-          message: 'Would you like to configure a Claude API key now for enhanced analysis?',
+          name: 'configureNow',
+          message: 'Would you like to configure the AI service now?',
           default: true,
         },
       ]);
-
-      if (addApiKey) {
-        const { apiKey } = await inquirer.prompt([
-          {
-            type: 'input',
-            name: 'apiKey',
-            message: 'Enter your Claude API key:',
-            validate: input => input.trim() !== '' || 'API key cannot be empty',
-          },
-        ]);
-
-        claudeService.updateApiKey(apiKey);
-        logger.success('Claude API key configured.');
-
-        // Test the connection
-        logger.info('Testing Claude API connection...');
-        const isConnected = await claudeService.testConnection();
-
-        if (!isConnected) {
-          logger.error(
-            'Could not connect to Claude API with the provided key. Falling back to basic analysis.'
-          );
-
-          // Generate and save basic project structure analysis
-          const analysisText = await generateProjectStructureAnalysis(project);
-          project.setInstructions(analysisText);
-          await project.save();
-
-          // Display the instructions
-          displayInstructions(project);
-          return project;
+      
+      if (configureNow) {
+        const AIConfigController = require('../../controllers/AIConfigController');
+        const aiConfigController = new AIConfigController();
+        await aiConfigController.handleConfig();
+        
+        // Re-get the active adapter after configuration
+        const adapter = aiServiceProvider.getActiveAdapter();
+        if (!adapter || !adapter.isConfigured()) {
+          logger.error('AI service is still not properly configured. Cannot continue.');
+          return;
         }
       } else {
-        // Generate and save basic project structure analysis
-        const analysisText = await generateProjectStructureAnalysis(project);
-        project.setInstructions(analysisText);
-        await project.save();
-
-        // Display the instructions
-        displayInstructions(project);
-        return project;
+        return;
       }
     }
 
-    // Get Claude configuration options
-    const claudeConfig = claudeService.claudeConfig;
-
-    // Ask if user wants to adjust model or token settings for this analysis
-    const { adjustSettings } = await inquirer.prompt([
+    // Get model configuration
+    const adapterModels = activeAdapter.getAvailableModels();
+    const { model } = await inquirer.prompt([
       {
-        type: 'confirm',
-        name: 'adjustSettings',
-        message: 'Would you like to adjust Claude API settings for this analysis?',
-        default: false,
+        type: 'list',
+        name: 'model',
+        message: `Select ${activeAdapter.serviceName} model to use:`,
+        choices: adapterModels.map(model => ({
+          name: model.name,
+          value: model.id
+        })),
+        default: activeAdapter.claudeConfig?.model || adapterModels[0].id,
       },
     ]);
 
-    if (adjustSettings) {
-      const { model } = await inquirer.prompt([
-        {
-          type: 'list',
-          name: 'model',
-          message: 'Select Claude model to use:',
-          choices: [
-            { name: 'Claude 3 Opus (best quality, slower)', value: 'claude-3-opus-20240229' },
-            { name: 'Claude 3 Sonnet (balanced)', value: 'claude-3-sonnet-20240229' },
-            { name: 'Claude 3 Haiku (fastest)', value: 'claude-3-haiku-20240307' },
-          ],
-          default: claudeConfig.model,
-        },
-      ]);
+    // Set the selected model
+    activeAdapter.updateConfig({ model });
 
-      const { maxTokens } = await inquirer.prompt([
-        {
-          type: 'number',
-          name: 'maxTokens',
-          message: 'Enter maximum output tokens:',
-          default: claudeConfig.maxTokens,
-          validate: input => input > 0 || 'Max tokens must be a positive number',
-        },
-      ]);
-
-      // Update config for this session only
-      claudeService.updateConfig({ model, maxTokens });
+    // Make sure project has directory structure
+    if (!project.directoryStructure) {
+      logger.warn('Project missing directory structure, regenerating...');
+      // Re-generate directory structure
+      project.directoryStructure = generateDirectoryStructure(project.files);
+      await project.save();
     }
 
-    // Check if project already has instructions
-    if (project.instructions) {
-      const { regenerateInstructions } = await inquirer.prompt([
-        {
-          type: 'confirm',
-          name: 'regenerateInstructions',
-          message:
-            'This project already has Claude instructions. Would you like to regenerate them?',
-          default: false,
-        },
-      ]);
+    // Display project information
+    logger.info(chalk.cyan('\n=== Project Analysis ==='));
+    logger.info(chalk.white(`Name: ${chalk.yellow(project.name)}`));
+    logger.info(chalk.white(`Files: ${chalk.yellow(project.files.length)}`));
+    logger.info(chalk.white(`Source Directories: ${chalk.yellow(project.sourceDirectories.length)}`));
+    logger.info(chalk.white(`Using AI Service: ${chalk.yellow(activeAdapter.serviceName)}`));
+    logger.info(chalk.white(`Using Model: ${chalk.yellow(model)}`));
 
-      if (!regenerateInstructions) {
-        displayInstructions(project);
-        return project;
-      }
-    }
+    // Ask for confirmation
+    const { confirmAnalyze } = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'confirmAnalyze',
+        message: 'Generate AI instructions for this project?',
+        default: true,
+      },
+    ]);
 
-    // Generate instructions with Claude
-    const spinner = ora('Generating project instructions with Claude AI...').start();
-
-    // Use structure.txt directly as context for Claude
-    const structureContent = await fileSystem.readFile(project.getStructurePath());
-
-    const projectData = {
-      structureContent: structureContent,
-      name: project.name,
-    };
-
-    const instructions = await claudeService.generateProjectInstructions(projectData);
-
-    if (!instructions) {
-      spinner.fail('Failed to generate instructions.');
+    if (!confirmAnalyze) {
+      logger.info('Analysis cancelled.');
       return;
     }
 
-    // Save instructions to project
-    project.setInstructions(instructions);
-    await project.save();
+    // Generate instructions
+    const spinner = ora('Generating AI instructions...').start();
 
-    spinner.succeed('Generated project instructions successfully.');
+    const projectData = {
+      structureContent: project.directoryStructure,
+      name: project.name,
+    };
 
-    // Display the instructions
-    displayInstructions(project);
+    const instructions = await activeAdapter.generateProjectInstructions(projectData);
+
+    spinner.succeed('AI instructions generated successfully.');
+
+    if (instructions) {
+      // Save instructions to project
+      project.instructions = instructions;
+      await project.save();
+
+      // Display instructions
+      logger.info(chalk.cyan('\n=== AI Instructions ==='));
+      logger.info(instructions);
+
+      // Copy to clipboard and show guidance
+      await clipboard.write(instructions);
+      logger.info(chalk.green('\nInstructions have been copied to your clipboard.'));
+      logger.info(
+        'You can use these instructions when working with Claude or other AI tools to help them understand your project structure.'
+      );
+    } else {
+      logger.error('Failed to generate instructions. Please check your AI service configuration.');
+    }
 
     return project;
   } catch (error) {
@@ -263,49 +184,88 @@ async function analyzeProject(projectName) {
 }
 
 /**
- * Display project instructions
- * @param {Project} project - Project with instructions
+ * Generate a directory structure string for Claude instructions
+ * @param {Array} files - Array of file objects
+ * @returns {string} - Formatted directory structure
  */
-function displayInstructions(project) {
-  logger.info(chalk.yellow('\n========= CLAUDE PROJECT INSTRUCTIONS ========='));
-  logger.info(project.instructions);
-  logger.info(chalk.yellow('========= END OF INSTRUCTIONS ========='));
+function generateDirectoryStructure(files) {
+  const path = require('path');
+  
+  let directoryStructure = `# Project Structure and File Mapping\n\n`;
 
-  // Show links to the project directory and analysis file
-  const projectDir = project.getProjectPath();
-  const analysisPath = project.getAnalysisPath();
-  const projectLink = generateDirectoryLink(projectDir);
-  const analysisLink = generateDirectoryLink(analysisPath);
+  // Part 1: Original directory structure by source directory
+  directoryStructure += `## Original Directory Structure\n\n`;
 
-  logger.info(chalk.cyan('\nProject directory: '));
-  logger.info(chalk.blue.underline(projectLink));
-  logger.info(chalk.white(projectDir));
+  // Group files by their original directories
+  const filesBySourceDir = {};
 
-  logger.info(chalk.cyan('\nAnalysis file: '));
-  logger.info(chalk.blue.underline(analysisLink));
-  logger.info(chalk.white(analysisPath));
+  files.forEach(file => {
+    // Skip if missing source information
+    if (!file.originalDirectory) return;
 
-  // Ask if user wants to copy the instructions to clipboard
-  inquirer
-    .prompt([
-      {
-        type: 'confirm',
-        name: 'copyToClipboard',
-        message: 'Would you like to copy these instructions to your clipboard?',
-        default: true,
-      },
-    ])
-    .then(({ copyToClipboard }) => {
-      if (copyToClipboard) {
-        try {
-          // Use the clipboard utility module
-          const clipboard = require('../../utils/clipboard');
-          clipboard.copyWithFeedback(project.instructions, 'Instructions copied to clipboard.');
-        } catch (error) {
-          logger.error('Failed to copy to clipboard:', error);
-        }
-      }
+    if (!filesBySourceDir[file.originalDirectory]) {
+      filesBySourceDir[file.originalDirectory] = [];
+    }
+
+    filesBySourceDir[file.originalDirectory].push(file);
+  });
+
+  // Output organized by source directories
+  Object.keys(filesBySourceDir)
+    .sort()
+    .forEach(dir => {
+      directoryStructure += `### ${dir}\n\n`;
+
+      const filesInDir = filesBySourceDir[dir].sort((a, b) =>
+        path.basename(a.originalPath).localeCompare(path.basename(b.originalPath))
+      );
+
+      filesInDir.forEach(file => {
+        const fileName = path.basename(file.originalPath);
+        directoryStructure += `- ${fileName}\n`;
+      });
+
+      directoryStructure += '\n';
     });
+
+  // Part 2: Flat file structure in the project
+  directoryStructure += `## Project Files (Flattened Structure)\n\n`;
+  directoryStructure += `All files are stored with flattened names in the project directory.\n\n`;
+
+  // Part 3: File mapping between original and project paths
+  directoryStructure += `## File Mapping\n\n`;
+  directoryStructure += `Original Path → Project Path\n\n`;
+
+  // Sort files alphabetically by original path for easier reference
+  const sortedFiles = [...files].sort((a, b) => {
+    const aPath = a.fullOriginalPath || a.originalPath;
+    const bPath = b.fullOriginalPath || b.originalPath;
+    return aPath.localeCompare(bPath);
+  });
+
+  sortedFiles.forEach(file => {
+    const origPath = file.fullOriginalPath || file.originalPath;
+    directoryStructure += `- \`${origPath}\` → \`${file.newPath}\`\n`;
+  });
+
+  // Part 4: File statistics
+  const extensions = {};
+  files.forEach(file => {
+    const ext = path.extname(file.originalPath);
+    extensions[ext] = (extensions[ext] || 0) + 1;
+  });
+
+  directoryStructure += `\n## File Statistics\n\n`;
+  directoryStructure += `Total files: ${files.length}\n\n`;
+  directoryStructure += `Files by extension:\n`;
+
+  Object.entries(extensions)
+    .sort((a, b) => b[1] - a[1]) // Sort by count descending
+    .forEach(([ext, count]) => {
+      directoryStructure += `- ${ext || '(no extension)'}: ${count}\n`;
+    });
+
+  return directoryStructure;
 }
 
 module.exports = analyzeProject;

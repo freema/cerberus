@@ -25,7 +25,7 @@ class ConfigMenuController {
         i18n.t('menu.settings.title'),
         [
           { name: i18n.t('menu.settings.gitlab'), value: 'gitlab' },
-          { name: i18n.t('menu.settings.claude'), value: 'claude' },
+          { name: i18n.t('menu.settings.ai') || 'AI Services', value: 'ai' },
           { name: i18n.t('menu.settings.debug'), value: 'debug' },
           { name: i18n.t('menu.settings.locale'), value: 'locale' },
           { name: i18n.t('menu.settings.show'), value: 'show' },
@@ -37,8 +37,10 @@ class ConfigMenuController {
         case 'gitlab':
           await this.apiConfigService.configureGitlab();
           break;
-        case 'claude':
-          await this.apiConfigService.configureClaude();
+        case 'ai':
+          const AIConfigController = require('./AIConfigController');
+          const aiConfigController = new AIConfigController();
+          await aiConfigController.handleConfig();
           break;
         case 'debug':
           await this.configureDebug();

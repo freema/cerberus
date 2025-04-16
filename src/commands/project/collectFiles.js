@@ -240,9 +240,11 @@ async function collectFiles(projectName) {
         type: 'input',
         name: 'excludeExtensions',
         message: 'Enter file extensions to exclude (comma-separated, include the dot):',
-        default: '.lock',
+        default: '.lock,.package-lock.json',
       },
     ]);
+    
+    logger.info(chalk.yellow('Note: package-lock.json is excluded by default as analyzing it provides no value for Claude projects.'));
     
     const excludeExtensionsList = excludeExtensions
       .split(',')

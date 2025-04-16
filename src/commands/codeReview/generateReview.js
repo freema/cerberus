@@ -2,7 +2,7 @@ const inquirer = require('inquirer');
 const chalk = require('chalk');
 const ora = require('ora');
 const MergeRequest = require('../../models/MergeRequest');
-const claudeService = require('../../services/ClaudeService');
+const aiServiceProvider = require('../../services/AIServiceFactory');
 const logger = require('../../utils/logger');
 
 /**
@@ -13,44 +13,35 @@ async function generateReview(mergeRequestId) {
   logger.info('=== Generate Code Review ===');
 
   try {
-    // Check if Claude API is configured
-    if (!claudeService.isConfigured()) {
-      logger.error('Claude API key not configured.');
-
-      const { addApiKey } = await inquirer.prompt([
+    // Get active AI service adapter
+    const activeAdapter = aiServiceProvider.getActiveAdapter();
+    
+    // Check if active adapter is configured
+    if (!activeAdapter || !activeAdapter.isConfigured()) {
+      logger.error(`Active AI service (${activeAdapter ? activeAdapter.serviceName : 'None'}) is not properly configured.`);
+      
+      const { configureNow } = await inquirer.prompt([
         {
           type: 'confirm',
-          name: 'addApiKey',
-          message: 'Would you like to configure a Claude API key now?',
+          name: 'configureNow',
+          message: 'Would you like to configure the AI service now?',
           default: true,
         },
       ]);
-
-      if (addApiKey) {
-        const { apiKey } = await inquirer.prompt([
-          {
-            type: 'input',
-            name: 'apiKey',
-            message: 'Enter your Claude API key:',
-            validate: input => input.trim() !== '' || 'API key cannot be empty',
-          },
-        ]);
-
-        claudeService.updateApiKey(apiKey);
-        logger.success('Claude API key configured.');
-
-        // Test the connection
-        logger.info('Testing Claude API connection...');
-        const isConnected = await claudeService.testConnection();
-
-        if (!isConnected) {
-          logger.error(
-            'Could not connect to Claude API with the provided key. Please check your configuration.'
-          );
+      
+      if (configureNow) {
+        const AIConfigController = require('../../controllers/AIConfigController');
+        const aiConfigController = new AIConfigController();
+        await aiConfigController.handleConfig();
+        
+        // Re-get the active adapter after configuration
+        const adapter = aiServiceProvider.getActiveAdapter();
+        if (!adapter || !adapter.isConfigured()) {
+          logger.error('AI service is still not properly configured. Cannot continue.');
           return;
         }
       } else {
-        logger.warn('Operation canceled. Please configure Claude API correctly before continuing.');
+        logger.warn('Operation canceled. Please configure AI service correctly before continuing.');
         return;
       }
     }
@@ -112,31 +103,33 @@ async function generateReview(mergeRequestId) {
       }
     }
 
-    // Get Claude configuration options
-    const claudeConfig = claudeService.claudeConfig;
-
+    // Get active adapter after possible configuration
+    const adapter = aiServiceProvider.getActiveAdapter();
+    
     // Ask if user wants to adjust model or token settings for this review
     const { adjustSettings } = await inquirer.prompt([
       {
         type: 'confirm',
         name: 'adjustSettings',
-        message: 'Would you like to adjust Claude API settings for this review?',
+        message: `Would you like to adjust ${adapter.serviceName} settings for this review?`,
         default: false,
       },
     ]);
 
     if (adjustSettings) {
+      // Get available models from adapter
+      const adapterModels = adapter.getAvailableModels();
+      
       const { model } = await inquirer.prompt([
         {
           type: 'list',
           name: 'model',
-          message: 'Select Claude model to use:',
-          choices: [
-            { name: 'Claude 3 Opus (best quality, slower)', value: 'claude-3-opus-20240229' },
-            { name: 'Claude 3 Sonnet (balanced)', value: 'claude-3-sonnet-20240229' },
-            { name: 'Claude 3 Haiku (fastest)', value: 'claude-3-haiku-20240307' },
-          ],
-          default: claudeConfig.model,
+          message: `Select ${adapter.serviceName} model to use:`,
+          choices: adapterModels.map(model => ({
+            name: model.name,
+            value: model.id
+          })),
+          default: adapter.claudeConfig?.model || adapterModels[0].id,
         },
       ]);
 
@@ -145,19 +138,19 @@ async function generateReview(mergeRequestId) {
           type: 'number',
           name: 'maxTokens',
           message: 'Enter maximum output tokens:',
-          default: claudeConfig.maxTokens,
+          default: adapter.claudeConfig?.maxTokens || 4000,
           validate: input => input > 0 || 'Max tokens must be a positive number',
         },
       ]);
 
       // Update config for this session only
-      claudeService.updateConfig({ model, maxTokens });
+      adapter.updateConfig({ model, maxTokens });
     }
 
     // Generate the review
-    const spinner = ora('Generating code review with Claude AI...').start();
+    const spinner = ora(`Generating code review with ${adapter.serviceName}...`).start();
 
-    const review = await claudeService.generateCodeReview(mergeRequest);
+    const review = await adapter.generateCodeReview(mergeRequest);
 
     if (!review) {
       spinner.fail('Failed to generate review.');

@@ -133,7 +133,8 @@ if (shouldParseArgs) {
 
     // Update configuration
     const gitlabService = require('../src/services/GitlabService');
-    const claudeService = require('../src/services/ClaudeService');
+    const aiServiceProvider = require('../src/services/AIServiceFactory');
+    const claudeAdapter = aiServiceProvider.getAdapter('claude');
 
     if (gitlabUrl.trim() !== '') {
       gitlabService.updateBaseUrl(gitlabUrl);
@@ -144,10 +145,10 @@ if (shouldParseArgs) {
     }
 
     if (claudeApiKey.trim() !== '') {
-      claudeService.updateApiKey(claudeApiKey);
+      claudeAdapter.updateApiKey(claudeApiKey);
     }
 
-    claudeService.updateConfig({ model: claudeModel });
+    claudeAdapter.updateConfig({ model: claudeModel });
 
     console.log('\nConfiguration saved successfully!');
 

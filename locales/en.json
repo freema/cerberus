@@ -39,6 +39,7 @@
       "title": "What would you like to configure?",
       "gitlab": "GitLab Settings",
       "claude": "Claude AI Settings",
+      "ai": "AI Services",
       "debug": "Debug Mode",
       "locale": "Language Settings",
       "show": "Show Current Configuration",

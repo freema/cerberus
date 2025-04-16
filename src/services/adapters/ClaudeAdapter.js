@@ -1,11 +1,12 @@
 /**
- * Service for interacting with Claude AI API
+ * Claude AI Service Adapter
+ * Implements adapter interface for Claude AI API
  */
-const BaseApiService = require('./BaseApiService');
-const logger = require('../utils/logger');
-const config = require('../utils/config');
+const AIServiceAdapter = require('./AIServiceAdapter');
+const logger = require('../../utils/logger');
+const config = require('../../utils/config');
 
-class ClaudeService extends BaseApiService {
+class ClaudeAdapter extends AIServiceAdapter {
   constructor() {
     super('Claude');
   }
@@ -24,6 +25,18 @@ class ClaudeService extends BaseApiService {
         'anthropic-version': '2023-06-01',
       });
     }
+  }
+
+  /**
+   * Get available Claude models
+   * @returns {Array<Object>} - List of available models
+   */
+  getAvailableModels() {
+    return [
+      { name: 'Claude 3 Opus (best quality, slower)', id: 'claude-3-opus-20240229' },
+      { name: 'Claude 3 Sonnet (balanced)', id: 'claude-3-sonnet-20240229' },
+      { name: 'Claude 3 Haiku (fastest)', id: 'claude-3-haiku-20240307' }
+    ];
   }
 
   /**
@@ -174,4 +187,4 @@ Format your review in a clear, professional manner with specific examples from t
   }
 }
 
-module.exports = new ClaudeService();
+module.exports = new ClaudeAdapter();

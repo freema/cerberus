@@ -4,13 +4,13 @@
 const config = require('./config');
 const logger = require('./logger');
 const GitlabService = require('../services/GitlabService');
-const ClaudeService = require('../services/ClaudeService');
 const UIHelper = require('./UIHelper');
 
 class ApiConfigService {
   constructor() {
     this.gitlabService = GitlabService;
-    this.claudeService = ClaudeService;
+    this.aiServiceProvider = require('../services/AIServiceFactory');
+    this.claudeAdapter = this.aiServiceProvider.getAdapter('claude');
     this.uiHelper = UIHelper;
   }
 
@@ -85,65 +85,17 @@ class ApiConfigService {
 
   /**
    * Kontrola a konfigurace Claude API
+   * @deprecated Use AIConfigController instead
    * @returns {Promise<boolean>} - Zda je konfigurace úspěšná
    */
   async configureClaude() {
-    const claudeConfig = config.getClaudeConfig();
-    const currentApiKey = config.getClaudeApiKey();
+    // Use the new AIConfigController instead
+    const AIConfigController = require('../controllers/AIConfigController');
+    const aiConfigController = new AIConfigController();
+    await aiConfigController.handleAdapterConfig('claude');
     
-    this.uiHelper.displayHeader('Claude AI Configuration');
-    
-    // Kontrola chybějícího API klíče
-    if (!currentApiKey) {
-      this.uiHelper.displayWarning('Claude API key is not configured. AI features will not work properly.');
-    }
-    
-    while (true) {
-      const configOption = await this.uiHelper.select('What would you like to configure?', [
-        { name: 'Claude API Key', value: 'apiKey' },
-        { name: 'Claude Model', value: 'model' },
-        { name: 'Max Tokens', value: 'maxTokens' },
-        { name: 'Test Connection', value: 'test' },
-        { name: 'Back', value: 'back' }
-      ]);
-      
-      switch (configOption) {
-        case 'apiKey':
-          const apiKey = await this.uiHelper.password('Enter Claude API key:',
-            input => input.trim() !== '' || 'API key cannot be empty');
-          
-          this.claudeService.updateApiKey(apiKey);
-          this.uiHelper.displaySuccess('Claude API key updated.');
-          break;
-        
-        case 'model':
-          const model = await this.uiHelper.select('Select Claude model:', [
-            { name: 'Claude 3 Opus (best quality, slower)', value: 'claude-3-opus-20240229' },
-            { name: 'Claude 3 Sonnet (balanced)', value: 'claude-3-sonnet-20240229' },
-            { name: 'Claude 3 Haiku (fastest)', value: 'claude-3-haiku-20240307' }
-          ], claudeConfig.model);
-          
-          this.claudeService.updateConfig({ model });
-          this.uiHelper.displaySuccess(`Claude model updated to ${model}.`);
-          break;
-        
-        case 'maxTokens':
-          const maxTokens = parseInt(await this.uiHelper.input('Enter maximum output tokens:',
-            input => parseInt(input) > 0 || 'Max tokens must be a positive number',
-            claudeConfig.maxTokens.toString()));
-          
-          this.claudeService.updateConfig({ maxTokens });
-          this.uiHelper.displaySuccess(`Max tokens updated to ${maxTokens}.`);
-          break;
-        
-        case 'test':
-          await this.testClaudeConnection();
-          break;
-        
-        case 'back':
-          return !!currentApiKey; // Return whether API key is configured
-      }
-    }
+    // Return whether API key is configured
+    return !!config.getClaudeApiKey();
   }
 
   /**
@@ -153,7 +105,7 @@ class ApiConfigService {
   async testClaudeConnection() {
     this.uiHelper.displayInfo('Testing Claude API connection...', '');
     
-    const isConnected = await this.claudeService.testConnection();
+    const isConnected = await this.claudeAdapter.testConnection();
     
     if (isConnected) {
       this.uiHelper.displaySuccess('Successfully connected to Claude API!');
@@ -176,13 +128,15 @@ class ApiConfigService {
       this.uiHelper.displayInfo('Some features that require Claude AI will not work without this key.', '');
       
       const action = await this.uiHelper.select('What would you like to do?', [
-        { name: 'Configure Claude AI', value: 'configure' },
+        { name: 'Configure AI Services', value: 'configure' },
         { name: 'Continue to Project menu (some features may be limited)', value: 'continue' },
         { name: 'Go back to main menu', value: 'back' }
       ]);
       
       if (action === 'configure') {
-        await this.configureClaude();
+        const AIConfigController = require('../controllers/AIConfigController');
+        const aiConfigController = new AIConfigController();
+        await aiConfigController.handleConfig();
         return false; // Return to main menu after configuration
       } else if (action === 'back') {
         return false;
@@ -213,12 +167,14 @@ class ApiConfigService {
       ]);
       
       if (action === 'configure') {
-        // Check and configure both services if needed
+        // Configure both GitLab and AI services
         if (!gitlabToken) {
           await this.configureGitlab();
         }
         if (!claudeApiKey) {
-          await this.configureClaude();
+          const AIConfigController = require('../controllers/AIConfigController');
+          const aiConfigController = new AIConfigController();
+          await aiConfigController.handleConfig();
         }
         return false; // Return to main menu after configuration
       } else if (action === 'back') {
@@ -258,7 +214,9 @@ class ApiConfigService {
     
     this.uiHelper.displayInfo(i18n.t('settings.showConfig.apiToken', { status: gitlabTokenStatus }), '');
     
-    this.uiHelper.displayInfo(i18n.t('settings.showConfig.claudeConfig'), '');
+    const activeAdapter = this.aiServiceProvider.getActiveAdapter();
+    this.uiHelper.displayInfo(i18n.t('settings.showConfig.claudeConfig') || 'AI Configuration:', '');
+    this.uiHelper.displayInfo(`Active AI Service: ${activeAdapter.serviceName}`, '');
     this.uiHelper.displayInfo(i18n.t('settings.showConfig.model', { model: claudeConfig.model }), '');
     this.uiHelper.displayInfo(i18n.t('settings.showConfig.maxTokens', { maxTokens: claudeConfig.maxTokens }), '');
     

@@ -37,6 +37,7 @@ class ConfigService {
             model: 'claude-3-opus-20240229',
             maxTokens: 4000,
           },
+          activeAIService: 'claude',
           debug: false,
         },
       });

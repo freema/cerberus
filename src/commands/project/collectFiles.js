@@ -240,7 +240,7 @@ async function collectFiles(projectName) {
         type: 'input',
         name: 'excludeExtensions',
         message: 'Enter file extensions to exclude (comma-separated, include the dot):',
-        default: '.lock,.package-lock.json',
+        default: '.lock,package-lock.json',
       },
     ]);
     

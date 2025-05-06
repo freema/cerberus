@@ -123,6 +123,54 @@ The instructions should be clear, precise, and focused on helping an AI system e
   }
 
   /**
+   * Generate summary for Jira issue
+   * @param {Object} jiraIssueData - Jira issue data including related issues
+   * @returns {Promise<string|null>} - Generated summary or null if error
+   */
+  async generateJiraIssueSummary(jiraIssueData) {
+    if (!this.isConfigured()) {
+      logger.warn('Claude API key not configured. Please configure it in the settings.');
+      return null;
+    }
+
+    return await this.executeRequest(
+      async () => {
+        // Připravíme data z Jira pro Claude
+        const issueData = JSON.stringify(jiraIssueData, null, 2);
+
+        const response = await this.client.post('/messages', {
+          model: this.claudeConfig.model,
+          max_tokens: this.claudeConfig.maxTokens,
+          messages: [
+            {
+              role: 'user',
+              content: `Analyzuj tento JSON s daty z Jira ticketu a vytvoř přehledné shrnutí. JSON obsahuje hlavní ticket, podúkoly a propojené úkoly včetně komentářů a dalších metadat.
+
+Jira data:
+\`\`\`json
+${issueData}
+\`\`\`
+
+Potřebuji:
+1. Stručný souhrn hlavního úkolu - o co se jedná, v jakém je stavu
+2. Analýzu podúkolů - kolik jich je, v jakém jsou stavu, co řeší
+3. Analýzu propojených úkolů - jak souvisí s hlavním úkolem
+4. Identifikaci klíčových problémů a komplikací z komentářů
+5. Celkové zhodnocení úkolu a jeho složitosti
+
+Formátuj výstup jako strukturovaný přehled, který by mohl být použit pro rychlé pochopení celého ticketu a jeho vazeb. Zaměř se především na technické aspekty a srozumitelnost pro vývojáře.`,
+            },
+          ],
+        });
+
+        return response.data.content[0].text;
+      },
+      'Error generating Jira issue summary',
+      null
+    );
+  }
+
+  /**
    * Generate code review for merge request
    * @param {Object} mergeRequestData - Merge request data including changes
    * @returns {Promise<string|null>} - Generated code review or null if error

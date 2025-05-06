@@ -127,9 +127,29 @@ class JiraMenuController {
         validate: input => input.trim() !== '' || 'Task URL cannot be empty'
       }
     ]);
+    
+    // Zjistíme, zda je dostupný Claude API klíč a nabídneme možnost generovat AI analýzu
+    const ClaudeAdapter = require('../services/adapters/ClaudeAdapter');
+    let withAIAnalysis = false;
+    
+    if (ClaudeAdapter.isConfigured()) {
+      const { generateAnalysis } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'generateAnalysis',
+          message: 'Do you want to generate AI analysis using Claude?',
+          default: true
+        }
+      ]);
+      
+      withAIAnalysis = generateAnalysis;
+    } else {
+      logger.warn('Claude AI API key is not configured. AI analysis will not be generated.');
+      logger.info('You can configure it in Settings -> AI Services.');
+    }
 
     logger.info('Analyzing Jira task...');
-    const result = await jiraCommands.analyzeTask(taskUrl);
+    const result = await jiraCommands.analyzeTask(taskUrl, withAIAnalysis);
 
     if (result && result.success) {
       logger.success(`Successfully analyzed Jira task ${result.issueKey}`);
@@ -176,6 +196,17 @@ class JiraMenuController {
       }
       
       logger.info(`\nJSON soubor obsahuje kompletní data včetně popisu, komentářů a dalších propojených úkolů.`);
+      
+      // Informace o AI analýze
+      if (result.aiAnalysis) {
+        logger.success(`\nAI analýza byla vygenerována pomocí Claude AI!`);
+        logger.info(`Analýza byla uložena do: ${result.analysisPath}`);
+        logger.info(`Soubor analýzy obsahuje strukturovaný přehled úkolu, jeho podúkolů a vazeb.`);
+      } else {
+        logger.warn(`\nAI analýza nebyla vygenerována.`);
+        logger.info(`Pro generování AI analýzy je potřeba nakonfigurovat API klíč Claude AI.`);
+        logger.info(`Můžete ho nastavit v menu Konfigurace -> AI Služby.`);
+      }
     } else {
       logger.error('Failed to analyze Jira task. Please check your URL and credentials.');
     }

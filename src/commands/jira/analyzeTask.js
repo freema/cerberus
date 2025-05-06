@@ -7,11 +7,12 @@ const path = require('path');
 const fs = require('fs-extra');
 
 /**
- * Process a Jira task URL and create a JSON summary
+ * Process a Jira task URL and create a JSON summary with optional AI analysis
  * @param {string} taskUrl - URL to the Jira task
+ * @param {boolean} generateAIAnalysis - Whether to generate AI analysis
  * @returns {Promise<Object|null>} - Result of the operation or null if failed
  */
-async function analyzeTask(taskUrl) {
+async function analyzeTask(taskUrl, generateAIAnalysis = true) {
   try {
     logger.info(`Analyzing Jira task from URL: ${taskUrl}`);
     
@@ -42,10 +43,26 @@ async function analyzeTask(taskUrl) {
         logger.error(`Failed to fetch data for issue ${issueKey}. The issue might not exist or you might not have permission to access it.`);
         return null;
       }
+      
+      // Volitelné generování AI analýzy
+      let aiAnalysis = null;
+      if (generateAIAnalysis) {
+        // Kontrola dostupnosti Claude API
+        const ClaudeAdapter = require('../../services/adapters/ClaudeAdapter');
+        if (ClaudeAdapter.isConfigured()) {
+          logger.info(`Generating AI analysis for issue ${issueKey}...`);
+          aiAnalysis = await ClaudeAdapter.generateJiraIssueSummary(summary);
+          if (!aiAnalysis) {
+            logger.warn(`Failed to generate AI analysis. Continuing without it.`);
+          }
+        } else {
+          logger.warn(`Claude AI API key is not configured. Skipping AI analysis generation.`);
+        }
+      }
 
       // Save the summary to a file
-      const filePath = await JiraService.saveSummaryToFile(issueKey, summary);
-      if (!filePath) {
+      const savedPaths = await JiraService.saveSummaryToFile(issueKey, summary, aiAnalysis);
+      if (!savedPaths) {
         logger.error('Failed to save summary to file.');
         return null;
       }
@@ -54,8 +71,10 @@ async function analyzeTask(taskUrl) {
       return {
         success: true,
         issueKey,
-        filePath,
-        summary
+        filePath: savedPaths.jsonPath,
+        analysisPath: savedPaths.analysisPath,
+        summary,
+        aiAnalysis
       };
     } catch (error) {
       if (error.response?.status === 403) {

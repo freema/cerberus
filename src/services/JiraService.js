@@ -426,9 +426,10 @@ class JiraService extends BaseApiService {
    * Save issue summary to a file
    * @param {string} issueKey - Jira issue key
    * @param {Object} summary - Issue summary
-   * @returns {Promise<string|null>} - Path to saved file or null if error
+   * @param {string} aiAnalysis - Optional AI analysis text
+   * @returns {Promise<Object|null>} - Object with paths to saved files or null if error
    */
-  async saveSummaryToFile(issueKey, summary) {
+  async saveSummaryToFile(issueKey, summary, aiAnalysis = null) {
     try {
       // Ensure the jira directory exists
       const jiraDataDir = pathHelper.getDataPathForType('jira');
@@ -436,14 +437,40 @@ class JiraService extends BaseApiService {
       
       // Create filename from issue key and current date
       const date = new Date().toISOString().replace(/[:.]/g, '-');
-      const filename = `${issueKey}-${date}.json`;
-      const filePath = path.join(jiraDataDir, filename);
+      const jsonFilename = `${issueKey}-${date}.json`;
+      const jsonFilePath = path.join(jiraDataDir, jsonFilename);
       
-      // Write the summary to file
-      await fs.writeJson(filePath, summary, { spaces: 2 });
+      // Write the summary to JSON file
+      await fs.writeJson(jsonFilePath, summary, { spaces: 2 });
+      logger.success(`Saved Jira summary to ${jsonFilePath}`);
       
-      logger.success(`Saved Jira summary to ${filePath}`);
-      return filePath;
+      // If AI analysis is provided, save it to a separate text file
+      let txtFilePath = null;
+      if (aiAnalysis) {
+        const txtFilename = `${issueKey}-${date}-analysis.md`;
+        txtFilePath = path.join(jiraDataDir, txtFilename);
+        
+        // Create a nice formatted Markdown file
+        const mdContent = `# AI Analysis of Jira Task ${issueKey}
+Date: ${new Date().toLocaleString()}
+
+## Analysis
+
+${aiAnalysis}
+
+## Source
+
+This analysis was generated based on data from Jira task ${issueKey} and its related tasks.
+`;
+        
+        await fs.writeFile(txtFilePath, mdContent, 'utf8');
+        logger.success(`Saved AI analysis to ${txtFilePath}`);
+      }
+      
+      return {
+        jsonPath: jsonFilePath,
+        analysisPath: txtFilePath
+      };
     } catch (error) {
       logger.error('Error saving Jira summary to file:', error);
       return null;

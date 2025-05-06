@@ -3,6 +3,7 @@ const { mainMenu } = require('../cli');
 const ProjectMenuController = require('./ProjectMenuController');
 const CodeReviewMenuController = require('./CodeReviewMenuController');
 const ConfigMenuController = require('./ConfigMenuController');
+const JiraMenuController = require('./JiraMenuController');
 const config = require('../utils/config');
 const UIHelper = require('../utils/UIHelper');
 const ApiConfigService = require('../utils/ApiConfigService');
@@ -13,6 +14,7 @@ class MenuController {
     this.projectMenuController = new ProjectMenuController();
     this.codeReviewMenuController = new CodeReviewMenuController();
     this.configMenuController = new ConfigMenuController();
+    this.jiraMenuController = new JiraMenuController();
   }
 
   /**
@@ -32,6 +34,11 @@ class MenuController {
           case 'codeReview':
             if (await this.checkRequiredAPIKeys()) {
               await this.codeReviewMenuController.handleMenu();
+            }
+            break;
+          case 'jira':
+            if (await this.checkJiraAPIKey()) {
+              await this.jiraMenuController.handleMenu();
             }
             break;
           case 'configure':
@@ -66,6 +73,15 @@ class MenuController {
   async checkRequiredAPIKeys() {
     // Delegate to ApiConfigService for this check
     return ApiConfigService.checkRequiredApiKeys();
+  }
+
+  /**
+   * Check if Jira API key is configured and offer to configure if not
+   * @returns {Promise<boolean>} - Whether to proceed
+   */
+  async checkJiraAPIKey() {
+    // Delegate to ApiConfigService for this check
+    return ApiConfigService.checkJiraApiKey();
   }
 
   /**

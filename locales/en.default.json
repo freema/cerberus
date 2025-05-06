@@ -17,6 +17,7 @@
       "title": "What would you like to do?",
       "project": "Collect and prepare project files for Claude AI",
       "codeReview": "Work with GitLab code reviews",
+      "jira": "Work with Jira tasks",
       "configure": "Configure settings",
       "exit": "Exit"
     },
@@ -36,7 +37,8 @@
     "settings": {
       "title": "What would you like to configure?",
       "gitlab": "GitLab Settings",
-      "claude": "Claude AI Settings",
+      "jira": "Jira Settings",
+      "ai": "AI Services",
       "debug": "Debug Mode",
       "locale": "Language Settings",
       "show": "Show Current Configuration",
@@ -106,21 +108,48 @@
       "warning": "WARNING: Some API keys are not configured:",
       "gitlabTokenMissing": "- GitLab API token is missing",
       "claudeApiKeyMissing": "- Claude API key is missing",
+      "jiraTokenMissing": "- Jira API token is missing",
       "configureMessage": "You can configure these using the appropriate options in the configure menu."
     }
   },
   "warnings": {
     "claudeApiKeyMissing": "WARNING: Claude AI API key is not configured!",
     "claudeFeaturesLimited": "Some features that require Claude AI will not work without this key.",
+    "jiraApiKeyMissing": "WARNING: Jira API token is not configured!",
+    "jiraFeaturesLimited": "Some features that require Jira will not work without this token.",
     "apiKeysMissing": "WARNING: Required API keys are not configured!",
     "gitlabTokenMissing": "- GitLab API token is missing",
     "codeReviewRequirements": "The code review functionality requires these API keys.",
     "whatToDo": "What would you like to do?",
     "configureClaude": "Configure Claude AI",
+    "configureJira": "Configure Jira API",
     "configureApiKeys": "Configure API keys",
     "continueProject": "Continue to Project menu (some features may be limited)",
     "continueCodeReview": "Continue to Code Review menu anyway",
+    "continueJira": "Continue to Jira menu (some features may be limited)",
     "goBackToMain": "Go back to main menu"
   },
-  "farewell": "Goodbye!"
+  "farewell": "Goodbye!",
+  "jira": {
+    "taskUrlPrompt": "Enter Jira task URL (e.g. https://your-domain.atlassian.net/browse/PROJECT-123):",
+    "jqlPrompt": "Enter JQL query (e.g. project = PROJECT AND status = \"In Progress\"):",
+    "analyzing": "Analyzing Jira task...",
+    "success": "Successfully analyzed Jira task {{issueKey}}",
+    "summaryPath": "Summary saved to: {{path}}",
+    "summary": {
+      "task": "Task: {{key}} - {{summary}}",
+      "status": "Status: {{status}}",
+      "subtasks": "Subtasks: {{count}}",
+      "linkedIssues": "Linked issues: {{count}}",
+      "comments": "Comments: {{count}}"
+    },
+    "failed": "Failed to analyze Jira task. Please check your URL and credentials."
+  },
+  "menu": {
+    "jira": {
+      "title": "Choose a Jira action:",
+      "analyzeTask": "Analyze Jira task",
+      "fetchTasks": "Fetch multiple tasks"
+    }
+  }
 }

@@ -112,7 +112,36 @@ const codeReviewPrompts = {
   }
 };
 
+/**
+ * Jira related prompts
+ */
+const jiraPrompts = {
+  /**
+   * Prompt for Jira choice
+   * @returns {Promise<Object>} User's choice
+   */
+  async jiraChoice() {
+    const i18n = require('../utils/i18n');
+    
+    const { choice } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'choice',
+        message: i18n.t('menu.jira.title'),
+        choices: withBackOption([
+          { name: i18n.t('menu.jira.fetch'), value: 'fetch' },
+          { name: i18n.t('menu.jira.analyze'), value: 'analyze' },
+          { name: i18n.t('menu.jira.create'), value: 'create' }
+        ])
+      }
+    ]);
+    
+    return choice;
+  }
+};
+
 module.exports = {
   projectPrompts,
-  codeReviewPrompts
+  codeReviewPrompts,
+  jiraPrompts
 };

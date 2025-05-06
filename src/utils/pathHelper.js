@@ -84,6 +84,7 @@ function ensureDirectories() {
     path.join(rootDir, 'var', 'log'),
     // Data directories - For persistent project data
     path.join(rootDir, 'data', 'projects'),
+    path.join(rootDir, 'data', 'jira'), // For Jira task data
     // Config directory
     path.join(rootDir, 'config'),
   ];

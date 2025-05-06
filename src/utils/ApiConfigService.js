@@ -184,6 +184,47 @@ class ApiConfigService {
     
     return true;
   }
+  
+  /**
+   * Kontrola a řešení chybějícího API klíče pro Jira
+   * @returns {Promise<boolean>} - Zda pokračovat dále
+   */
+  async checkJiraApiKey() {
+    const jiraToken = config.getJiraToken();
+    
+    if (!jiraToken) {
+      this.uiHelper.displayWarning('Jira API token is not configured!');
+      this.uiHelper.displayInfo('Some features that require Jira will not work without this token.', '');
+      
+      const action = await this.uiHelper.select('What would you like to do?', [
+        { name: 'Configure Jira API', value: 'configure' },
+        { name: 'Continue to Jira menu (some features may be limited)', value: 'continue' },
+        { name: 'Go back to main menu', value: 'back' }
+      ]);
+      
+      if (action === 'configure') {
+        await this.configureJira();
+        return !!config.getJiraToken(); // Return whether token is configured
+      } else if (action === 'back') {
+        return false;
+      }
+    }
+    
+    return true;
+  }
+  
+  /**
+   * Konfigurace Jira API
+   * @returns {Promise<boolean>} - Zda je konfigurace úspěšná
+   */
+  async configureJira() {
+    const JiraConfigController = require('../controllers/JiraConfigController');
+    const jiraConfigController = new JiraConfigController();
+    await jiraConfigController.handleConfig();
+    
+    // Return whether API key is configured
+    return !!config.getJiraToken();
+  }
 
   /**
    * Zobrazení aktuální konfigurace
@@ -196,6 +237,7 @@ class ApiConfigService {
     const debugEnabled = config.isDebugMode();
     const gitlabToken = config.getGitlabToken();
     const claudeApiKey = config.getClaudeApiKey();
+    const jiraToken = config.getJiraToken();
     
     this.uiHelper.displayHeader(i18n.t('settings.showConfig.title'));
     
@@ -226,11 +268,21 @@ class ApiConfigService {
     
     this.uiHelper.displayInfo(i18n.t('settings.showConfig.apiKey', { status: claudeKeyStatus }), '');
     
+    // Zobrazení Jira konfigurace
+    this.uiHelper.displayInfo('Jira Configuration:', '');
+    
+    const jiraTokenStatus = jiraToken ? 
+      i18n.t('settings.showConfig.configured') : 
+      i18n.t('settings.showConfig.notConfigured');
+    
+    this.uiHelper.displayInfo(`API Token: ${jiraTokenStatus}`, '');
+    
     // Varování, pokud chybí klíče
-    if (!gitlabToken || !claudeApiKey) {
+    if (!gitlabToken || !claudeApiKey || !jiraToken) {
       this.uiHelper.displayWarning(i18n.t('settings.showConfig.warning'));
       if (!gitlabToken) this.uiHelper.displayInfo(i18n.t('settings.showConfig.gitlabTokenMissing'), '');
       if (!claudeApiKey) this.uiHelper.displayInfo(i18n.t('settings.showConfig.claudeApiKeyMissing'), '');
+      if (!jiraToken) this.uiHelper.displayInfo(i18n.t('settings.showConfig.jiraTokenMissing'), '');
       this.uiHelper.displayInfo(i18n.t('settings.showConfig.configureMessage'), '');
     }
   }

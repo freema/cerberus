@@ -33,6 +33,11 @@ class ConfigService {
             baseUrl: 'https://gitlab.com/api/v4',
             timeout: 10000,
           },
+          jira: {
+            baseUrl: 'https://your-domain.atlassian.net',
+            timeout: 10000,
+            username: '',
+          },
           claude: {
             model: 'claude-3-opus-20240229',
             maxTokens: 4000,
@@ -49,6 +54,7 @@ class ConfigService {
         defaults: {
           gitlabToken: null,
           claudeApiKey: null,
+          jiraToken: null,
         },
         encryptionKey: encryptionKey,
         expiresIn: 365 * 24 * 60 * 60 * 1000, // 1 year in milliseconds
@@ -144,6 +150,22 @@ class ConfigService {
   setClaudeApiKey(apiKey) {
     this.setCredential('claudeApiKey', apiKey);
   }
+  
+  /**
+   * Get the Jira API token
+   * @returns {string|null} - Jira API token or null
+   */
+  getJiraToken() {
+    return this.getCredential('jiraToken');
+  }
+  
+  /**
+   * Set the Jira API token
+   * @param {string} token - Jira API token
+   */
+  setJiraToken(token) {
+    this.setCredential('jiraToken', token);
+  }
 
   /**
    * Check if debug mode is enabled
@@ -179,6 +201,28 @@ class ConfigService {
   setGitlabConfig(config) {
     this.set('gitlab', {
       ...this.getGitlabConfig(),
+      ...config,
+    });
+  }
+
+  /**
+   * Get Jira configuration
+   * @returns {Object} - Jira configuration
+   */
+  getJiraConfig() {
+    return this.get('jira', {
+      baseUrl: 'https://your-domain.atlassian.net',
+      timeout: 10000,
+    });
+  }
+
+  /**
+   * Set Jira configuration
+   * @param {Object} config - Jira configuration
+   */
+  setJiraConfig(config) {
+    this.set('jira', {
+      ...this.getJiraConfig(),
       ...config,
     });
   }

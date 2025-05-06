@@ -30,14 +30,19 @@ class BaseApiService {
    */
   createClient(baseUrl, headers, options = {}) {
     this.baseUrl = baseUrl;
-    this.client = axios.create({
+    
+    // Vytvoříme konfiguraci klienta
+    const clientConfig = {
       baseURL: baseUrl,
       headers: {
         'Content-Type': 'application/json',
         ...headers,
       },
       ...options,
-    });
+    };
+    
+    // Pokud je v options auth objekt, vytvoříme axios klienta s autentizací
+    this.client = axios.create(clientConfig);
   }
 
   /**
@@ -55,7 +60,8 @@ class BaseApiService {
       logger.success(`${this.serviceName} API connection successful`);
       return true;
     } catch (error) {
-      logger.error(`Failed to connect to ${this.serviceName} API:`, error);
+      // Základní hlášení o chybě - detailnější hlášení je v performTestRequest()
+      logger.error(`Failed to connect to ${this.serviceName} API: ${error.message}`);
       return false;
     }
   }

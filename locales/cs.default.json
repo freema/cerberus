@@ -17,6 +17,7 @@
       "title": "Co chcete dělat?",
       "project": "Sběr a příprava souborů projektu pro Claude AI",
       "codeReview": "Práce s GitLab code reviews",
+      "jira": "Práce s Jira úkoly",
       "configure": "Nastavení",
       "exit": "Ukončit"
     },
@@ -36,7 +37,8 @@
     "settings": {
       "title": "Co chcete nastavit?",
       "gitlab": "Nastavení GitLab",
-      "claude": "Nastavení Claude AI",
+      "jira": "Nastavení Jira",
+      "ai": "AI služby",
       "debug": "Debug režim",
       "locale": "Nastavení jazyka",
       "show": "Zobrazit aktuální nastavení",
@@ -106,21 +108,48 @@
       "warning": "VAROVÁNÍ: Některé API klíče nejsou nakonfigurovány:",
       "gitlabTokenMissing": "- GitLab API token chybí",
       "claudeApiKeyMissing": "- Claude API klíč chybí",
+      "jiraTokenMissing": "- Jira API token chybí",
       "configureMessage": "Tyto hodnoty můžete nastavit pomocí příslušných voleb v menu konfigurace."
     }
   },
   "warnings": {
     "claudeApiKeyMissing": "VAROVÁNÍ: API klíč Claude AI není nakonfigurován!",
     "claudeFeaturesLimited": "Některé funkce vyžadující Claude AI nebudou bez tohoto klíče fungovat.",
+    "jiraApiKeyMissing": "VAROVÁNÍ: Jira API token není nakonfigurován!",
+    "jiraFeaturesLimited": "Některé funkce vyžadující Jira nebudou bez tohoto tokenu fungovat.",
     "apiKeysMissing": "VAROVÁNÍ: Požadované API klíče nejsou nakonfigurovány!",
     "gitlabTokenMissing": "- GitLab API token chybí",
     "codeReviewRequirements": "Funkce code review vyžaduje tyto API klíče.",
     "whatToDo": "Co chcete udělat?",
     "configureClaude": "Nastavit Claude AI",
+    "configureJira": "Nastavit Jira API",
     "configureApiKeys": "Nastavit API klíče",
     "continueProject": "Pokračovat do menu projektu (některé funkce mohou být omezené)",
     "continueCodeReview": "Pokračovat do menu Code Review i přesto",
+    "continueJira": "Pokračovat do menu Jira (některé funkce mohou být omezené)",
     "goBackToMain": "Zpět do hlavního menu"
   },
-  "farewell": "Na shledanou!"
+  "farewell": "Na shledanou!",
+  "jira": {
+    "taskUrlPrompt": "Zadejte URL adresu Jira úkolu (např. https://your-domain.atlassian.net/browse/PROJECT-123):",
+    "jqlPrompt": "Zadejte JQL dotaz (např. project = PROJECT AND status = \"In Progress\"):",
+    "analyzing": "Analyzuji Jira úkol...",
+    "success": "Úspěšně analyzován Jira úkol {{issueKey}}",
+    "summaryPath": "Souhrn uložen do: {{path}}",
+    "summary": {
+      "task": "Úkol: {{key}} - {{summary}}",
+      "status": "Stav: {{status}}",
+      "subtasks": "Podúkoly: {{count}}",
+      "linkedIssues": "Propojené úkoly: {{count}}",
+      "comments": "Komentáře: {{count}}"
+    },
+    "failed": "Analýza Jira úkolu selhala. Zkontrolujte prosím URL a přihlašovací údaje."
+  },
+  "menu": {
+    "jira": {
+      "title": "Vyberte akci pro Jira:",
+      "analyzeTask": "Analyzovat Jira úkol",
+      "fetchTasks": "Načíst více úkolů"
+    }
+  }
 }

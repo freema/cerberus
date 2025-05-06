@@ -17,6 +17,7 @@
       "title": "What would you like to do?",
       "project": "Collect and prepare project files for Claude AI",
       "codeReview": "Work with GitLab code reviews",
+      "jira": "Work with Jira issues and projects",
       "configure": "Configure settings",
       "exit": "Exit"
     },
@@ -35,9 +36,16 @@
       "review": "Analyze merge request",
       "generate": "Generate AI review"
     },
+    "jira": {
+      "title": "Jira options:",
+      "fetch": "Fetch Jira issues",
+      "analyze": "Analyze Jira issue",
+      "create": "Create new Jira issue"
+    },
     "settings": {
       "title": "What would you like to configure?",
       "gitlab": "GitLab Settings",
+      "jira": "Jira Settings",
       "claude": "Claude AI Settings",
       "ai": "AI Services",
       "debug": "Debug Mode",
@@ -109,6 +117,7 @@
       "warning": "WARNING: Some API keys are not configured:",
       "gitlabTokenMissing": "- GitLab API token is missing",
       "claudeApiKeyMissing": "- Claude API key is missing",
+      "jiraTokenMissing": "- Jira API token is missing",
       "configureMessage": "You can configure these using the appropriate options in the configure menu."
     }
   },
@@ -117,12 +126,16 @@
     "claudeFeaturesLimited": "Some features that require Claude AI will not work without this key.",
     "apiKeysMissing": "WARNING: Required API keys are not configured!",
     "gitlabTokenMissing": "- GitLab API token is missing",
+    "jiraApiKeyMissing": "WARNING: Jira API token is not configured!",
+    "jiraFeaturesLimited": "Some features that require Jira will not work without this token.",
     "codeReviewRequirements": "The code review functionality requires these API keys.",
     "whatToDo": "What would you like to do?",
     "configureClaude": "Configure Claude AI",
     "configureApiKeys": "Configure API keys",
+    "configureJira": "Configure Jira API",
     "continueProject": "Continue to Project menu (some features may be limited)",
     "continueCodeReview": "Continue to Code Review menu anyway",
+    "continueJira": "Continue to Jira menu (some features may be limited)",
     "goBackToMain": "Go back to main menu"
   },
   "farewell": "Goodbye!"

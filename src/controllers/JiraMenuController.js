@@ -128,7 +128,7 @@ class JiraMenuController {
       }
     ]);
     
-    // Zjistíme, zda je dostupný Claude API klíč a nabídneme možnost generovat AI analýzu
+    // Check if Claude API key is available and offer to generate AI analysis
     const ClaudeAdapter = require('../services/adapters/ClaudeAdapter');
     let withAIAnalysis = false;
     

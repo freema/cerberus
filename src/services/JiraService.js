@@ -240,12 +240,12 @@ class JiraService extends BaseApiService {
    * @returns {Promise<Array|null>} - Array of linked issues or null if error
    */
   async getLinkedIssues(issueKey, depth = 2, processedKeys = new Set()) {
-    // Zastavíme rekurzi, pokud jsme dosáhli maximální hloubky nebo jsme již úkol zpracovali
+    // Stop recursion if we reached maximum depth or already processed this issue
     if (depth <= 0 || processedKeys.has(issueKey)) {
       return [];
     }
     
-    // Přidáme aktuální klíč do zpracovaných
+    // Add current key to processed set
     processedKeys.add(issueKey);
     
     // First get the main issue to find issue links
@@ -258,7 +258,7 @@ class JiraService extends BaseApiService {
       .filter(link => link.inwardIssue || link.outwardIssue)
       .map(link => {
         const linkedKey = link.inwardIssue ? link.inwardIssue.key : link.outwardIssue.key;
-        // Připravíme také typ vazby
+        // Prepare link type information
         const linkType = link.type ? link.type.name : 'linked';
         const direction = link.inwardIssue ? 'inward' : 'outward';
         return { 
@@ -276,25 +276,25 @@ class JiraService extends BaseApiService {
     // Get linked issues with their nested linked issues
     const result = [];
     
-    // Pro každý propojený úkol získáme jeho data a rekurzivně také jeho propojené úkoly
+    // For each linked issue, get its data and recursively its linked issues
     for (const linkInfo of linkedIssueKeys) {
-      // Přeskočíme již zpracované úkoly
+      // Skip already processed issues
       if (processedKeys.has(linkInfo.key)) {
         continue;
       }
       
-      // Získáme úkol
+      // Get the issue
       const linkedIssue = await this.getIssue(linkInfo.key);
       
       if (linkedIssue) {
-        // Rekurzivně získáme propojené úkoly (s nižší hloubkou)
+        // Recursively get linked issues (with reduced depth)
         const nestedLinkedIssues = await this.getLinkedIssues(
           linkInfo.key, 
           depth - 1, 
           new Set(processedKeys)
         );
         
-        // Přidáme informace o úkolu včetně jeho propojených úkolů
+        // Add information about the issue including its linked issues
         result.push({
           key: linkedIssue.key,
           summary: linkedIssue.fields.summary,

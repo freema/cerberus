@@ -44,10 +44,10 @@ async function analyzeTask(taskUrl, generateAIAnalysis = true) {
         return null;
       }
       
-      // Volitelné generování AI analýzy
+      // Optional AI analysis generation
       let aiAnalysis = null;
       if (generateAIAnalysis) {
-        // Kontrola dostupnosti Claude API
+        // Check if Claude API is available
         const ClaudeAdapter = require('../../services/adapters/ClaudeAdapter');
         if (ClaudeAdapter.isConfigured()) {
           logger.info(`Generating AI analysis for issue ${issueKey}...`);

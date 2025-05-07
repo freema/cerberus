@@ -135,7 +135,7 @@ The instructions should be clear, precise, and focused on helping an AI system e
 
     return await this.executeRequest(
       async () => {
-        // Připravíme data z Jira pro Claude
+        // Prepare Jira data for Claude
         const issueData = JSON.stringify(jiraIssueData, null, 2);
 
         const response = await this.client.post('/messages', {

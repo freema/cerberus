@@ -72,7 +72,17 @@ function copyWithFeedback(
   return success;
 }
 
+/**
+ * Write text to clipboard (alias for copyToClipboard)
+ * @param {string} text - Text to write to clipboard
+ * @returns {boolean} - Whether the operation was successful
+ */
+function write(text) {
+  return copyToClipboard(text);
+}
+
 module.exports = {
   copyToClipboard,
   copyWithFeedback,
+  write
 };

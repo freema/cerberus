@@ -148,38 +148,113 @@ async function collectFiles(projectName) {
         logger.info('');
       }
 
-      // Get path with auto-detection
-      const { sourcePath } = await inquirer.prompt([
+      // Get input method
+      const { inputMethod } = await inquirer.prompt([
         {
-          type: 'input',
-          name: 'sourcePath',
-          message: 'Enter path (file or directory):',
-          validate: async input => {
-            try {
-              const stats = await fs.stat(input);
-              return true;
-            } catch (error) {
-              return 'Path does not exist or is not accessible.';
-            }
-          },
-        },
+          type: 'list',
+          name: 'inputMethod',
+          message: 'How would you like to add paths?',
+          choices: [
+            { name: 'Enter a single path', value: 'single' },
+            { name: 'Paste multiple paths at once', value: 'multiple' }
+          ]
+        }
       ]);
 
-      // Auto-detect if it's a file or directory
-      try {
-        const stats = await fs.stat(sourcePath);
-        const pathType = stats.isDirectory() ? 'directory' : 'file';
+      if (inputMethod === 'single') {
+        // Single path input (original method)
+        const { sourcePath } = await inquirer.prompt([
+          {
+            type: 'input',
+            name: 'sourcePath',
+            message: 'Enter path (file or directory):',
+            validate: async input => {
+              try {
+                const stats = await fs.stat(input);
+                return true;
+              } catch (error) {
+                return 'Path does not exist or is not accessible.';
+              }
+            },
+          },
+        ]);
 
-        // Add to paths list
-        sourcePaths.push({
-          path: sourcePath,
-          type: pathType,
-        });
+        // Auto-detect if it's a file or directory
+        try {
+          const stats = await fs.stat(sourcePath);
+          const pathType = stats.isDirectory() ? 'directory' : 'file';
 
-        logger.info(`Added ${pathType}: ${sourcePath}`);
-      } catch (error) {
-        logger.error(`Error detecting path type: ${error.message}`);
-        continue;
+          // Add to paths list
+          sourcePaths.push({
+            path: sourcePath,
+            type: pathType,
+          });
+
+          logger.info(`Added ${pathType}: ${sourcePath}`);
+        } catch (error) {
+          logger.error(`Error detecting path type: ${error.message}`);
+          continue;
+        }
+      } else {
+        // Multiple paths input using console paste
+        logger.info(chalk.cyan('\n=== MULTI-PATH INPUT ==='));
+        logger.info(chalk.cyan('1. Paste multiple file paths below (one per line)'));
+        logger.info(chalk.cyan('2. You can paste many paths at once or enter them individually'));
+        logger.info(chalk.cyan('3. Press Enter on an empty line when finished'));
+        logger.info(chalk.yellow('\n↓ Paste paths here ↓'));
+        logger.info(chalk.gray('----------------------------------'));
+        
+        const lines = [];
+        let line;
+        let done = false;
+        
+        while (!done) {
+          const result = await inquirer.prompt([
+            {
+              type: 'input',
+              name: 'line',
+              message: ' ',
+              prefix: ''
+            }
+          ]);
+          
+          line = result.line.trim();
+          
+          if (line === '') {
+            // Empty line indicates end of input
+            done = true;
+          } else {
+            lines.push(line);
+          }
+        }
+        
+        logger.info(chalk.gray('----------------------------------'));
+        logger.info(chalk.green(`✓ Received ${lines.length} paths`));
+        
+        const multiPaths = lines.join('\n');
+
+        // Parse and validate each path
+        const paths = parseMultiplePaths(multiPaths);
+        let validPathsCount = 0;
+
+        for (const path of paths) {
+          try {
+            const stats = await fs.stat(path);
+            const pathType = stats.isDirectory() ? 'directory' : 'file';
+
+            // Add to paths list
+            sourcePaths.push({
+              path,
+              type: pathType,
+            });
+            
+            validPathsCount++;
+          } catch (error) {
+            logger.error(`Skipping invalid path: ${path} - ${error.message}`);
+          }
+        }
+
+        logger.info(`Added ${validPathsCount} valid paths out of ${paths.length} provided.`);
       }
 
       // Ask if user wants to add more (only if at least one path is added)
@@ -547,6 +622,23 @@ function formatFileSize(bytes) {
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
   if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+}
+
+/**
+ * Parse multiple paths from a text input
+ * @param {string} input - Text containing multiple paths
+ * @returns {Array<string>} - Array of individual paths
+ */
+function parseMultiplePaths(input) {
+  if (!input || typeof input !== 'string') {
+    return [];
+  }
+  
+  // Split the input by newlines, and filter out empty lines
+  return input
+    .split(/[\r\n]+/)
+    .map(line => line.trim())
+    .filter(line => line.length > 0);
 }
 
 /**

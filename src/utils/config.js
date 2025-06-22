@@ -57,7 +57,7 @@ class ConfigService {
           jiraToken: null,
         },
         encryptionKey: encryptionKey,
-        expiresIn: 365 * 24 * 60 * 60 * 1000, // 1 year in milliseconds
+        expiresIn: null, // No expiration - permanent storage
       });
 
       this.logger.info('Configuration initialized successfully');

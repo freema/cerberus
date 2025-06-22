@@ -300,7 +300,7 @@ async function collectFiles(projectName) {
         type: 'input',
         name: 'excludeDirs',
         message: 'Enter directories to exclude (comma-separated):',
-        default: 'node_modules,vendor,dist,build,public,.git,__pycache__',
+        default: 'node_modules,vendor,dist,build,public,.git,__pycache__,coverage',
       },
     ]);
 

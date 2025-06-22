@@ -137,11 +137,16 @@ async function fetchMergeRequests() {
     logger.info(`Source branch: ${sourceBranch}`);
 
     // Get merge request changes
-    const changesSpinner = ora(`Fetching changes for MR #${parsedUrl.mergeRequestIid}...`).start();
+    const changesSpinner = ora(
+      parsedUrl.commitId 
+        ? `Fetching changes for commit ${parsedUrl.commitId.substring(0, 8)}...`
+        : `Fetching changes for MR #${parsedUrl.mergeRequestIid}...`
+    ).start();
 
     const changes = await gitlabService.getMergeRequestChanges(
       projectId,
-      parsedUrl.mergeRequestIid
+      parsedUrl.mergeRequestIid,
+      parsedUrl.commitId
     );
 
     if (!changes || changes.length === 0) {
@@ -200,12 +205,19 @@ async function fetchMergeRequests() {
     // Process changes to extract the information we need and fetch complete file content
     const processSpinner = ora(`Processing changes and fetching complete file content...`).start();
 
-    const processedChanges = await processChanges(supportedChanges, projectId, sourceBranch);
+    const processedChanges = await processChanges(
+      supportedChanges, 
+      projectId, 
+      parsedUrl.commitId || sourceBranch
+    );
 
     processSpinner.succeed(`Processed ${processedChanges.length} files.`);
 
     // Create the merge request object
-    const mergeRequestId = `mr_${parsedUrl.projectPath.replace(/\//g, '_')}_${parsedUrl.mergeRequestIid}`;
+    // Include commit ID in the filename if specific commit is selected
+    const mergeRequestId = parsedUrl.commitId 
+      ? `mr_${parsedUrl.projectPath.replace(/\//g, '_')}_${parsedUrl.mergeRequestIid}_${parsedUrl.commitId.substring(0, 8)}`
+      : `mr_${parsedUrl.projectPath.replace(/\//g, '_')}_${parsedUrl.mergeRequestIid}`;
 
     const mergeRequestData = {
       id: mergeRequestId,
@@ -213,6 +225,7 @@ async function fetchMergeRequests() {
       projectId: projectId,
       projectPath: parsedUrl.projectPath,
       mergeRequestIid: parsedUrl.mergeRequestIid,
+      commitId: parsedUrl.commitId,
       sourceBranch: sourceBranch,
       targetBranch: mergeRequestDetails.target_branch,
       title: mergeRequestDetails.title,
@@ -234,6 +247,9 @@ async function fetchMergeRequests() {
     await mergeRequest.save();
 
     logger.success(`\nMerge request data processed and saved successfully!`);
+    if (parsedUrl.commitId) {
+      logger.info(`Specific commit: ${parsedUrl.commitId.substring(0, 8)}`);
+    }
     logger.info(`Total files changed: ${changes.length}`);
     logger.info(`Supported files processed: ${processedChanges.length}`);
 

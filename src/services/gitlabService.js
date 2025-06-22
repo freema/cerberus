@@ -106,17 +106,29 @@ class GitlabService extends BaseApiService {
    * Get changes in a merge request
    * @param {number} projectId - Project ID
    * @param {number} mergeRequestIid - Merge request IID (internal ID)
+   * @param {string} commitId - Optional specific commit SHA
    * @returns {Promise<Array|null>} - Array of changes or null if error
    */
-  async getMergeRequestChanges(projectId, mergeRequestIid) {
+  async getMergeRequestChanges(projectId, mergeRequestIid, commitId = null) {
     return this.executeRequest(
       async () => {
-        const response = await this.client.get(
-          `/projects/${projectId}/merge_requests/${mergeRequestIid}/changes`
-        );
-        return response.data.changes;
+        if (commitId) {
+          // If commit ID is provided, get the specific commit changes
+          const response = await this.client.get(
+            `/projects/${projectId}/repository/commits/${commitId}/diff`
+          );
+          return response.data;
+        } else {
+          // Otherwise get all MR changes
+          const response = await this.client.get(
+            `/projects/${projectId}/merge_requests/${mergeRequestIid}/changes`
+          );
+          return response.data.changes;
+        }
       },
-      `Error getting changes for merge request #${mergeRequestIid}`,
+      commitId 
+        ? `Error getting changes for commit ${commitId}`
+        : `Error getting changes for merge request #${mergeRequestIid}`,
       null
     );
   }
@@ -147,7 +159,7 @@ class GitlabService extends BaseApiService {
   /**
    * Parse a GitLab merge request URL
    * @param {string} url - GitLab merge request URL
-   * @returns {Object|null} - Object with projectPath and mergeRequestIid or null if invalid
+   * @returns {Object|null} - Object with projectPath, mergeRequestIid, and optional commitId
    */
   parseMergeRequestUrl(url) {
     try {
@@ -158,29 +170,39 @@ class GitlabService extends BaseApiService {
       const pathParts = urlObj.pathname.split('/').filter(part => part.length > 0);
 
       // Check if it's a merge request URL
-      if (pathParts.length < 4 || pathParts[pathParts.length - 2] !== 'merge_requests') {
-        logger.error('Invalid merge request URL format');
+      const mergeRequestsIndex = pathParts.findIndex(part => part === 'merge_requests');
+      if (mergeRequestsIndex === -1) {
+        logger.error('Invalid merge request URL format - missing "merge_requests"');
         return null;
       }
 
       // Extract merge request IID
-      const mergeRequestIid = parseInt(pathParts[pathParts.length - 1], 10);
-      if (isNaN(mergeRequestIid)) {
+      let mergeRequestIid;
+      let mergeRequestIdPart = pathParts[mergeRequestsIndex + 1];
+      
+      // Handle URLs like /merge_requests/123/diffs
+      if (mergeRequestIdPart && !isNaN(parseInt(mergeRequestIdPart, 10))) {
+        mergeRequestIid = parseInt(mergeRequestIdPart, 10);
+      } else {
         logger.error('Invalid merge request ID');
         return null;
       }
 
       // Extract project path
       const projectPathIndex = pathParts.findIndex(part => part === '-');
+      let projectPath;
       if (projectPathIndex === -1) {
-        // Simple format: /group/project/-/merge_requests/123
-        const projectPath = pathParts.slice(0, pathParts.length - 3).join('/');
-        return { projectPath, mergeRequestIid };
+        // Simple format: /group/project/merge_requests/123
+        projectPath = pathParts.slice(0, mergeRequestsIndex).join('/');
       } else {
         // Format with namespace: /namespace/group/project/-/merge_requests/123
-        const projectPath = pathParts.slice(0, projectPathIndex).join('/');
-        return { projectPath, mergeRequestIid };
+        projectPath = pathParts.slice(0, projectPathIndex).join('/');
       }
+
+      // Extract commit ID from query parameters if present
+      const commitId = urlObj.searchParams.get('commit_id') || null;
+
+      return { projectPath, mergeRequestIid, commitId };
     } catch (error) {
       logger.error('Error parsing merge request URL:', error);
       return null;

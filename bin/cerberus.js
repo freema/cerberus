@@ -3,7 +3,6 @@
 const { program } = require('commander');
 const { displayBanner } = require('../src/cli/index');
 const projectCommands = require('../src/commands/project');
-const codeReviewCommands = require('../src/commands/codeReview');
 const menuController = require('../src/controllers/menuController');
 const logger = require('../src/utils/logger');
 const config = require('../src/utils/config');
@@ -12,7 +11,7 @@ const { clearTerminal } = require('../src/utils/terminal');
 // Global options
 program
   .name('cerberus')
-  .description('CLI tool for GitLab code review and Claude AI project preparation')
+  .description('CLI tool for preparing files and projects for Claude AI')
   .version('1.0.0')
   .option('-d, --debug', 'Enable debug mode')
   .option('-c, --config', 'Show current configuration')
@@ -40,7 +39,6 @@ displayBanner();
 
 // Register commands
 projectCommands(program);
-codeReviewCommands(program);
 
 // Configuration command
 program
@@ -88,25 +86,6 @@ if (shouldParseArgs) {
       return false;
     }
 
-    // Setup GitLab
-    console.log('\n=== GitLab Configuration ===');
-    const { gitlabUrl } = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'gitlabUrl',
-        message: 'Enter your GitLab API URL (or leave empty to skip):',
-        default: 'https://gitlab.com/api/v4',
-      },
-    ]);
-
-    const { gitlabToken } = await inquirer.prompt([
-      {
-        type: 'password',
-        name: 'gitlabToken',
-        message: 'Enter your GitLab API token (or leave empty to skip):',
-      },
-    ]);
-
     // Setup Claude API
     console.log('\n=== Claude AI Configuration ===');
     const { claudeApiKey } = await inquirer.prompt([
@@ -132,17 +111,8 @@ if (shouldParseArgs) {
     ]);
 
     // Update configuration
-    const gitlabService = require('../src/services/GitlabService');
     const aiServiceProvider = require('../src/services/AIServiceFactory');
     const claudeAdapter = aiServiceProvider.getAdapter('claude');
-
-    if (gitlabUrl.trim() !== '') {
-      gitlabService.updateBaseUrl(gitlabUrl);
-    }
-
-    if (gitlabToken.trim() !== '') {
-      gitlabService.updateToken(gitlabToken);
-    }
 
     if (claudeApiKey.trim() !== '') {
       claudeAdapter.updateApiKey(claudeApiKey);
@@ -167,12 +137,11 @@ if (shouldParseArgs) {
       } else {
         // Check if we have API keys, but don't force setup
         try {
-          const gitlabToken = config.getGitlabToken();
           const claudeApiKey = config.getClaudeApiKey();
 
-          if (!gitlabToken || !claudeApiKey) {
+          if (!claudeApiKey) {
             console.log(
-              'Some API keys are missing. You can configure them later from the main menu.'
+              'Claude API key is missing. You can configure it later from the main menu.'
             );
           }
         } catch (err) {

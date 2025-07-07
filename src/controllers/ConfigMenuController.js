@@ -24,8 +24,6 @@ class ConfigMenuController {
       const configType = await this.uiHelper.select(
         i18n.t('menu.settings.title'),
         [
-          { name: i18n.t('menu.settings.gitlab'), value: 'gitlab' },
-          { name: i18n.t('menu.settings.jira') || 'Jira Settings', value: 'jira' },
           { name: i18n.t('menu.settings.ai') || 'AI Services', value: 'ai' },
           { name: i18n.t('menu.settings.debug'), value: 'debug' },
           { name: i18n.t('menu.settings.locale'), value: 'locale' },
@@ -35,12 +33,6 @@ class ConfigMenuController {
       );
 
       switch (configType) {
-        case 'gitlab':
-          await this.apiConfigService.configureGitlab();
-          break;
-        case 'jira':
-          await this.configureJira();
-          break;
         case 'ai':
           const AIConfigController = require('./AIConfigController');
           const aiConfigController = new AIConfigController();
@@ -65,21 +57,11 @@ class ConfigMenuController {
    * Check missing configurations and show warnings
    */
   checkMissingConfigs() {
-    const gitlabToken = config.getGitlabToken();
     const claudeApiKey = config.getClaudeApiKey();
-    const jiraToken = config.getJiraToken();
 
-    if (!gitlabToken || !claudeApiKey || !jiraToken) {
+    if (!claudeApiKey) {
       this.uiHelper.displayWarning(i18n.t('settings.showConfig.warning'));
-      if (!gitlabToken) {
-        this.uiHelper.displayInfo(i18n.t('settings.showConfig.gitlabTokenMissing'), '');
-      }
-      if (!claudeApiKey) {
-        this.uiHelper.displayInfo(i18n.t('settings.showConfig.claudeApiKeyMissing'), '');
-      }
-      if (!jiraToken) {
-        this.uiHelper.displayInfo(i18n.t('settings.showConfig.jiraTokenMissing'), '');
-      }
+      this.uiHelper.displayInfo(i18n.t('settings.showConfig.claudeApiKeyMissing'), '');
     }
   }
 
@@ -99,14 +81,6 @@ class ConfigMenuController {
     this.uiHelper.displaySuccess(`Debug mode ${enableDebug ? 'enabled' : 'disabled'}.`);
   }
 
-  /**
-   * Configure Jira settings
-   */
-  async configureJira() {
-    const JiraConfigController = require('./JiraConfigController');
-    const jiraConfigController = new JiraConfigController();
-    await jiraConfigController.handleConfig();
-  }
 
   /**
    * Configure language settings

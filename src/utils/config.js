@@ -29,15 +29,6 @@ class ConfigService {
         defaults: {
           supportedExtensions: ['.php', '.js', '.jsx', '.ts', '.tsx', '.py'],
           excludedDirs: ['node_modules', 'vendor', '.git', 'dist', 'build'],
-          gitlab: {
-            baseUrl: 'https://gitlab.com/api/v4',
-            timeout: 10000,
-          },
-          jira: {
-            baseUrl: 'https://your-domain.atlassian.net',
-            timeout: 10000,
-            username: '',
-          },
           claude: {
             model: 'claude-3-opus-20240229',
             maxTokens: 4000,
@@ -52,9 +43,7 @@ class ConfigService {
         name: 'credentials',
         dir: path.join(pathHelper.getCachePath(), 'security'), // Store in var/cache/security instead of config
         defaults: {
-          gitlabToken: null,
           claudeApiKey: null,
-          jiraToken: null,
         },
         encryptionKey: encryptionKey,
         expiresIn: null, // No expiration - permanent storage
@@ -119,21 +108,6 @@ class ConfigService {
     this.credentialsConfig.set(key, value);
   }
 
-  /**
-   * Get the GitLab token
-   * @returns {string|null} - GitLab token or null
-   */
-  getGitlabToken() {
-    return this.getCredential('gitlabToken');
-  }
-
-  /**
-   * Set the GitLab token
-   * @param {string} token - GitLab token
-   */
-  setGitlabToken(token) {
-    this.setCredential('gitlabToken', token);
-  }
 
   /**
    * Get the Claude API key
@@ -149,22 +123,6 @@ class ConfigService {
    */
   setClaudeApiKey(apiKey) {
     this.setCredential('claudeApiKey', apiKey);
-  }
-  
-  /**
-   * Get the Jira API token
-   * @returns {string|null} - Jira API token or null
-   */
-  getJiraToken() {
-    return this.getCredential('jiraToken');
-  }
-  
-  /**
-   * Set the Jira API token
-   * @param {string} token - Jira API token
-   */
-  setJiraToken(token) {
-    this.setCredential('jiraToken', token);
   }
 
   /**
@@ -183,49 +141,6 @@ class ConfigService {
     this.set('debug', enabled);
   }
 
-  /**
-   * Get GitLab configuration
-   * @returns {Object} - GitLab configuration
-   */
-  getGitlabConfig() {
-    return this.get('gitlab', {
-      baseUrl: 'https://gitlab.com/api/v4',
-      timeout: 10000,
-    });
-  }
-
-  /**
-   * Set GitLab configuration
-   * @param {Object} config - GitLab configuration
-   */
-  setGitlabConfig(config) {
-    this.set('gitlab', {
-      ...this.getGitlabConfig(),
-      ...config,
-    });
-  }
-
-  /**
-   * Get Jira configuration
-   * @returns {Object} - Jira configuration
-   */
-  getJiraConfig() {
-    return this.get('jira', {
-      baseUrl: 'https://your-domain.atlassian.net',
-      timeout: 10000,
-    });
-  }
-
-  /**
-   * Set Jira configuration
-   * @param {Object} config - Jira configuration
-   */
-  setJiraConfig(config) {
-    this.set('jira', {
-      ...this.getJiraConfig(),
-      ...config,
-    });
-  }
 
   /**
    * Get Claude configuration

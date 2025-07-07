@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs-extra');
 const BaseModel = require('./BaseModel');
 const config = require('../utils/config');
 const fileSystem = require('../utils/fileSystem');

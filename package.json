@@ -1,7 +1,7 @@
 {
   "name": "cerberus",
   "version": "1.0.0",
-  "description": "CLI tool for GitLab code review and Claude AI project preparation",
+  "description": "CLI tool for preparing files and projects for Claude AI",
   "main": "bin/cerberus.js",
   "bin": {
     "cerberus": "./bin/cerberus.js"
@@ -15,16 +15,15 @@
     "format": "prettier --write \"src/**/*.{js,json}\" \"bin/**/*.{js,json}\"",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:file": "jest --testPathPattern",
-    "prepare": "npm run lint && npm test"
+    "test:file": "jest --testPathPattern"
   },
   "engines": {
     "node": ">=16.0.0"
   },
   "keywords": [
     "cli",
-    "code-review",
-    "gitlab",
+    "file-management",
+    "project-management",
     "claude",
     "ai"
   ],

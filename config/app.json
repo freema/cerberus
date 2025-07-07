@@ -14,6 +14,12 @@
     "dist",
     "build"
   ],
+  "claude": {
+    "model": "claude-3-opus-20240229",
+    "maxTokens": 4000
+  },
+  "activeAIService": "claude",
+  "debug": true,
   "gitlab": {
     "baseUrl": "https://code.denik.cz/api/v4",
     "timeout": 10000
@@ -23,11 +29,5 @@
     "timeout": 10000,
     "username": "tomas.grasl@vlmedia.cz"
   },
-  "claude": {
-    "model": "claude-3-opus-20240229",
-    "maxTokens": 4000
-  },
-  "activeAIService": "claude",
-  "debug": true,
   "locale": "cs"
 }

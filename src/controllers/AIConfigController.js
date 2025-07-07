@@ -16,11 +16,13 @@ class AIConfigController {
     // Show available adapters
     const adapters = aiServiceProvider.getAvailableAdapters();
     const activeAdapter = aiServiceProvider.getActiveAdapter();
+    const config = require('../utils/config');
+    const activeAdapterId = config.get('activeAIService', 'claude');
     
     logger.info('Available AI services:');
     adapters.forEach(adapter => {
       const statusSymbol = adapter.isConfigured ? '✅' : '⚠️';
-      const activeSymbol = (activeAdapter && adapter.id === activeAdapter.serviceName.toLowerCase()) ? '[ACTIVE]' : '';
+      const activeSymbol = (adapter.id === activeAdapterId) ? '[ACTIVE]' : '';
       logger.info(`  ${statusSymbol} ${adapter.name} ${activeSymbol}`);
     });
     
@@ -57,6 +59,8 @@ class AIConfigController {
   async handleSetActiveAdapter() {
     const adapters = aiServiceProvider.getAvailableAdapters();
     const activeAdapter = aiServiceProvider.getActiveAdapter();
+    const config = require('../utils/config');
+    const activeAdapterId = config.get('activeAIService', 'claude');
     
     const configuredAdapters = adapters.filter(adapter => adapter.isConfigured);
     
@@ -71,7 +75,7 @@ class AIConfigController {
         name: 'adapterId',
         message: 'Select the AI service to use:',
         choices: configuredAdapters.map(adapter => ({
-          name: `${adapter.name}${activeAdapter && adapter.id === activeAdapter.serviceName.toLowerCase() ? ' (current)' : ''}`,
+          name: `${adapter.name}${adapter.id === activeAdapterId ? ' (current)' : ''}`,
           value: adapter.id
         })),
       }

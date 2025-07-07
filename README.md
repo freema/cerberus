@@ -1,32 +1,38 @@
 # Cerberus
 
-Cerberus is a console-based Node.js application designed to streamline development workflows through interactive terminal commands. The application offers two main features:
+Cerberus is a command-line tool designed to prepare files and projects for Claude AI. It helps developers collect, organize, and analyze source code files to create comprehensive project contexts that can be used as system messages in Claude projects.
 
-1. **Project File Collection**: Collect and organize code files for Claude AI
-2. **GitLab Code Review**: Analyze GitLab merge requests with Claude AI
+## Purpose
+
+Cerberus simplifies the process of working with Claude AI by:
+- Collecting files from multiple source directories
+- Organizing all files in a single project folder with flattened names
+- Generating comprehensive project analysis and instructions
+- Creating ready-to-use context for Claude AI conversations
 
 ## Features
 
 - **Project Management**
-  - Create and manage projects for Claude AI
-  - Collect and organize code files from multiple sources:
-    - Multiple directories at once
-    - Individual files
-    - Mixed selection of files and directories
-  - Generate project structure documentation even without Claude API
-  - Analyze projects to create comprehensive Claude AI instructions
-
-- **Code Review**
-  - Fetch and analyze GitLab merge requests
-  - Process code changes for AI review
-  - Generate detailed code reviews with Claude AI
-
+  - Create new projects with organized file structure
+  - Collect files from multiple directories simultaneously
+  - Update existing projects with changes from original sources
+  - Open projects in your default file manager
+  
+- **File Collection**
+  - Support for multiple file extensions (.php, .js, .jsx, .ts, .tsx, .py)
+  - Intelligent filtering of common excluded directories (node_modules, vendor, etc.)
+  - Flattened file naming to avoid conflicts
+  - Preserve original file paths in metadata
+  
+- **Project Analysis**
+  - Generate comprehensive project structure documentation
+  - Create Claude AI instructions based on project content
+  - Export analysis results for use as system messages
+  
 - **Configuration**
-  - Secure storage of API credentials without expiration
-  - Multi-language support (English and Czech)
-  - Configurable GitLab and Claude API settings
-  - Customizable file extension filters
+  - AI service configuration (Claude API)
   - Debug mode for troubleshooting
+  - Multi-language support (English and Czech)
 
 ## Installation
 
@@ -61,58 +67,76 @@ cerberus --config
 cerberus project create           # Create a new project
 cerberus project collect          # Collect files for a project
 cerberus project analyze          # Generate Claude instructions
-cerberus codeReview fetch         # Fetch a GitLab merge request
-cerberus codeReview review        # Generate code review
 cerberus configure                # Configure settings
 ```
 
+## Workflow Example
+
+1. **Create a new project**
+   ```bash
+   cerberus project create
+   ```
+   Enter a project name when prompted.
+
+2. **Collect files**
+   - Select your project
+   - Choose source directories or files
+   - Files will be copied with flattened names (e.g., `src_utils_helper.js`)
+
+3. **Analyze the project**
+   - Generate comprehensive documentation
+   - Create Claude AI instructions
+   - Copy the generated analysis to use as a system message
+
+4. **Use in Claude**
+   - Create a new Claude project
+   - Paste the generated analysis as the system message
+   - Start coding with full project context
+
 ## Configuration
 
-The application stores configuration in two separate locations:
-- `config/app.json` - Application settings (language, extensions, etc.)
-- `var/cache/security/credentials.json` - API keys and tokens (encrypted)
+The application stores configuration in two locations:
+- `config/app.json` - Application settings
+- `var/cache/security/credentials.json` - API keys (encrypted)
 
-You can configure:
-- GitLab URL and token
-- Claude AI API key and model
-- Supported file extensions
-- Language (English/Czech)
-- Debug settings
-
-All credentials are stored securely with encryption based on your machine identity and never expire or are exposed in code.
+### Configurable Options
+- **AI Services**: Claude API key and model selection
+- **Debug Mode**: Enable/disable debug logging
+- **Language**: Switch between English and Czech
 
 ## Project Structure
 
 ```
 cerberus/
 ├── bin/
-│   └── cerberus.js       # Main executable file
+│   └── cerberus.js       # Main executable
 ├── src/
 │   ├── commands/         # CLI commands
-│   │   ├── codeReview/   # Code review functions
-│   │   └── project/      # Project management functions
-│   ├── services/         # External API services
+│   │   └── project/      # Project management
+│   ├── controllers/      # Menu controllers
+│   ├── services/         # AI service integration
 │   ├── utils/            # Helper utilities
-│   │   ├── clipboard.js  # Cross-platform clipboard handling
-│   │   ├── i18n.js       # Internationalization support
-│   │   └── ...
-│   ├── models/           # Data models
-│   └── cli/              # CLI framework
-├── var/                  # Variable data (logs, cache)
-│   ├── cache/            # Cache storage
-│   │   ├── merge-requests/ # Merge request cache
-│   │   ├── security/     # Encrypted credentials
-│   │   ├── projects/     # Temporary project data
-│   │   └── temp/         # Other temporary files
-│   └── log/              # Log files
-├── data/                 # Persistent data storage
-│   └── projects/         # Project files and analysis
+│   └── models/           # Data models
+├── data/
+│   └── projects/         # Project storage
+├── var/
+│   ├── cache/            # Temporary data
+│   └── log/              # Application logs
 ├── locales/              # Language files
-│   ├── en.json           # English translations
-│   └── cs.json           # Czech translations
-├── config/               # Configuration files
-└── package.json
+└── config/               # Configuration
 ```
+
+## File Organization
+
+When collecting files, Cerberus:
+1. Copies files from source locations
+2. Renames them with flattened paths (replacing `/` with `_`)
+3. Stores them in `data/projects/[project-name]/`
+4. Maintains a mapping of flattened names to original paths
+
+Example:
+- Original: `/src/utils/helper.js`
+- Flattened: `src_utils_helper.js`
 
 ## License
 

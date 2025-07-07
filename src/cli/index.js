@@ -33,8 +33,6 @@ async function mainMenu() {
       message: i18n.t('menu.main.title'),
       choices: [
         { name: i18n.t('menu.main.project'), value: 'project' },
-        { name: i18n.t('menu.main.codeReview'), value: 'codeReview' },
-        { name: i18n.t('menu.main.jira'), value: 'jira' },
         { name: i18n.t('menu.main.configure'), value: 'configure' },
         { name: i18n.t('menu.main.exit'), value: 'exit' },
       ],

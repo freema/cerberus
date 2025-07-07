@@ -5,7 +5,6 @@ const inquirer = require('inquirer');
 const chalk = require('chalk');
 const logger = require('../utils/logger');
 const Project = require('../models/Project');
-const MergeRequest = require('../models/MergeRequest');
 const config = require('../utils/config');
 // Služby budou importovány v konkrétních příkazech podle potřeby
 const ora = require('ora');
@@ -194,50 +193,6 @@ class CommandBase {
     return await Project.load(selectedName);
   }
 
-  /**
-   * Select a merge request from the list of available merge requests
-   * @returns {Promise<MergeRequest|null>} - Selected merge request
-   */
-  async selectMergeRequest() {
-    // Get list of merge requests
-    const mrIds = await MergeRequest.listAll();
-
-    if (mrIds.length === 0) {
-      logger.warn('No merge requests found');
-
-      if (await this.confirmAction('Would you like to fetch a new merge request?')) {
-        // Create fetch MR command
-        const FetchMRCommand = require('./codeReview/fetchMergeRequests');
-        const fetchCmd = new FetchMRCommand();
-        return await fetchCmd.execute({});
-      }
-
-      return null;
-    }
-
-    // Get merge request details for display
-    const choices = [];
-    for (const id of mrIds) {
-      try {
-        const mr = await MergeRequest.load(id);
-        choices.push({
-          name: `${mr.projectPath} - MR !${mr.mergeRequestIid}: ${mr.title} (${mr.id})`,
-          value: id,
-        });
-      } catch (error) {
-        logger.debug(`Error loading merge request ${id}:`, error);
-      }
-    }
-
-    if (choices.length === 0) {
-      logger.error('No valid merge requests found');
-      return null;
-    }
-
-    // Show merge request selection
-    const selectedId = await this.selectOption('Select a merge request:', choices);
-    return await MergeRequest.load(selectedId);
-  }
 
   /**
    * Check if API keys are configured and offer to configure them if not

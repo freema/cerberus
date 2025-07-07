@@ -14,7 +14,8 @@ class ProjectMenuController {
       { name: i18n.t('menu.project.new'), value: 'new' },
       { name: i18n.t('menu.project.existingOrUpdate'), value: 'existingOrUpdate' }, // Combined option
       { name: i18n.t('menu.project.collect'), value: 'collect' },
-      { name: i18n.t('menu.project.analyze'), value: 'analyze' }
+      { name: i18n.t('menu.project.analyze'), value: 'analyze' },
+      { name: 'Create bundle for Claude', value: 'bundle' }
     ];
   }
 
@@ -43,6 +44,10 @@ class ProjectMenuController {
         case 'analyze':
           const analyzeProject = require('../commands/project/analyzeProject');
           await analyzeProject();
+          break;
+        case 'bundle':
+          const createBundle = require('../commands/project/createBundle');
+          await createBundle();
           break;
         case 'back':
           // Return to main menu
@@ -107,6 +112,7 @@ class ProjectMenuController {
             { name: 'Update files from original sources', value: 'update' },
             { name: 'Collect more files', value: 'collect' },
             { name: 'Analyze project (generate Claude instructions)', value: 'analyze' },
+            { name: 'Create bundle for Claude Projects', value: 'bundle' },
             { name: 'Go back', value: 'back' }
           ]
         }
@@ -128,6 +134,10 @@ class ProjectMenuController {
         case 'analyze':
           const analyzeProject = require('../commands/project/analyzeProject');
           await analyzeProject(selectedProject);
+          break;
+        case 'bundle':
+          const createBundle = require('../commands/project/createBundle');
+          await createBundle(selectedProject);
           break;
         case 'back':
           // Just return to the previous menu

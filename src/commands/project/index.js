@@ -4,6 +4,7 @@ const openProject = require('./openProject');
 const collectFiles = require('./collectFiles');
 const analyzeProject = require('./analyzeProject');
 const updateFiles = require('./updateFiles');
+const createBundle = require('./createBundle');
 
 /**
  * Register project commands
@@ -53,6 +54,11 @@ function registerCommands(program) {
     .command('update')
     .description('Update project files from original sources')
     .action(updateFiles);
+
+  projectCommand
+    .command('bundle')
+    .description('Create file bundles for Claude Projects')
+    .action(createBundle);
 
   return program;
 }

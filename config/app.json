@@ -12,7 +12,8 @@
     "vendor",
     ".git",
     "dist",
-    "build"
+    "build",
+    "coverage"
   ],
   "claude": {
     "model": "claude-3-opus-20240229",
@@ -20,14 +21,12 @@
   },
   "activeAIService": "claude",
   "debug": true,
-  "gitlab": {
-    "baseUrl": "https://code.denik.cz/api/v4",
-    "timeout": 10000
-  },
-  "jira": {
-    "baseUrl": "https://vlm-online.atlassian.net",
-    "timeout": 10000,
-    "username": "tomas.grasl@vlmedia.cz"
+  "bundle": {
+    "maxFilesPerBundle": 50,
+    "bundleFormat": "markdown",
+    "includeEmptyFiles": false,
+    "maxFileSizeForBundle": 1048576,
+    "maxBundleSize": 5242880
   },
   "locale": "cs"
 }

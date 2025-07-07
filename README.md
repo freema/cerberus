@@ -24,6 +24,14 @@ Cerberus simplifies the process of working with Claude AI by:
   - Flattened file naming to avoid conflicts
   - Preserve original file paths in metadata
   
+- **Bundle Creation** 🆕
+  - Create file bundles optimized for Claude Projects
+  - Single bundle: All files in one markdown file
+  - Multiple bundles: Split large projects across multiple files
+  - Custom bundles: Select specific files to include
+  - Automatic syntax highlighting and file organization
+  - Generate system messages for Claude Projects
+  
 - **Project Analysis**
   - Generate comprehensive project structure documentation
   - Create Claude AI instructions based on project content
@@ -33,6 +41,7 @@ Cerberus simplifies the process of working with Claude AI by:
   - AI service configuration (Claude API)
   - Debug mode for troubleshooting
   - Multi-language support (English and Czech)
+  - Configurable bundle settings
 
 ## Installation
 
@@ -67,6 +76,7 @@ cerberus --config
 cerberus project create           # Create a new project
 cerberus project collect          # Collect files for a project
 cerberus project analyze          # Generate Claude instructions
+cerberus project bundle           # Create bundles for Claude Projects
 cerberus configure                # Configure settings
 ```
 
@@ -82,6 +92,18 @@ cerberus configure                # Configure settings
    - Select your project
    - Choose source directories or files
    - Files will be copied with flattened names (e.g., `src_utils_helper.js`)
+
+3. **Create bundles for Claude Projects** 🆕
+   - Choose bundle type (single, multiple, or custom)
+   - Files are packaged with syntax highlighting
+   - System message is automatically generated
+   
+4. **Use in Claude Projects**
+   - Upload bundle files (.md) to your Claude Project
+   - Copy system message as project instructions
+   - Start coding with full project context
+
+### Alternative: Traditional Analysis Workflow
 
 3. **Analyze the project**
    - Generate comprehensive documentation
@@ -103,6 +125,7 @@ The application stores configuration in two locations:
 - **AI Services**: Claude API key and model selection
 - **Debug Mode**: Enable/disable debug logging
 - **Language**: Switch between English and Czech
+- **Bundle Settings**: Maximum files per bundle, file size limits, format options
 
 ## Project Structure
 
@@ -137,6 +160,112 @@ When collecting files, Cerberus:
 Example:
 - Original: `/src/utils/helper.js`
 - Flattened: `src_utils_helper.js`
+
+## Working with Bundles for Claude Projects
+
+### What are Bundles?
+
+Bundles are specially formatted Markdown files that contain multiple source code files from your project. Instead of uploading dozens of individual files to Claude Projects, you can upload 1-3 bundle files that contain everything.
+
+### Bundle Types
+
+#### 1. Single Bundle
+- **Best for**: Small to medium projects (< 100 files)
+- **Contains**: All project files in one .md file
+- **Advantages**: Simple, everything in one place
+- **File**: `[project-name]-bundle-1.md`
+
+#### 2. Multiple Bundles
+- **Best for**: Large projects (100+ files)
+- **Contains**: Files split across multiple .md files (default: 50 files per bundle)
+- **Advantages**: Stays within Claude's size limits
+- **Files**: `[project-name]-bundle-1.md`, `[project-name]-bundle-2.md`, etc.
+
+#### 3. Custom Bundle
+- **Best for**: When you need specific files only
+- **Contains**: Only the files you select
+- **Advantages**: Focused context, smaller size
+- **File**: `[project-name]-custom-bundle.md`
+
+### Bundle Format
+
+Each bundle contains:
+```markdown
+# CODE_BUNDLE_START
+## Project: my-project
+## Created: 2024-01-15T10:30:00.000Z
+## Total Files: 25
+## Bundle: 1 of 1
+
+---
+
+### FILE: src/components/Button.jsx
+```jsx
+import React from 'react';
+
+export const Button = ({ children, onClick }) => {
+  return <button onClick={onClick}>{children}</button>;
+};
+```
+
+---
+
+### FILE: src/utils/helpers.js
+```javascript
+export const formatDate = (date) => {
+  return date.toISOString().split('T')[0];
+};
+```
+
+# CODE_BUNDLE_END
+```
+
+### Using Bundles in Claude Projects
+
+1. **Create your project and collect files** as usual
+2. **Create bundle**: Select "Create bundle for Claude" from project menu
+3. **Choose bundle type**: Single, multiple, or custom
+4. **Upload to Claude**: 
+   - Go to claude.ai and create a new Project
+   - Upload ALL bundle .md files
+   - Copy the generated system message to project instructions
+5. **Start coding**: Claude now understands your entire project structure
+
+### Bundle Configuration
+
+You can configure bundle settings in `config/app.json`:
+
+```json
+{
+  "bundle": {
+    "maxFilesPerBundle": 50,
+    "bundleFormat": "markdown",
+    "includeEmptyFiles": false,
+    "maxFileSizeForBundle": 1048576,
+    "maxBundleSize": 5242880
+  }
+}
+```
+
+### Bundle Storage
+
+Bundles are saved in your project directory:
+```
+data/projects/my-project/
+├── bundles/
+│   ├── my-project-bundle-1.md
+│   ├── my-project-bundle-2.md
+│   └── my-project-claude-instructions.md
+└── [other project files...]
+```
+
+### Best Practices
+
+- **For projects < 50 files**: Use single bundle
+- **For projects 50-200 files**: Use multiple bundles with default settings
+- **For projects > 200 files**: Consider using custom bundles with only essential files
+- **Always upload ALL bundles** to Claude Projects for complete context
+- **Use the generated system message** for best results
 
 ## License
 

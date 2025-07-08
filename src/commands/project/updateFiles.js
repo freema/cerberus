@@ -8,7 +8,7 @@ const fs = require('fs-extra');
 const ora = require('ora');
 const Project = require('../../models/Project');
 const logger = require('../../utils/logger');
-const { generateDirectoryLink } = require('../../utils/pathUtils');
+const { generateDirectoryLink } = require('../../utils/pathHelper');
 
 /**
  * Update project files from original sources

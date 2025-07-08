@@ -8,7 +8,7 @@ const ora = require('ora');
 const path = require('path');
 const logger = require('./logger');
 const i18n = require('./i18n');
-const { generateDirectoryLink } = require('./pathUtils');
+const { generateDirectoryLink } = require('./pathHelper');
 const clipboard = require('./clipboard');
 
 class UIHelper {

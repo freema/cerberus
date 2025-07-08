@@ -9,6 +9,7 @@ const logger = require('../../utils/logger');
 const config = require('../../utils/config');
 const clipboard = require('../../utils/clipboard');
 const aiServiceProvider = require('../../services/AIServiceFactory');
+const { generateDirectoryStructure } = require('../../utils/directoryStructure');
 
 /**
  * Analyze a project and generate Claude instructions
@@ -181,91 +182,6 @@ async function analyzeProject(projectName) {
   } catch (error) {
     logger.error('Error analyzing project:', error);
   }
-}
-
-/**
- * Generate a directory structure string for Claude instructions
- * @param {Array} files - Array of file objects
- * @returns {string} - Formatted directory structure
- */
-function generateDirectoryStructure(files) {
-  const path = require('path');
-  
-  let directoryStructure = `# Project Structure and File Mapping\n\n`;
-
-  // Part 1: Original directory structure by source directory
-  directoryStructure += `## Original Directory Structure\n\n`;
-
-  // Group files by their original directories
-  const filesBySourceDir = {};
-
-  files.forEach(file => {
-    // Skip if missing source information
-    if (!file.originalDirectory) return;
-
-    if (!filesBySourceDir[file.originalDirectory]) {
-      filesBySourceDir[file.originalDirectory] = [];
-    }
-
-    filesBySourceDir[file.originalDirectory].push(file);
-  });
-
-  // Output organized by source directories
-  Object.keys(filesBySourceDir)
-    .sort()
-    .forEach(dir => {
-      directoryStructure += `### ${dir}\n\n`;
-
-      const filesInDir = filesBySourceDir[dir].sort((a, b) =>
-        path.basename(a.originalPath).localeCompare(path.basename(b.originalPath))
-      );
-
-      filesInDir.forEach(file => {
-        const fileName = path.basename(file.originalPath);
-        directoryStructure += `- ${fileName}\n`;
-      });
-
-      directoryStructure += '\n';
-    });
-
-  // Part 2: Flat file structure in the project
-  directoryStructure += `## Project Files (Flattened Structure)\n\n`;
-  directoryStructure += `All files are stored with flattened names in the project directory.\n\n`;
-
-  // Part 3: File mapping between original and project paths
-  directoryStructure += `## File Mapping\n\n`;
-  directoryStructure += `Original Path → Project Path\n\n`;
-
-  // Sort files alphabetically by original path for easier reference
-  const sortedFiles = [...files].sort((a, b) => {
-    const aPath = a.fullOriginalPath || a.originalPath;
-    const bPath = b.fullOriginalPath || b.originalPath;
-    return aPath.localeCompare(bPath);
-  });
-
-  sortedFiles.forEach(file => {
-    const origPath = file.fullOriginalPath || file.originalPath;
-    directoryStructure += `- \`${origPath}\` → \`${file.newPath}\`\n`;
-  });
-
-  // Part 4: File statistics
-  const extensions = {};
-  files.forEach(file => {
-    const ext = path.extname(file.originalPath);
-    extensions[ext] = (extensions[ext] || 0) + 1;
-  });
-
-  directoryStructure += `\n## File Statistics\n\n`;
-  directoryStructure += `Total files: ${files.length}\n\n`;
-  directoryStructure += `Files by extension:\n`;
-
-  Object.entries(extensions)
-    .sort((a, b) => b[1] - a[1]) // Sort by count descending
-    .forEach(([ext, count]) => {
-      directoryStructure += `- ${ext || '(no extension)'}: ${count}\n`;
-    });
-
-  return directoryStructure;
 }
 
 module.exports = analyzeProject;

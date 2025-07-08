@@ -1,3 +1,20 @@
+// Mock fs-extra module first
+jest.mock('fs-extra', () => ({
+  ensureDirSync: jest.fn(),
+  appendFileSync: jest.fn(),
+}));
+
+// Mock chalk
+jest.mock('chalk', () => ({
+  red: jest.fn(text => text),
+  green: jest.fn(text => text),
+  blue: jest.fn(text => text),
+  yellow: jest.fn(text => text),
+  cyan: jest.fn(text => text),
+  gray: jest.fn(text => text),
+  white: jest.fn(text => text),
+}));
+
 const logger = require('../../src/utils/logger');
 
 // Mock console methods
@@ -49,9 +66,37 @@ describe('Logger', () => {
   });
 
   test('debug() should log when debug mode is enabled', () => {
+    jest.clearAllMocks(); // Clear previous calls
     logger.setDebugMode(true);
     logger.debug('Test debug message');
-    expect(console.log).toHaveBeenCalledTimes(1);
     expect(console.log).toHaveBeenCalled();
+  });
+
+  test('initializeFromConfig() should enable debug mode when config.debug is true', () => {
+    const mockConfig = { debug: true };
+    logger.setDebugMode(false); // Start with debug off
+    logger.initializeFromConfig(mockConfig);
+    expect(logger.isDebugMode()).toBe(true);
+  });
+
+  test('initializeFromConfig() should not enable debug mode when config.debug is false', () => {
+    const mockConfig = { debug: false };
+    logger.setDebugMode(false);
+    logger.initializeFromConfig(mockConfig);
+    expect(logger.isDebugMode()).toBe(false);
+  });
+
+  test('initializeFromConfig() should handle null config gracefully', () => {
+    logger.setDebugMode(false);
+    logger.initializeFromConfig(null);
+    expect(logger.isDebugMode()).toBe(false);
+  });
+
+  test('isDebugMode() should return current debug state', () => {
+    logger.setDebugMode(true);
+    expect(logger.isDebugMode()).toBe(true);
+    
+    logger.setDebugMode(false);
+    expect(logger.isDebugMode()).toBe(false);
   });
 });

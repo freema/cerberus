@@ -142,3 +142,6 @@ dist
 .pnp.*
 
 **/.claude/settings.local.json
+
+# Task backup files
+backup-projects-*.tar.gz

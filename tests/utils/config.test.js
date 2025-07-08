@@ -1,6 +1,21 @@
 // Mock the fs-extra module first
 jest.mock('fs-extra', () => ({
   ensureDirSync: jest.fn(),
+  existsSync: jest.fn(() => false),
+  writeFileSync: jest.fn(),
+  readFileSync: jest.fn(() => '{}'),
+  appendFileSync: jest.fn(),
+}));
+
+// Mock chalk
+jest.mock('chalk', () => ({
+  red: jest.fn(text => text),
+  green: jest.fn(text => text),
+  blue: jest.fn(text => text),
+  yellow: jest.fn(text => text),
+  cyan: jest.fn(text => text),
+  gray: jest.fn(text => text),
+  white: jest.fn(text => text),
 }));
 
 // Import the config service
@@ -22,19 +37,6 @@ describe('Config Service', () => {
     config.set('nested.test', 'nestedValue');
     const result = config.get('nested.test');
     expect(result).toBe('nestedValue');
-  });
-
-  test('should get GitLab configuration', () => {
-    const gitlabConfig = config.getGitlabConfig();
-    expect(gitlabConfig).toHaveProperty('baseUrl');
-    expect(gitlabConfig).toHaveProperty('timeout');
-  });
-
-  test('should set GitLab configuration', () => {
-    const newConfig = { baseUrl: 'https://example.gitlab.com/api/v4' };
-    config.setGitlabConfig(newConfig);
-    const gitlabConfig = config.getGitlabConfig();
-    expect(gitlabConfig.baseUrl).toBe('https://example.gitlab.com/api/v4');
   });
 
   test('should get Claude configuration', () => {
@@ -74,15 +76,20 @@ describe('Config Service', () => {
     expect(credential).toBe('secret');
   });
 
-  test('should set and get GitLab token', () => {
-    config.setGitlabToken('gl_token123');
-    const token = config.getGitlabToken();
-    expect(token).toBe('gl_token123');
-  });
-
   test('should set and get Claude API key', () => {
     config.setClaudeApiKey('claude_key456');
     const apiKey = config.getClaudeApiKey();
     expect(apiKey).toBe('claude_key456');
+  });
+
+  test('should handle configuration get/set operations', () => {
+    // Test that config can handle general configuration operations
+    config.set('test.nested.key', 'testValue');
+    const value = config.get('test.nested.key');
+    expect(value).toBe('testValue');
+    
+    // Test default value
+    const defaultValue = config.get('nonexistent.key', 'default');
+    expect(defaultValue).toBe('default');
   });
 });

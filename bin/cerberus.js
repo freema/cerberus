@@ -128,6 +128,15 @@ if (shouldParseArgs) {
   // Start the interactive CLI
   (async () => {
     try {
+      // Initialize debug mode from config after logger and config are loaded
+      try {
+        const appConfig = config.getAppConfig();
+        logger.initializeFromConfig(appConfig);
+      } catch (err) {
+        // Config might not exist yet, continue without debug mode
+        logger.debug('Could not initialize debug mode from config');
+      }
+
       // Check if this is first run by looking for a config file
       const configFileExists = fs.existsSync(configPath);
 

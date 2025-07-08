@@ -12,28 +12,16 @@ class Logger {
     this.logToFile = true;
     this.logFilePath = '';
     this.ensureLogDirectory();
-    
-    // Load debug mode from config if available (added this line)
-    this.initializeDebugMode();
   }
-  
+
   /**
-   * Initialize debug mode from config if available
+   * Initialize debug mode from config (should be called after config is loaded)
+   * @param {Object} config - Config object with debug property
    */
-  initializeDebugMode() {
-    try {
-      // Try to get config - we need to be careful to avoid circular dependencies
-      const configPath = path.join(process.cwd(), 'config', 'app.json');
-      if (fs.existsSync(configPath)) {
-        const configData = fs.readJsonSync(configPath);
-        if (configData && configData.debug === true) {
-          this.setDebugMode(true);
-          this.debug('Debug mode enabled from config');
-        }
-      }
-    } catch (error) {
-      // Ignore errors here - we'll just use the default (false)
-      console.error('Error reading debug config:', error.message);
+  initializeFromConfig(config) {
+    if (config && config.debug === true) {
+      this.setDebugMode(true);
+      this.debug('Debug mode enabled from config');
     }
   }
 

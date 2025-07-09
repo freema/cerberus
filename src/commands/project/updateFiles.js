@@ -9,6 +9,7 @@ const ora = require('ora');
 const Project = require('../../models/Project');
 const logger = require('../../utils/logger');
 const { generateDirectoryLink } = require('../../utils/pathHelper');
+const { selectAndLoadProject } = require('../../utils/projectHelper');
 
 /**
  * Update project files from original sources
@@ -18,173 +19,213 @@ async function updateFiles(projectName) {
   logger.info('=== Update Project Files ===');
 
   try {
-    let project;
+    // Load project using helper function
+    const project = await selectAndLoadProject(projectName, {
+      requireFiles: true,
+      action: 'update'
+    });
     
-    // If no project name provided, let user select one
-    if (!projectName) {
-      const existingProjects = await Project.listAll();
-      
-      if (existingProjects.length === 0) {
-        logger.warn('No projects found. Please create a project first.');
-        return;
-      }
-      
-      const { selectedProject } = await inquirer.prompt([
-        {
-          type: 'list',
-          name: 'selectedProject',
-          message: 'Select a project to update:',
-          choices: existingProjects
-        }
-      ]);
-      
-      projectName = selectedProject;
-    }
-    
-    // Load the project
-    project = await Project.load(projectName);
-    
-    // Validate project files info
-    if (!project.files || project.files.length === 0) {
-      logger.warn('This project has no files information. Please collect files first.');
+    if (!project) {
       return;
     }
     
-    // Show project information
-    logger.info(chalk.cyan('\n=== Project Information ==='));
-    logger.info(chalk.white(`Name: ${chalk.yellow(project.name)}`));
-    logger.info(chalk.white(`Last Updated: ${chalk.yellow(new Date(project.lastUpdated).toLocaleString())}`));
-    logger.info(chalk.white(`Files: ${chalk.yellow(project.files.length)}`));
-    logger.info(chalk.white(`Source Directories: ${chalk.yellow(project.sourceDirectories.join(', ') || 'None')}`))
+    // Display project information and handle source directories
+    displayProjectInfo(project);
+    await validateAndUpdateSourceDirectories(project);
     
-    // Verify source directories still exist
-    const validSourceDirs = [];
-    const invalidSourceDirs = [];
-    
-    for (const dir of project.sourceDirectories) {
-      try {
-        await fs.access(dir);
-        validSourceDirs.push(dir);
-      } catch (error) {
-        invalidSourceDirs.push(dir);
-      }
-    }
-    
-    if (invalidSourceDirs.length > 0) {
-      logger.warn('\nSome source directories no longer exist or are not accessible:');
-      invalidSourceDirs.forEach(dir => logger.warn(chalk.red(`- ${dir}`)));
-      
-      if (validSourceDirs.length === 0) {
-        const { proceed } = await inquirer.prompt([
-          {
-            type: 'confirm',
-            name: 'proceed',
-            message: 'No valid source directories found. Do you want to add new source directories?',
-            default: true
-          }
-        ]);
-        
-        if (proceed) {
-          // Add new source directories
-          await addNewSourceDirectories(project);
-        } else {
-          logger.warn('Update cancelled due to missing source directories.');
-          return;
-        }
-      } else {
-        logger.info(chalk.green('\nValid source directories:'));
-        validSourceDirs.forEach(dir => logger.info(chalk.green(`- ${dir}`)));
-        
-        const { removeInvalid } = await inquirer.prompt([
-          {
-            type: 'confirm',
-            name: 'removeInvalid',
-            message: 'Do you want to remove invalid source directories from the project?',
-            default: true
-          }
-        ]);
-        
-        if (removeInvalid) {
-          project.sourceDirectories = validSourceDirs;
-          await project.save();
-          logger.success('Invalid source directories removed from project configuration.');
-        }
-        
-        const { addNew } = await inquirer.prompt([
-          {
-            type: 'confirm',
-            name: 'addNew',
-            message: 'Do you want to add new source directories?',
-            default: false
-          }
-        ]);
-        
-        if (addNew) {
-          await addNewSourceDirectories(project);
-        }
-      }
-    }
-    
-    // Update approach
-    const { updateApproach } = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'updateApproach',
-        message: 'How would you like to update project files?',
-        choices: [
-          { 
-            name: 'Update all files (check for new/modified files in all sources)', 
-            value: 'all' 
-          },
-          { 
-            name: 'Update only existing files (don\'t add new files)', 
-            value: 'existing' 
-          },
-          { 
-            name: 'Select specific files to update', 
-            value: 'select' 
-          },
-          { 
-            name: 'Cancel update', 
-            value: 'cancel' 
-          }
-        ]
-      }
-    ]);
-    
+    // Get update approach and execute
+    const updateApproach = await getUpdateApproach();
     if (updateApproach === 'cancel') {
       logger.info('Update cancelled.');
       return;
     }
     
-    // Process update based on selected approach
-    switch (updateApproach) {
-      case 'all':
-        await updateAllFiles(project);
-        break;
-      case 'existing':
-        await updateExistingFiles(project);
-        break;
-      case 'select':
-        await selectFilesToUpdate(project);
-        break;
-    }
+    // Execute update based on approach
+    await executeUpdate(project, updateApproach);
     
-    // Save project after updates
-    await project.save();
-    
-    // Show link to the project directory
-    const projectDir = project.getProjectPath();
-    const dirLink = generateDirectoryLink(projectDir);
-
-    logger.info(chalk.cyan('\nProject directory: '));
-    logger.info(chalk.blue.underline(dirLink));
-    logger.info(chalk.white(projectDir));
+    // Complete the update process
+    await completeUpdate(project);
     
     return project;
   } catch (error) {
     logger.error('Error updating project files:', error);
   }
+}
+
+/**
+ * Display project information
+ * @param {Project} project - Project instance
+ */
+function displayProjectInfo(project) {
+  logger.info(chalk.cyan('\n=== Project Information ==='));
+  logger.info(chalk.white(`Name: ${chalk.yellow(project.name)}`));
+  logger.info(chalk.white(`Last Updated: ${chalk.yellow(new Date(project.lastUpdated).toLocaleString())}`));
+  logger.info(chalk.white(`Files: ${chalk.yellow(project.files.length)}`));
+  logger.info(chalk.white(`Source Directories: ${chalk.yellow(project.sourceDirectories.join(', ') || 'None')}`));
+}
+
+/**
+ * Validate and update source directories
+ * @param {Project} project - Project instance
+ */
+async function validateAndUpdateSourceDirectories(project) {
+  const { validDirs, invalidDirs } = await validateSourceDirectories(project.sourceDirectories);
+  
+  if (invalidDirs.length > 0) {
+    logger.warn('\nSome source directories no longer exist or are not accessible:');
+    invalidDirs.forEach(dir => logger.warn(chalk.red(`- ${dir}`)));
+    
+    if (validDirs.length === 0) {
+      const proceed = await askToAddNewDirectories('No valid source directories found. Do you want to add new source directories?');
+      if (proceed) {
+        await addNewSourceDirectories(project);
+      } else {
+        throw new Error('Update cancelled due to missing source directories.');
+      }
+    } else {
+      await handlePartiallyValidDirectories(project, validDirs, invalidDirs);
+    }
+  }
+}
+
+/**
+ * Validate source directories
+ * @param {Array} directories - Array of directory paths
+ * @returns {Promise<Object>} - Object with valid and invalid directories
+ */
+async function validateSourceDirectories(directories) {
+  const validDirs = [];
+  const invalidDirs = [];
+  
+  for (const dir of directories) {
+    try {
+      await fs.access(dir);
+      validDirs.push(dir);
+    } catch (error) {
+      invalidDirs.push(dir);
+    }
+  }
+  
+  return { validDirs, invalidDirs };
+}
+
+/**
+ * Handle partially valid directories scenario
+ * @param {Project} project - Project instance
+ * @param {Array} validDirs - Valid directories
+ * @param {Array} invalidDirs - Invalid directories
+ */
+async function handlePartiallyValidDirectories(project, validDirs, invalidDirs) {
+  logger.info(chalk.green('\nValid source directories:'));
+  validDirs.forEach(dir => logger.info(chalk.green(`- ${dir}`)));
+  
+  const { removeInvalid } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'removeInvalid',
+      message: 'Do you want to remove invalid source directories from the project?',
+      default: true
+    }
+  ]);
+  
+  if (removeInvalid) {
+    project.sourceDirectories = validDirs;
+    await project.save();
+    logger.success('Invalid source directories removed from project configuration.');
+  }
+  
+  const addNew = await askToAddNewDirectories('Do you want to add new source directories?', false);
+  if (addNew) {
+    await addNewSourceDirectories(project);
+  }
+}
+
+/**
+ * Ask user if they want to add new directories
+ * @param {string} message - Prompt message
+ * @param {boolean} defaultValue - Default value
+ * @returns {Promise<boolean>} - User response
+ */
+async function askToAddNewDirectories(message, defaultValue = true) {
+  const { proceed } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'proceed',
+      message,
+      default: defaultValue
+    }
+  ]);
+  return proceed;
+}
+
+/**
+ * Get update approach from user
+ * @returns {Promise<string>} - Selected approach
+ */
+async function getUpdateApproach() {
+  const { updateApproach } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'updateApproach',
+      message: 'How would you like to update project files?',
+      choices: [
+        { 
+          name: 'Update all files (check for new/modified files in all sources)', 
+          value: 'all' 
+        },
+        { 
+          name: 'Update only existing files (don\'t add new files)', 
+          value: 'existing' 
+        },
+        { 
+          name: 'Select specific files to update', 
+          value: 'select' 
+        },
+        { 
+          name: 'Cancel update', 
+          value: 'cancel' 
+        }
+      ]
+    }
+  ]);
+  
+  return updateApproach;
+}
+
+/**
+ * Execute update based on selected approach
+ * @param {Project} project - Project instance
+ * @param {string} approach - Update approach
+ */
+async function executeUpdate(project, approach) {
+  switch (approach) {
+    case 'all':
+      await updateAllFiles(project);
+      break;
+    case 'existing':
+      await updateExistingFiles(project);
+      break;
+    case 'select':
+      await selectFilesToUpdate(project);
+      break;
+  }
+}
+
+/**
+ * Complete the update process
+ * @param {Project} project - Project instance
+ */
+async function completeUpdate(project) {
+  // Save project after updates
+  await project.save();
+  
+  // Show link to the project directory
+  const projectDir = project.getProjectPath();
+  const dirLink = generateDirectoryLink(projectDir);
+
+  logger.info(chalk.cyan('\nProject directory: '));
+  logger.info(chalk.blue.underline(dirLink));
+  logger.info(chalk.white(projectDir));
 }
 
 /**

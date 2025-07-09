@@ -9,7 +9,7 @@ const Project = require('../../models/Project');
 const bundleCreator = require('../../utils/bundleCreator');
 const clipboard = require('../../utils/clipboard');
 const logger = require('../../utils/logger');
-const UIHelper = require('../../utils/UIHelper');
+const UIHelper = require('../../utils/uiHelper');
 
 class CreateBundleCommand extends CommandBase {
   constructor() {

@@ -3,7 +3,7 @@ const { mainMenu } = require('../cli');
 const ProjectMenuController = require('./ProjectMenuController');
 const ConfigMenuController = require('./ConfigMenuController');
 const config = require('../utils/config');
-const UIHelper = require('../utils/UIHelper');
+const UIHelper = require('../utils/uiHelper');
 const ApiConfigService = require('../utils/ApiConfigService');
 const logger = require('../utils/logger');
 

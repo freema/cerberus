@@ -3,7 +3,7 @@
  */
 const config = require('./config');
 const logger = require('./logger');
-const UIHelper = require('./UIHelper');
+const UIHelper = require('./uiHelper');
 
 class ApiConfigService {
   constructor() {

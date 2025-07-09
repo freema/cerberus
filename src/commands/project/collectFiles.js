@@ -9,6 +9,7 @@ const config = require('../../utils/config');
 const logger = require('../../utils/logger');
 const { generateDirectoryLink } = require('../../utils/pathHelper');
 const { generateDirectoryStructure } = require('../../utils/directoryStructure');
+const { selectAndLoadProject } = require('../../utils/projectHelper');
 
 // Extension groups for different file types
 const FILE_EXTENSION_GROUPS = {
@@ -30,433 +31,30 @@ async function collectFiles(projectName) {
   logger.info('=== Collect Project Files ===');
 
   try {
-    let project;
+    // Handle project selection/creation using the helper
+    const project = await handleProjectSelection(projectName);
+    if (!project) return;
+    
+    projectName = project.name;
 
-    // If project name is not provided, either open existing or create new
-    if (!projectName) {
-      const existingProjects = await Project.listAll();
-
-      if (existingProjects.length > 0) {
-        const { projectAction } = await inquirer.prompt([
-          {
-            type: 'list',
-            name: 'projectAction',
-            message: 'Select project action:',
-            choices: [
-              { name: 'Create a new project', value: 'create' },
-              { name: 'Select an existing project', value: 'select' },
-              { name: 'Update an existing project', value: 'update' },
-              { name: 'Go back', value: 'back' },
-            ],
-          },
-        ]);
-
-        if (projectAction === 'back') {
-          return;
-        } else if (projectAction === 'create') {
-          const createProject = require('./createProject');
-          project = await createProject();
-
-          // If project creation was cancelled or failed
-          if (!project) return;
-
-          projectName = project.name;
-        } else if (projectAction === 'select' || projectAction === 'update') {
-          const { selectedProject } = await inquirer.prompt([
-            {
-              type: 'list',
-              name: 'selectedProject',
-              message: `Select a project to ${projectAction === 'update' ? 'update' : 'use'}:`,
-              choices: existingProjects,
-            },
-          ]);
-
-          projectName = selectedProject;
-          project = await Project.load(projectName);
-
-          if (projectAction === 'update') {
-            // Show existing project info before updating
-            logger.info(`Updating project: ${projectName}`);
-            logger.info(`Current files: ${project.files.length}`);
-            logger.info(`Source directories: ${project.sourceDirectories.join(', ') || 'None'}`);
-
-            // Confirm update
-            const { confirmUpdate } = await inquirer.prompt([
-              {
-                type: 'confirm',
-                name: 'confirmUpdate',
-                message: 'This will add new files to the existing project. Continue?',
-                default: true,
-              },
-            ]);
-
-            if (!confirmUpdate) {
-              logger.warn('Update cancelled.');
-              return;
-            }
-          }
-        }
-      } else {
-        logger.info('No existing projects found. Creating a new project...');
-        const createProject = require('./createProject');
-        project = await createProject();
-
-        // If project creation was cancelled or failed
-        if (!project) return;
-
-        projectName = project.name;
-      }
-    } else {
-      // Try to load the specified project
-      try {
-        project = await Project.load(projectName);
-      } catch (error) {
-        logger.error(`Project "${projectName}" not found.`);
-
-        const { createNewProject } = await inquirer.prompt([
-          {
-            type: 'confirm',
-            name: 'createNewProject',
-            message: `Project "${projectName}" not found. Would you like to create it?`,
-            default: true,
-          },
-        ]);
-
-        if (createNewProject) {
-          const createProject = require('./createProject');
-          project = await createProject();
-          if (!project) return;
-          projectName = project.name;
-        } else {
-          return;
-        }
-      }
-    }
-
-    // At this point we have a valid project
-
-    // Use a multi-path collection approach
-    const sourcePaths = [];
-    let continueAddingPaths = true;
-
-    while (continueAddingPaths) {
-      // Show current paths
-      if (sourcePaths.length > 0) {
-        logger.info(chalk.cyan('\nCurrent source paths:'));
-        sourcePaths.forEach((p, index) => {
-          logger.info(`  ${index + 1}. ${p.path} (${p.type})`);
-        });
-        logger.info('');
-      }
-
-      // Get input method
-      const { inputMethod } = await inquirer.prompt([
-        {
-          type: 'list',
-          name: 'inputMethod',
-          message: 'How would you like to add paths?',
-          choices: [
-            { name: 'Enter a single path', value: 'single' },
-            { name: 'Paste multiple paths at once', value: 'multiple' }
-          ]
-        }
-      ]);
-
-      if (inputMethod === 'single') {
-        // Single path input (original method)
-        const { sourcePath } = await inquirer.prompt([
-          {
-            type: 'input',
-            name: 'sourcePath',
-            message: 'Enter path (file or directory):',
-            validate: async input => {
-              try {
-                const stats = await fs.stat(input);
-                return true;
-              } catch (error) {
-                return 'Path does not exist or is not accessible.';
-              }
-            },
-          },
-        ]);
-
-        // Auto-detect if it's a file or directory
-        try {
-          const stats = await fs.stat(sourcePath);
-          const pathType = stats.isDirectory() ? 'directory' : 'file';
-
-          // Add to paths list
-          sourcePaths.push({
-            path: sourcePath,
-            type: pathType,
-          });
-
-          logger.info(`Added ${pathType}: ${sourcePath}`);
-        } catch (error) {
-          logger.error(`Error detecting path type: ${error.message}`);
-          continue;
-        }
-      } else {
-        // Multiple paths input using console paste
-        logger.info(chalk.cyan('\n=== MULTI-PATH INPUT ==='));
-        logger.info(chalk.cyan('1. Paste multiple file paths below (one per line)'));
-        logger.info(chalk.cyan('2. You can paste many paths at once or enter them individually'));
-        logger.info(chalk.cyan('3. Press Enter on an empty line when finished'));
-        logger.info(chalk.yellow('\n↓ Paste paths here ↓'));
-        logger.info(chalk.gray('----------------------------------'));
-        
-        const lines = [];
-        let line;
-        let done = false;
-        
-        while (!done) {
-          const result = await inquirer.prompt([
-            {
-              type: 'input',
-              name: 'line',
-              message: ' ',
-              prefix: ''
-            }
-          ]);
-          
-          line = result.line.trim();
-          
-          if (line === '') {
-            // Empty line indicates end of input
-            done = true;
-          } else {
-            lines.push(line);
-          }
-        }
-        
-        logger.info(chalk.gray('----------------------------------'));
-        logger.info(chalk.green(`✓ Received ${lines.length} paths`));
-        
-        const multiPaths = lines.join('\n');
-
-        // Parse and validate each path
-        const paths = parseMultiplePaths(multiPaths);
-        let validPathsCount = 0;
-
-        for (const path of paths) {
-          try {
-            const stats = await fs.stat(path);
-            const pathType = stats.isDirectory() ? 'directory' : 'file';
-
-            // Add to paths list
-            sourcePaths.push({
-              path,
-              type: pathType,
-            });
-            
-            validPathsCount++;
-          } catch (error) {
-            logger.error(`Skipping invalid path: ${path} - ${error.message}`);
-          }
-        }
-
-        logger.info(`Added ${validPathsCount} valid paths out of ${paths.length} provided.`);
-      }
-
-      // Ask if user wants to add more (only if at least one path is added)
-      if (sourcePaths.length > 0) {
-        const { addMore } = await inquirer.prompt([
-          {
-            type: 'confirm',
-            name: 'addMore',
-            message: 'Would you like to add more paths?',
-            default: true,
-          },
-        ]);
-
-        continueAddingPaths = addMore;
-      }
-    }
-
-    // If no paths were added, exit
+    // Collect source paths from user
+    const sourcePaths = await collectSourcePaths();
     if (sourcePaths.length === 0) {
       logger.warn('No source paths specified. Operation cancelled.');
       return;
     }
 
-    // Select file types
-    const { selectedGroups } = await inquirer.prompt([
-      {
-        type: 'checkbox',
-        name: 'selectedGroups',
-        message: 'Select file types to include:',
-        choices: Object.keys(FILE_EXTENSION_GROUPS).map(group => ({
-          name: `${group} (${FILE_EXTENSION_GROUPS[group].join(', ')})`,
-          value: group,
-          checked: true,
-        })),
-      },
-    ]);
+    // Get file filtering preferences
+    const filters = await getFileFilters();
 
-    const selectedExtensions = selectedGroups.flatMap(group => FILE_EXTENSION_GROUPS[group]);
-
-    // Directories to exclude
-    const { excludeDirs } = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'excludeDirs',
-        message: 'Enter directories to exclude (comma-separated):',
-        default: 'node_modules,vendor,dist,build,public,.git,__pycache__,coverage',
-      },
-    ]);
-
-    const excludeList = excludeDirs
-      .split(',')
-      .map(dir => dir.trim())
-      .filter(Boolean);
-      
-    // Files to exclude by extension
-    const { excludeExtensions } = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'excludeExtensions',
-        message: 'Enter file extensions to exclude (comma-separated, include the dot):',
-        default: '.lock,package-lock.json,.pyc',
-      },
-    ]);
-    
-    logger.info(chalk.yellow('Note: package-lock.json is excluded by default as analyzing it provides no value for Claude projects.'));
-    
-    const excludeExtensionsList = excludeExtensions
-      .split(',')
-      .map(ext => ext.trim())
-      .filter(Boolean);
-
-    // Process all paths and collect files
-    const allFiles = [];
-    const directories = [];
-    let totalSize = 0;
-
-    const spinner = ora('Scanning for files...').start();
-
-    // Process each path
-    for (const sourcePath of sourcePaths) {
-      if (sourcePath.type === 'directory') {
-        // Handle directory
-        directories.push(sourcePath.path);
-        const dirFiles = await getFilesInDirectory(
-          sourcePath.path,
-          selectedExtensions,
-          excludeList,
-          excludeExtensionsList
-        );
-        allFiles.push(...dirFiles);
-
-        // Add to project source directories
-        project.addSourceDirectory(sourcePath.path);
-      } else {
-        // Handle specific file
-        const fileExt = path.extname(sourcePath.path).toLowerCase();
-        
-        // Skip excluded extensions for individual files too
-        if (excludeExtensionsList.includes(fileExt)) {
-          logger.info(chalk.yellow(`Skipping excluded file extension: ${sourcePath.path}`));
-          continue;
-        }
-        
-        if (selectedExtensions.includes(fileExt)) {
-          const relPath = path.basename(sourcePath.path);
-          allFiles.push({
-            fullPath: sourcePath.path,
-            relativePath: relPath,
-          });
-        }
-      }
-    }
-
+    // Process files based on paths and filters
+    const allFiles = await processSourcePaths(sourcePaths, filters, project);
     if (allFiles.length === 0) {
-      spinner.fail('No matching files found.');
       return;
     }
 
-    totalSize = await calculateTotalSize(allFiles);
-
-    spinner.succeed(`Found ${allFiles.length} files (${formatFileSize(totalSize)}).`);
-
-    // Group files by extension for display
-    const filesByExt = {};
-    allFiles.forEach(file => {
-      const ext = path.extname(file.relativePath).toLowerCase();
-      filesByExt[ext] = (filesByExt[ext] || 0) + 1;
-    });
-
-    logger.info(chalk.cyan('\nFiles by type:'));
-    Object.entries(filesByExt)
-      .sort((a, b) => b[1] - a[1])
-      .forEach(([ext, count]) => {
-        logger.info(`  ${ext || '(no extension)'}: ${count} files`);
-      });
-
-    // Confirm copy operation
-    const { confirmCopy } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'confirmCopy',
-        message: `Copy ${allFiles.length} files to project "${projectName}"?`,
-        default: true,
-      },
-    ]);
-
-    if (!confirmCopy) {
-      logger.warn('Copy operation cancelled.');
-      return;
-    }
-
-    // Copy files
-    const copySpinner = ora(`Copying files to project ${projectName}...`).start();
-
-    // Copy the files
-    const { copiedFiles } = await copyFilesToProject(allFiles, project);
-
-    // Generate directory structure
-    const directoryStructure = generateDirectoryStructure(copiedFiles);
-    project.setDirectoryStructure(directoryStructure);
-
-    // Save project metadata
-    await project.save();
-
-    copySpinner.succeed(`Copied ${copiedFiles.length} files to project: ${projectName}`);
-
-    // Show link to the project directory
-    const projectDir = project.getProjectPath();
-    const dirLink = generateDirectoryLink(projectDir);
-
-    logger.info(chalk.cyan('\nFiles collected to: '));
-    logger.info(chalk.blue.underline(dirLink));
-    logger.info(
-      chalk.yellow('You can click the link above to open the directory or copy the path below:')
-    );
-    logger.info(chalk.white(projectDir));
-
-    // Ask if user wants to analyze the project now
-    const { analyzeNow } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'analyzeNow',
-        message: 'Would you like to analyze this project now (generate Claude instructions)?',
-        default: true,
-      },
-    ]);
-
-    if (analyzeNow) {
-      const analyzeProject = require('./analyzeProject');
-      await analyzeProject(projectName);
-    } else {
-      // Print the directory structure to console for easy copying
-      logger.info(chalk.yellow('\n========= DIRECTORY STRUCTURE ========='));
-      logger.info(directoryStructure);
-      logger.info(chalk.yellow('========= END OF DIRECTORY STRUCTURE ========='));
-
-      // Add the directory link again for convenience
-      logger.info(chalk.cyan('\nProject directory: '));
-      logger.info(chalk.blue.underline(dirLink));
-      logger.info(chalk.white(projectDir));
-    }
+    // Complete the file collection process
+    await completeFileCollection(allFiles, project, projectName);
 
     return project;
   } catch (error) {
@@ -640,6 +238,479 @@ function parseMultiplePaths(input) {
     .split(/[\r\n]+/)
     .map(line => line.trim())
     .filter(line => line.length > 0);
+}
+
+/**
+ * Handle project selection, creation, and loading
+ * @param {string} [projectName] - Optional project name
+ * @returns {Promise<Project|null>} - Selected/created project or null
+ */
+async function handleProjectSelection(projectName) {
+  // If project name is not provided, either open existing or create new
+  if (!projectName) {
+    const existingProjects = await Project.listAll();
+
+    if (existingProjects.length > 0) {
+      const { projectAction } = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'projectAction',
+          message: 'Select project action:',
+          choices: [
+            { name: 'Create a new project', value: 'create' },
+            { name: 'Select an existing project', value: 'select' },
+            { name: 'Update an existing project', value: 'update' },
+            { name: 'Go back', value: 'back' },
+          ],
+        },
+      ]);
+
+      if (projectAction === 'back') {
+        return null;
+      } else if (projectAction === 'create') {
+        const createProject = require('./createProject');
+        return await createProject();
+      } else if (projectAction === 'select' || projectAction === 'update') {
+        const { selectedProject } = await inquirer.prompt([
+          {
+            type: 'list',
+            name: 'selectedProject',
+            message: `Select a project to ${projectAction === 'update' ? 'update' : 'use'}:`,
+            choices: existingProjects,
+          },
+        ]);
+
+        const project = await Project.load(selectedProject);
+
+        if (projectAction === 'update') {
+          // Show existing project info before updating
+          logger.info(`Updating project: ${selectedProject}`);
+          logger.info(`Current files: ${project.files.length}`);
+          logger.info(`Source directories: ${project.sourceDirectories.join(', ') || 'None'}`);
+
+          // Confirm update
+          const { confirmUpdate } = await inquirer.prompt([
+            {
+              type: 'confirm',
+              name: 'confirmUpdate',
+              message: 'This will add new files to the existing project. Continue?',
+              default: true,
+            },
+          ]);
+
+          if (!confirmUpdate) {
+            logger.warn('Update cancelled.');
+            return null;
+          }
+        }
+        
+        return project;
+      }
+    } else {
+      logger.info('No existing projects found. Creating a new project...');
+      const createProject = require('./createProject');
+      return await createProject();
+    }
+  } else {
+    // Try to load the specified project
+    try {
+      return await Project.load(projectName);
+    } catch (error) {
+      logger.error(`Project "${projectName}" not found.`);
+
+      const { createNewProject } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'createNewProject',
+          message: `Project "${projectName}" not found. Would you like to create it?`,
+          default: true,
+        },
+      ]);
+
+      if (createNewProject) {
+        const createProject = require('./createProject');
+        return await createProject();
+      } else {
+        return null;
+      }
+    }
+  }
+}
+
+/**
+ * Collect source paths from user input
+ * @returns {Promise<Array>} - Array of path objects with path and type
+ */
+async function collectSourcePaths() {
+  const sourcePaths = [];
+  let continueAddingPaths = true;
+
+  while (continueAddingPaths) {
+    // Show current paths
+    if (sourcePaths.length > 0) {
+      logger.info(chalk.cyan('\nCurrent source paths:'));
+      sourcePaths.forEach((p, index) => {
+        logger.info(`  ${index + 1}. ${p.path} (${p.type})`);
+      });
+      logger.info('');
+    }
+
+    // Get input method
+    const { inputMethod } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'inputMethod',
+        message: 'How would you like to add paths?',
+        choices: [
+          { name: 'Enter a single path', value: 'single' },
+          { name: 'Paste multiple paths at once', value: 'multiple' }
+        ]
+      }
+    ]);
+
+    if (inputMethod === 'single') {
+      const pathObj = await getSinglePath();
+      if (pathObj) {
+        sourcePaths.push(pathObj);
+        logger.info(`Added ${pathObj.type}: ${pathObj.path}`);
+      }
+    } else {
+      const multiplePaths = await getMultiplePaths();
+      sourcePaths.push(...multiplePaths);
+    }
+
+    // Ask if user wants to add more (only if at least one path is added)
+    if (sourcePaths.length > 0) {
+      const { addMore } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'addMore',
+          message: 'Would you like to add more paths?',
+          default: true,
+        },
+      ]);
+
+      continueAddingPaths = addMore;
+    }
+  }
+
+  return sourcePaths;
+}
+
+/**
+ * Get a single path from user input
+ * @returns {Promise<Object|null>} - Path object or null
+ */
+async function getSinglePath() {
+  const { sourcePath } = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'sourcePath',
+      message: 'Enter path (file or directory):',
+      validate: async input => {
+        try {
+          await fs.stat(input);
+          return true;
+        } catch (error) {
+          return 'Path does not exist or is not accessible.';
+        }
+      },
+    },
+  ]);
+
+  try {
+    const stats = await fs.stat(sourcePath);
+    const pathType = stats.isDirectory() ? 'directory' : 'file';
+    return { path: sourcePath, type: pathType };
+  } catch (error) {
+    logger.error(`Error detecting path type: ${error.message}`);
+    return null;
+  }
+}
+
+/**
+ * Get multiple paths from user input
+ * @returns {Promise<Array>} - Array of path objects
+ */
+async function getMultiplePaths() {
+  logger.info(chalk.cyan('\n=== MULTI-PATH INPUT ==='));
+  logger.info(chalk.cyan('1. Paste multiple file paths below (one per line)'));
+  logger.info(chalk.cyan('2. You can paste many paths at once or enter them individually'));
+  logger.info(chalk.cyan('3. Press Enter on an empty line when finished'));
+  logger.info(chalk.yellow('\n↓ Paste paths here ↓'));
+  logger.info(chalk.gray('----------------------------------'));
+  
+  const lines = [];
+  let done = false;
+  
+  while (!done) {
+    const result = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'line',
+        message: ' ',
+        prefix: ''
+      }
+    ]);
+    
+    const line = result.line.trim();
+    
+    if (line === '') {
+      done = true;
+    } else {
+      lines.push(line);
+    }
+  }
+  
+  logger.info(chalk.gray('----------------------------------'));
+  logger.info(chalk.green(`✓ Received ${lines.length} paths`));
+  
+  const multiPaths = lines.join('\n');
+  const paths = parseMultiplePaths(multiPaths);
+  const validPaths = [];
+
+  for (const path of paths) {
+    try {
+      const stats = await fs.stat(path);
+      const pathType = stats.isDirectory() ? 'directory' : 'file';
+      validPaths.push({ path, type: pathType });
+    } catch (error) {
+      logger.error(`Skipping invalid path: ${path} - ${error.message}`);
+    }
+  }
+
+  logger.info(`Added ${validPaths.length} valid paths out of ${paths.length} provided.`);
+  return validPaths;
+}
+
+/**
+ * Get file filtering preferences from user
+ * @returns {Promise<Object>} - Filter configuration
+ */
+async function getFileFilters() {
+  // Select file types
+  const { selectedGroups } = await inquirer.prompt([
+    {
+      type: 'checkbox',
+      name: 'selectedGroups',
+      message: 'Select file types to include:',
+      choices: Object.keys(FILE_EXTENSION_GROUPS).map(group => ({
+        name: `${group} (${FILE_EXTENSION_GROUPS[group].join(', ')})`,
+        value: group,
+        checked: true,
+      })),
+    },
+  ]);
+
+  const selectedExtensions = selectedGroups.flatMap(group => FILE_EXTENSION_GROUPS[group]);
+
+  // Directories to exclude
+  const { excludeDirs } = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'excludeDirs',
+      message: 'Enter directories to exclude (comma-separated):',
+      default: 'node_modules,vendor,dist,build,public,.git,__pycache__,coverage',
+    },
+  ]);
+
+  const excludeList = excludeDirs
+    .split(',')
+    .map(dir => dir.trim())
+    .filter(Boolean);
+    
+  // Files to exclude by extension
+  const { excludeExtensions } = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'excludeExtensions',
+      message: 'Enter file extensions to exclude (comma-separated, include the dot):',
+      default: '.lock,package-lock.json,.pyc',
+    },
+  ]);
+  
+  logger.info(chalk.yellow('Note: package-lock.json is excluded by default as analyzing it provides no value for Claude projects.'));
+  
+  const excludeExtensionsList = excludeExtensions
+    .split(',')
+    .map(ext => ext.trim())
+    .filter(Boolean);
+
+  return {
+    selectedExtensions,
+    excludeList,
+    excludeExtensionsList,
+  };
+}
+
+/**
+ * Process source paths and collect files
+ * @param {Array} sourcePaths - Array of path objects
+ * @param {Object} filters - Filter configuration
+ * @param {Project} project - Project instance
+ * @returns {Promise<Array>} - Array of file objects
+ */
+async function processSourcePaths(sourcePaths, filters, project) {
+  const allFiles = [];
+  const spinner = ora('Scanning for files...').start();
+
+  // Process each path
+  for (const sourcePath of sourcePaths) {
+    if (sourcePath.type === 'directory') {
+      // Handle directory
+      const dirFiles = await getFilesInDirectory(
+        sourcePath.path,
+        filters.selectedExtensions,
+        filters.excludeList,
+        filters.excludeExtensionsList
+      );
+      allFiles.push(...dirFiles);
+
+      // Add to project source directories
+      project.addSourceDirectory(sourcePath.path);
+    } else {
+      // Handle specific file
+      const fileExt = path.extname(sourcePath.path).toLowerCase();
+      
+      // Skip excluded extensions for individual files too
+      if (filters.excludeExtensionsList.includes(fileExt)) {
+        logger.info(chalk.yellow(`Skipping excluded file extension: ${sourcePath.path}`));
+        continue;
+      }
+      
+      if (filters.selectedExtensions.includes(fileExt)) {
+        const relPath = path.basename(sourcePath.path);
+        allFiles.push({
+          fullPath: sourcePath.path,
+          relativePath: relPath,
+        });
+      }
+    }
+  }
+
+  if (allFiles.length === 0) {
+    spinner.fail('No matching files found.');
+    return [];
+  }
+
+  const totalSize = await calculateTotalSize(allFiles);
+  spinner.succeed(`Found ${allFiles.length} files (${formatFileSize(totalSize)}).`);
+
+  // Display file summary
+  displayFileSummary(allFiles);
+  
+  return allFiles;
+}
+
+/**
+ * Display summary of collected files
+ * @param {Array} allFiles - Array of file objects
+ */
+function displayFileSummary(allFiles) {
+  // Group files by extension for display
+  const filesByExt = {};
+  allFiles.forEach(file => {
+    const ext = path.extname(file.relativePath).toLowerCase();
+    filesByExt[ext] = (filesByExt[ext] || 0) + 1;
+  });
+
+  logger.info(chalk.cyan('\nFiles by type:'));
+  Object.entries(filesByExt)
+    .sort((a, b) => b[1] - a[1])
+    .forEach(([ext, count]) => {
+      logger.info(`  ${ext || '(no extension)'}: ${count} files`);
+    });
+}
+
+/**
+ * Complete the file collection process
+ * @param {Array} allFiles - Array of file objects
+ * @param {Project} project - Project instance
+ * @param {string} projectName - Project name
+ */
+async function completeFileCollection(allFiles, project, projectName) {
+  // Confirm copy operation
+  const { confirmCopy } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'confirmCopy',
+      message: `Copy ${allFiles.length} files to project "${projectName}"?`,
+      default: true,
+    },
+  ]);
+
+  if (!confirmCopy) {
+    logger.warn('Copy operation cancelled.');
+    return;
+  }
+
+  // Copy files
+  const copySpinner = ora(`Copying files to project ${projectName}...`).start();
+  const { copiedFiles } = await copyFilesToProject(allFiles, project);
+
+  // Generate directory structure
+  const directoryStructure = generateDirectoryStructure(copiedFiles);
+  project.setDirectoryStructure(directoryStructure);
+
+  // Save project metadata
+  await project.save();
+  copySpinner.succeed(`Copied ${copiedFiles.length} files to project: ${projectName}`);
+
+  // Show project location
+  displayProjectLocation(project);
+
+  // Offer to analyze the project
+  await offerProjectAnalysis(projectName, directoryStructure, project);
+}
+
+/**
+ * Display project location information
+ * @param {Project} project - Project instance
+ */
+function displayProjectLocation(project) {
+  const projectDir = project.getProjectPath();
+  const dirLink = generateDirectoryLink(projectDir);
+
+  logger.info(chalk.cyan('\nFiles collected to: '));
+  logger.info(chalk.blue.underline(dirLink));
+  logger.info(
+    chalk.yellow('You can click the link above to open the directory or copy the path below:')
+  );
+  logger.info(chalk.white(projectDir));
+}
+
+/**
+ * Offer project analysis to user
+ * @param {string} projectName - Project name
+ * @param {string} directoryStructure - Directory structure content
+ * @param {Project} project - Project instance
+ */
+async function offerProjectAnalysis(projectName, directoryStructure, project) {
+  const { analyzeNow } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'analyzeNow',
+      message: 'Would you like to analyze this project now (generate Claude instructions)?',
+      default: true,
+    },
+  ]);
+
+  if (analyzeNow) {
+    const analyzeProject = require('./analyzeProject');
+    await analyzeProject(projectName);
+  } else {
+    // Print the directory structure to console for easy copying
+    logger.info(chalk.yellow('\n========= DIRECTORY STRUCTURE ========='));
+    logger.info(directoryStructure);
+    logger.info(chalk.yellow('========= END OF DIRECTORY STRUCTURE ========='));
+
+    // Add the directory link again for convenience
+    const projectDir = project.getProjectPath();
+    const dirLink = generateDirectoryLink(projectDir);
+    logger.info(chalk.cyan('\nProject directory: '));
+    logger.info(chalk.blue.underline(dirLink));
+    logger.info(chalk.white(projectDir));
+  }
 }
 
 module.exports = collectFiles;

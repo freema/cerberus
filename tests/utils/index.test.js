@@ -1,10 +1,11 @@
 // Mock all the utility modules
 jest.mock('../../src/utils/logger', () => ({ mock: 'logger' }));
 jest.mock('../../src/utils/config', () => ({ mock: 'config' }));
-jest.mock('../../src/utils/UIHelper', () => ({ mock: 'UIHelper' }));
+jest.mock('../../src/utils/uiHelper', () => ({ mock: 'uiHelper' }));
 jest.mock('../../src/utils/pathHelper', () => ({ mock: 'pathHelper' }));
+jest.mock('../../src/utils/projectHelper', () => ({ mock: 'projectHelper' }));
 jest.mock('../../src/utils/clipboard', () => ({ mock: 'clipboard' }));
-jest.mock('../../src/utils/ValidationHelper', () => ({ mock: 'ValidationHelper' }));
+jest.mock('../../src/utils/validationHelper', () => ({ mock: 'validationHelper' }));
 jest.mock('../../src/utils/fileSystem', () => ({ mock: 'fileSystem' }));
 jest.mock('../../src/utils/directoryStructure', () => ({ mock: 'directoryStructure' }));
 jest.mock('../../src/utils/terminal', () => ({ mock: 'terminal' }));
@@ -22,6 +23,7 @@ describe('Utils Index', () => {
     expect(utils).toHaveProperty('config');
     expect(utils).toHaveProperty('ui');
     expect(utils).toHaveProperty('paths');
+    expect(utils).toHaveProperty('projectHelper');
     expect(utils).toHaveProperty('clipboard');
     expect(utils).toHaveProperty('validation');
     expect(utils).toHaveProperty('fileSystem');
@@ -37,10 +39,11 @@ describe('Utils Index', () => {
   test('should have correct module mappings', () => {
     expect(utils.logger).toEqual({ mock: 'logger' });
     expect(utils.config).toEqual({ mock: 'config' });
-    expect(utils.ui).toEqual({ mock: 'UIHelper' });
+    expect(utils.ui).toEqual({ mock: 'uiHelper' });
     expect(utils.paths).toEqual({ mock: 'pathHelper' });
+    expect(utils.projectHelper).toEqual({ mock: 'projectHelper' });
     expect(utils.clipboard).toEqual({ mock: 'clipboard' });
-    expect(utils.validation).toEqual({ mock: 'ValidationHelper' });
+    expect(utils.validation).toEqual({ mock: 'validationHelper' });
     expect(utils.fileSystem).toEqual({ mock: 'fileSystem' });
     expect(utils.directoryStructure).toEqual({ mock: 'directoryStructure' });
     expect(utils.terminal).toEqual({ mock: 'terminal' });
@@ -51,8 +54,8 @@ describe('Utils Index', () => {
     expect(utils.simpleConfig).toEqual({ mock: 'simpleConfig' });
   });
 
-  test('should export exactly 14 modules', () => {
+  test('should export exactly 15 modules', () => {
     const exportedKeys = Object.keys(utils);
-    expect(exportedKeys).toHaveLength(14);
+    expect(exportedKeys).toHaveLength(15);
   });
 });

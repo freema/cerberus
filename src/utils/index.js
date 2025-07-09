@@ -6,10 +6,11 @@
 module.exports = {
   logger: require('./logger'),
   config: require('./config'),
-  ui: require('./UIHelper'),
+  ui: require('./uiHelper'),
   paths: require('./pathHelper'),
+  projectHelper: require('./projectHelper'),
   clipboard: require('./clipboard'),
-  validation: require('./ValidationHelper'),
+  validation: require('./validationHelper'),
   fileSystem: require('./fileSystem'),
   directoryStructure: require('./directoryStructure'),
   terminal: require('./terminal'),

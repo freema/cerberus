@@ -4,7 +4,7 @@
 const logger = require('../utils/logger');
 const config = require('../utils/config');
 const i18n = require('../utils/i18n');
-const UIHelper = require('../utils/UIHelper');
+const UIHelper = require('../utils/uiHelper');
 const ApiConfigService = require('../utils/ApiConfigService');
 
 class ConfigMenuController {

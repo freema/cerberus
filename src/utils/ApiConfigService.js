@@ -1,5 +1,5 @@
 /**
- * ApiConfigService - Centralizovaná služba pro konfiguraci API
+ * ApiConfigService - Centralized service for API configuration
  */
 const config = require('./config');
 const logger = require('./logger');
@@ -14,9 +14,9 @@ class ApiConfigService {
 
 
   /**
-   * Kontrola a konfigurace Claude API
+   * Check and configure Claude API
    * @deprecated Use AIConfigController instead
-   * @returns {Promise<boolean>} - Zda je konfigurace úspěšná
+   * @returns {Promise<boolean>} - Whether configuration is successful
    */
   async configureClaude() {
     // Use the new AIConfigController instead
@@ -29,8 +29,8 @@ class ApiConfigService {
   }
 
   /**
-   * Testování připojení ke Claude API
-   * @returns {Promise<boolean>} - Zda je spojení funkční
+   * Test connection to Claude API
+   * @returns {Promise<boolean>} - Whether connection is functional
    */
   async testClaudeConnection() {
     this.uiHelper.displayInfo('Testing Claude API connection...', '');
@@ -47,8 +47,8 @@ class ApiConfigService {
   }
 
   /**
-   * Kontrola a řešení chybějícího API klíče Claude
-   * @returns {Promise<boolean>} - Zda pokračovat dále
+   * Check and resolve missing Claude API key
+   * @returns {Promise<boolean>} - Whether to continue
    */
   async checkClaudeApiKey() {
     const claudeApiKey = config.getClaudeApiKey();
@@ -78,7 +78,7 @@ class ApiConfigService {
 
 
   /**
-   * Zobrazení aktuální konfigurace
+   * Display current configuration
    */
   showConfiguration() {
     const i18n = require('./i18n');
@@ -107,7 +107,7 @@ class ApiConfigService {
     
     this.uiHelper.displayInfo(i18n.t('settings.showConfig.apiKey', { status: claudeKeyStatus }), '');
     
-    // Varování, pokud chybí klíče
+    // Warning if keys are missing
     if (!claudeApiKey) {
       this.uiHelper.displayWarning(i18n.t('settings.showConfig.warning'));
       this.uiHelper.displayInfo(i18n.t('settings.showConfig.claudeApiKeyMissing'), '');
@@ -116,7 +116,7 @@ class ApiConfigService {
   }
 }
 
-// Vytvoření singleton instance
+// Create singleton instance
 const apiConfigService = new ApiConfigService();
 
 module.exports = apiConfigService;

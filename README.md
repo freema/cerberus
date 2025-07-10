@@ -40,7 +40,7 @@ Cerberus simplifies the process of working with Claude AI by:
 - **Configuration**
   - AI service configuration (Claude API)
   - Debug mode for troubleshooting
-  - Multi-language support (English and Czech)
+  - English interface (with i18n support for future languages)
   - Configurable bundle settings
 
 ## Installation
@@ -121,10 +121,12 @@ The application stores configuration in two locations:
 - `config/app.json` - Application settings
 - `var/cache/security/credentials.json` - API keys (encrypted)
 
+**Note**: The application currently runs in English only. Multi-language support infrastructure is in place for future development.
+
 ### Configurable Options
 - **AI Services**: Claude API key and model selection
 - **Debug Mode**: Enable/disable debug logging
-- **Language**: Switch between English and Czech
+- **Interface**: Currently English only (multi-language support planned for future)
 - **Bundle Settings**: Maximum files per bundle, file size limits, format options
 
 ## Project Structure
@@ -266,7 +268,3 @@ data/projects/my-project/
 - **For projects > 200 files**: Consider using custom bundles with only essential files
 - **Always upload ALL bundles** to Claude Projects for complete context
 - **Use the generated system message** for best results
-
-## License
-
-MIT

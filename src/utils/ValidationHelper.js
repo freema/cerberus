@@ -1,5 +1,5 @@
 /**
- * ValidationHelper - Centralizovaná utilita pro validační funkce
+ * ValidationHelper - Centralized utility for validation functions
  */
 const fs = require('fs-extra');
 const path = require('path');
@@ -7,10 +7,10 @@ const logger = require('./logger');
 
 class ValidationHelper {
   /**
-   * Validace existence cesty
-   * @param {string} input - Cesta k ověření
-   * @param {boolean} requireDirectory - Má být cesta adresář?
-   * @returns {Promise<string|boolean>} - True pokud validní, jinak chybová zpráva
+   * Validates path existence
+   * @param {string} input - Path to validate
+   * @param {boolean} requireDirectory - Should path be a directory?
+   * @returns {Promise<string|boolean>} - True if valid, otherwise error message
    */
   async validatePath(input, requireDirectory = false) {
     if (!input || input.trim() === '') {
@@ -31,15 +31,15 @@ class ValidationHelper {
   }
 
   /**
-   * Validace nezapisovatelné cesty
-   * @param {string} input - Cesta k ověření
-   * @returns {Promise<string|boolean>} - True pokud validní, jinak chybová zpráva
+   * Validates writable path
+   * @param {string} input - Path to validate
+   * @returns {Promise<string|boolean>} - True if valid, otherwise error message
    */
   async validateWritablePath(input) {
     const pathExists = await this.validatePath(input);
     
     if (pathExists !== true) {
-      // Zkusíme vytvořit adresář
+      // Try to create directory
       try {
         await fs.ensureDir(path.dirname(input));
         return true;
@@ -48,7 +48,7 @@ class ValidationHelper {
       }
     }
     
-    // Zkontrolujeme, zda můžeme zapisovat
+    // Check if we can write
     try {
       await fs.access(input, fs.constants.W_OK);
       return true;
@@ -58,19 +58,19 @@ class ValidationHelper {
   }
 
   /**
-   * Validace neprázdného vstupu
-   * @param {string} input - Vstup k ověření
-   * @param {string} [errorMessage] - Vlastní chybová zpráva
-   * @returns {string|boolean} - True pokud validní, jinak chybová zpráva
+   * Validates non-empty input
+   * @param {string} input - Input to validate
+   * @param {string} [errorMessage] - Custom error message
+   * @returns {string|boolean} - True if valid, otherwise error message
    */
   validateNotEmpty(input, errorMessage = 'Input cannot be empty') {
     return input && input.trim() !== '' ? true : errorMessage;
   }
 
   /**
-   * Validace URL
-   * @param {string} input - URL k ověření
-   * @returns {string|boolean} - True pokud validní, jinak chybová zpráva
+   * Validates URL
+   * @param {string} input - URL to validate
+   * @returns {string|boolean} - True if valid, otherwise error message
    */
   validateUrl(input) {
     if (!input || input.trim() === '') {
@@ -86,9 +86,9 @@ class ValidationHelper {
   }
 
   /**
-   * Validace GitLab merge request URL
-   * @param {string} input - URL k ověření
-   * @returns {string|boolean} - True pokud validní, jinak chybová zpráva
+   * Validates GitLab merge request URL
+   * @param {string} input - URL to validate
+   * @returns {string|boolean} - True if valid, otherwise error message
    */
   validateMergeRequestUrl(input) {
     const urlValid = this.validateUrl(input);
@@ -104,11 +104,11 @@ class ValidationHelper {
   }
 
   /**
-   * Validace číselného vstupu
-   * @param {string|number} input - Vstup k ověření
-   * @param {number} [min] - Minimální hodnota
-   * @param {number} [max] - Maximální hodnota
-   * @returns {string|boolean} - True pokud validní, jinak chybová zpráva
+   * Validates numeric input
+   * @param {string|number} input - Input to validate
+   * @param {number} [min] - Minimum value
+   * @param {number} [max] - Maximum value
+   * @returns {string|boolean} - True if valid, otherwise error message
    */
   validateNumber(input, min = null, max = null) {
     const number = Number(input);
@@ -129,9 +129,9 @@ class ValidationHelper {
   }
 
   /**
-   * Validace koncovek souborů
-   * @param {string} input - Vstup k ověření (seznam koncovek oddělených čárkou)
-   * @returns {string|boolean} - True pokud validní, jinak chybová zpráva
+   * Validates file extensions
+   * @param {string} input - Input to validate (comma-separated list of extensions)
+   * @returns {string|boolean} - True if valid, otherwise error message
    */
   validateFileExtensions(input) {
     if (!input || input.trim() === '') {
@@ -148,16 +148,16 @@ class ValidationHelper {
   }
 
   /**
-   * Validace názvu projektu
-   * @param {string} input - Název projektu k ověření
-   * @returns {string|boolean} - True pokud validní, jinak chybová zpráva
+   * Validates project name
+   * @param {string} input - Project name to validate
+   * @returns {string|boolean} - True if valid, otherwise error message
    */
   validateProjectName(input) {
     if (!input || input.trim() === '') {
       return 'Project name cannot be empty';
     }
     
-    // Kontrola zakázaných znaků v názvu
+    // Check for forbidden characters in name
     const invalidChars = /[\/\\:*?"<>|]/;
     if (invalidChars.test(input)) {
       return 'Project name contains invalid characters';
@@ -167,9 +167,9 @@ class ValidationHelper {
   }
 
   /**
-   * Validace existence souboru
-   * @param {string} filePath - Cesta k souboru k ověření
-   * @returns {Promise<boolean>} - True pokud soubor existuje
+   * Validates file existence
+   * @param {string} filePath - File path to validate
+   * @returns {Promise<boolean>} - True if file exists
    */
   async fileExists(filePath) {
     try {
@@ -181,9 +181,9 @@ class ValidationHelper {
   }
 
   /**
-   * Validace API klíče
-   * @param {string} input - API klíč k ověření
-   * @returns {string|boolean} - True pokud validní, jinak chybová zpráva
+   * Validates API key
+   * @param {string} input - API key to validate
+   * @returns {string|boolean} - True if valid, otherwise error message
    */
   validateApiKey(input) {
     const empty = this.validateNotEmpty(input, 'API key cannot be empty');
@@ -191,13 +191,13 @@ class ValidationHelper {
       return empty;
     }
     
-    // Zde by mohla být další validace podle formátu klíče
+    // Additional validation could be added here based on key format
     
     return true;
   }
 }
 
-// Vytvoření singleton instance
+// Create singleton instance
 const validationHelper = new ValidationHelper();
 
 module.exports = validationHelper;

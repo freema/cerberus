@@ -15,7 +15,7 @@ class ProjectMenuController {
       { name: i18n.t('menu.project.existingOrUpdate'), value: 'existingOrUpdate' }, // Combined option
       { name: i18n.t('menu.project.collect'), value: 'collect' },
       { name: i18n.t('menu.project.analyze'), value: 'analyze' },
-      { name: 'Create bundle for Claude', value: 'bundle' }
+      { name: '📦 Create bundle for Claude', value: 'bundle' }
     ];
   }
 
@@ -93,7 +93,7 @@ class ProjectMenuController {
           type: 'list',
           name: 'selectedProject',
           message: 'Select a project:',
-          choices: [...existingProjects, { name: 'Go back', value: 'back' }],
+          choices: [...existingProjects, { name: '⬅️ Go back', value: 'back' }],
         },
       ]);
       
@@ -108,12 +108,12 @@ class ProjectMenuController {
           name: 'action',
           message: `What would you like to do with project "${selectedProject}"?`,
           choices: [
-            { name: 'Open project', value: 'open' },
-            { name: 'Update files from original sources', value: 'update' },
-            { name: 'Collect more files', value: 'collect' },
-            { name: 'Analyze project (generate Claude instructions)', value: 'analyze' },
-            { name: 'Create bundle for Claude Projects', value: 'bundle' },
-            { name: 'Go back', value: 'back' }
+            { name: '📂 Open project', value: 'open' },
+            { name: '🔄 Update files from original sources', value: 'update' },
+            { name: '📥 Collect more files', value: 'collect' },
+            { name: '🔎 Analyze project (generate Claude instructions)', value: 'analyze' },
+            { name: '📦 Create bundle for Claude Projects', value: 'bundle' },
+            { name: '⬅️ Go back', value: 'back' }
           ]
         }
       ]);

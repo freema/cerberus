@@ -1,6 +1,6 @@
 /**
- * UIHelper - Centralizovaná třída pro CLI interakce
- * Nahrazuje opakující se inquirer.prompt volání
+ * UIHelper - Centralized class for CLI interactions
+ * Replaces repetitive inquirer.prompt calls
  */
 const inquirer = require('inquirer');
 const chalk = require('chalk');
@@ -13,10 +13,10 @@ const clipboard = require('./clipboard');
 
 class UIHelper {
   /**
-   * Získá potvrzení od uživatele
-   * @param {string} message - Otázka pro uživatele
-   * @param {boolean} defaultValue - Výchozí hodnota (true/false)
-   * @returns {Promise<boolean>} - Odpověď uživatele
+   * Gets confirmation from user
+   * @param {string} message - Question for user
+   * @param {boolean} defaultValue - Default value (true/false)
+   * @returns {Promise<boolean>} - User's answer
    */
   async confirm(message, defaultValue = true) {
     const { confirmed } = await inquirer.prompt([{
@@ -29,11 +29,11 @@ class UIHelper {
   }
 
   /**
-   * Získá textový vstup od uživatele
-   * @param {string} message - Výzva pro uživatele
-   * @param {Function|null} validate - Validační funkce
-   * @param {string} defaultValue - Výchozí hodnota
-   * @returns {Promise<string>} - Vstup od uživatele
+   * Gets text input from user
+   * @param {string} message - Prompt for user
+   * @param {Function|null} validate - Validation function
+   * @param {string} defaultValue - Default value
+   * @returns {Promise<string>} - User input
    */
   async input(message, validate = null, defaultValue = '') {
     const { value } = await inquirer.prompt([{
@@ -47,10 +47,10 @@ class UIHelper {
   }
 
   /**
-   * Získá heslo od uživatele (skryté)
-   * @param {string} message - Výzva pro uživatele
-   * @param {Function|null} validate - Validační funkce
-   * @returns {Promise<string>} - Heslo od uživatele
+   * Gets password from user (hidden)
+   * @param {string} message - Prompt for user
+   * @param {Function|null} validate - Validation function
+   * @returns {Promise<string>} - User password
    */
   async password(message, validate = null) {
     const { value } = await inquirer.prompt([{
@@ -63,11 +63,11 @@ class UIHelper {
   }
 
   /**
-   * Získá výběr jedné možnosti z nabídky
-   * @param {string} message - Výzva pro uživatele
-   * @param {Array<Object>} choices - Dostupné možnosti výběru
-   * @param {string|null} defaultValue - Výchozí hodnota
-   * @returns {Promise<any>} - Vybraná hodnota
+   * Gets single choice selection from menu
+   * @param {string} message - Prompt for user
+   * @param {Array<Object>} choices - Available choices
+   * @param {string|null} defaultValue - Default value
+   * @returns {Promise<any>} - Selected value
    */
   async select(message, choices, defaultValue = null) {
     const { selected } = await inquirer.prompt([{
@@ -81,11 +81,11 @@ class UIHelper {
   }
 
   /**
-   * Získá výběr více možností z nabídky
-   * @param {string} message - Výzva pro uživatele
-   * @param {Array<Object>} choices - Dostupné možnosti výběru
-   * @param {Array<any>} defaultValue - Výchozí vybrané hodnoty
-   * @returns {Promise<Array<any>>} - Vybrané hodnoty
+   * Gets multiple choice selection from menu
+   * @param {string} message - Prompt for user
+   * @param {Array<Object>} choices - Available choices
+   * @param {Array<any>} defaultValue - Default selected values
+   * @returns {Promise<Array<any>>} - Selected values
    */
   async multiSelect(message, choices, defaultValue = []) {
     const { selected } = await inquirer.prompt([{
@@ -99,12 +99,12 @@ class UIHelper {
   }
 
   /**
-   * Zobrazí spinner během asynchronní operace
-   * @param {string} message - Zpráva zobrazená se spinnerem
-   * @param {Function} asyncFunction - Asynchronní funkce k vykonání
-   * @param {string} successMessage - Zpráva při úspěchu
-   * @param {string} errorMessage - Zpráva při chybě
-   * @returns {Promise<any>} - Výsledek asynchronní funkce
+   * Shows spinner during async operation
+   * @param {string} message - Message displayed with spinner
+   * @param {Function} asyncFunction - Async function to execute
+   * @param {string} successMessage - Success message
+   * @param {string} errorMessage - Error message
+   * @returns {Promise<any>} - Result of async function
    */
   async withSpinner(message, asyncFunction, successMessage = null, errorMessage = null) {
     const spinner = ora(message).start();
@@ -127,50 +127,50 @@ class UIHelper {
   }
 
   /**
-   * Zobrazí hlavičku sekce
-   * @param {string} title - Název sekce
+   * Displays section header
+   * @param {string} title - Section title
    */
   displayHeader(title) {
     logger.info(chalk.cyan(`\n=== ${title} ===`));
   }
 
   /**
-   * Zobrazí informační řádek (klíč: hodnota)
-   * @param {string} label - Popisek
-   * @param {string} value - Hodnota
+   * Displays info line (key: value)
+   * @param {string} label - Label
+   * @param {string} value - Value
    */
   displayInfo(label, value) {
     logger.info(`${chalk.white(label)}: ${chalk.yellow(value || 'N/A')}`);
   }
 
   /**
-   * Zobrazí výstražnou zprávu
-   * @param {string} message - Zpráva
+   * Displays warning message
+   * @param {string} message - Message
    */
   displayWarning(message) {
     logger.warn(`⚠️  ${message}`);
   }
 
   /**
-   * Zobrazí chybovou zprávu
-   * @param {string} message - Zpráva
+   * Displays error message
+   * @param {string} message - Message
    */
   displayError(message) {
     logger.error(`❌ ${message}`);
   }
 
   /**
-   * Zobrazí úspěšnou zprávu
-   * @param {string} message - Zpráva
+   * Displays success message
+   * @param {string} message - Message
    */
   displaySuccess(message) {
     logger.success(`✓ ${message}`);
   }
 
   /**
-   * Zobrazí popis s možným ořezáním
-   * @param {string} text - Popisný text
-   * @param {number} maxLength - Maximální délka před ořezáním
+   * Displays description with possible truncation
+   * @param {string} text - Description text
+   * @param {number} maxLength - Maximum length before truncation
    */
   displayDescription(text, maxLength = 500) {
     if (!text) return;
@@ -181,12 +181,12 @@ class UIHelper {
   }
 
   /**
-   * Zobrazí tabulku dat
-   * @param {Array<string>} headers - Záhlaví tabulky
-   * @param {Array<Array<string>>} rows - Řádky tabulky
+   * Displays data table
+   * @param {Array<string>} headers - Table headers
+   * @param {Array<Array<string>>} rows - Table rows
    */
   displayTable(headers, rows) {
-    // Výpočet šířky sloupců
+    // Calculate column widths
     const widths = headers.map((header, idx) => {
       let maxWidth = header.length;
       rows.forEach(row => {
@@ -195,21 +195,21 @@ class UIHelper {
           maxWidth = cellValue.length;
         }
       });
-      return maxWidth + 2; // Přidání zarovnání
+      return maxWidth + 2; // Add padding
     });
     
-    // Tisk záhlaví
+    // Print headers
     let headerRow = '';
     headers.forEach((header, idx) => {
       headerRow += chalk.cyan(header.padEnd(widths[idx]));
     });
     logger.info(headerRow);
     
-    // Tisk oddělovače
+    // Print separator
     const separator = widths.map(width => '-'.repeat(width)).join('');
     logger.info(chalk.gray(separator));
     
-    // Tisk řádků
+    // Print rows
     rows.forEach(row => {
       let rowStr = '';
       row.forEach((cell, idx) => {
@@ -220,9 +220,9 @@ class UIHelper {
   }
 
   /**
-   * Zobrazí odkaz na adresář
-   * @param {string} dirPath - Cesta k adresáři
-   * @param {string} [label] - Volitelný popisek
+   * Displays directory link
+   * @param {string} dirPath - Directory path
+   * @param {string} [label] - Optional label
    */
   displayDirectoryLink(dirPath, label = null) {
     const dirLink = generateDirectoryLink(dirPath);
@@ -236,9 +236,9 @@ class UIHelper {
   }
 
   /**
-   * Zkopíruje text do schránky a zobrazí zprávu
-   * @param {string} text - Text ke zkopírování
-   * @param {string} [successMessage] - Zpráva při úspěchu
+   * Copies text to clipboard and displays message
+   * @param {string} text - Text to copy
+   * @param {string} [successMessage] - Success message
    */
   copyToClipboard(text, successMessage = 'Copied to clipboard.') {
     try {
@@ -251,10 +251,10 @@ class UIHelper {
   }
 
   /**
-   * Zeptá se uživatele, zda chce zkopírovat text do schránky
-   * @param {string} text - Text ke zkopírování
-   * @param {string} [message] - Zpráva dotazu
-   * @param {string} [successMessage] - Zpráva při úspěchu
+   * Asks user if they want to copy text to clipboard
+   * @param {string} text - Text to copy
+   * @param {string} [message] - Question message
+   * @param {string} [successMessage] - Success message
    */
   async askToCopyToClipboard(text, message = 'Would you like to copy this to your clipboard?', successMessage = 'Copied to clipboard.') {
     const shouldCopy = await this.confirm(message, true);
@@ -265,9 +265,9 @@ class UIHelper {
   }
 
   /**
-   * Formátuje velikost souboru na čitelný formát
-   * @param {number} bytes - Velikost v bajtech
-   * @returns {string} - Formátovaná velikost
+   * Formats file size to readable format
+   * @param {number} bytes - Size in bytes
+   * @returns {string} - Formatted size
    */
   formatFileSize(bytes) {
     if (bytes < 1024) return bytes + ' bytes';
@@ -277,7 +277,7 @@ class UIHelper {
   }
 }
 
-// Vytvoření singleton instance
+// Create singleton instance
 const uiHelper = new UIHelper();
 
 module.exports = uiHelper;

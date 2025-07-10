@@ -26,7 +26,8 @@ class ConfigMenuController {
         [
           { name: i18n.t('menu.settings.ai') || 'AI Services', value: 'ai' },
           { name: i18n.t('menu.settings.debug'), value: 'debug' },
-          { name: i18n.t('menu.settings.locale'), value: 'locale' },
+          // Language settings temporarily disabled for English-only mode
+          // { name: i18n.t('menu.settings.locale'), value: 'locale' },
           { name: i18n.t('menu.settings.show'), value: 'show' },
           { name: i18n.t('menu.settings.back'), value: 'back' },
         ]
@@ -41,9 +42,10 @@ class ConfigMenuController {
         case 'debug':
           await this.configureDebug();
           break;
-        case 'locale':
-          await this.configureLanguage();
-          break;
+        // Language settings temporarily disabled for English-only mode
+        // case 'locale':
+        //   await this.configureLanguage();
+        //   break;
         case 'show':
           this.apiConfigService.showConfiguration();
           break;
@@ -71,9 +73,9 @@ class ConfigMenuController {
   async configureDebug() {
     const debugEnabled = config.isDebugMode();
 
-    this.uiHelper.displayHeader('Debug Configuration');
+    this.uiHelper.displayHeader('🐛 Debug Configuration');
 
-    const enableDebug = await this.uiHelper.confirm('Enable debug mode?', debugEnabled);
+    const enableDebug = await this.uiHelper.confirm('🐛 Enable debug mode?', debugEnabled);
 
     config.setDebugMode(enableDebug);
     logger.setDebugMode(enableDebug);
@@ -84,38 +86,44 @@ class ConfigMenuController {
 
   /**
    * Configure language settings
+   * Note: Temporarily disabled for English-only mode
+   * Keep method for future multi-language support
    */
   async configureLanguage() {
-    this.uiHelper.displayHeader(i18n.t('settings.languageSettings.title'));
-
-    const currentLocale = i18n.getCurrentLocale();
-    const localeNames = {
-      en: 'English',
-      cs: 'Čeština (Czech)',
-    };
-
-    this.uiHelper.displayInfo(
-      i18n.t('settings.languageSettings.currentLanguage', { language: localeNames[currentLocale] }),
-      ''
-    );
-
-    const newLocale = await this.uiHelper.select(
-      i18n.t('settings.languageSettings.selectLanguage'),
-      [
-        { name: 'English', value: 'en' },
-        { name: 'Čeština (Czech)', value: 'cs' },
-      ],
-      currentLocale
-    );
-
-    if (newLocale !== currentLocale) {
-      const success = i18n.setLocale(newLocale);
-      if (success) {
-        this.uiHelper.displaySuccess(
-          i18n.t('settings.languageSettings.languageChanged', { language: localeNames[newLocale] })
-        );
-      }
-    }
+    this.uiHelper.displayInfo('Language switching is currently disabled. The application runs in English only.', '');
+    return;
+    
+    // Code kept for future multi-language support
+    // this.uiHelper.displayHeader(i18n.t('settings.languageSettings.title'));
+    // 
+    // const currentLocale = i18n.getCurrentLocale();
+    // const localeNames = {
+    //   en: 'English',
+    //   cs: 'Čeština (Czech)',
+    // };
+    // 
+    // this.uiHelper.displayInfo(
+    //   i18n.t('settings.languageSettings.currentLanguage', { language: localeNames[currentLocale] }),
+    //   ''
+    // );
+    // 
+    // const newLocale = await this.uiHelper.select(
+    //   i18n.t('settings.languageSettings.selectLanguage'),
+    //   [
+    //     { name: 'English', value: 'en' },
+    //     { name: 'Čeština (Czech)', value: 'cs' },
+    //   ],
+    //   currentLocale
+    // );
+    // 
+    // if (newLocale !== currentLocale) {
+    //   const success = i18n.setLocale(newLocale);
+    //   if (success) {
+    //     this.uiHelper.displaySuccess(
+    //       i18n.t('settings.languageSettings.languageChanged', { language: localeNames[newLocale] })
+    //     );
+    //   }
+    // }
   }
 
   /**

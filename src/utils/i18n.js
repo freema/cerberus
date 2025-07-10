@@ -57,18 +57,20 @@ class I18nService {
         );
       }
 
-      if (!this.translations['cs']) {
-        logger.info('Creating default Czech locale file');
-        this.translations['cs'] = require('../../locales/cs.default.json');
-        fs.writeFileSync(
-          path.join(localesDir, 'cs.json'),
-          JSON.stringify(this.translations['cs'], null, 2),
-          'utf8'
-        );
-      }
+      // Czech locale support removed - keeping infrastructure for future languages
+      // if (!this.translations['cs']) {
+      //   logger.info('Creating default Czech locale file');
+      //   this.translations['cs'] = require('../../locales/cs.default.json');
+      //   fs.writeFileSync(
+      //     path.join(localesDir, 'cs.json'),
+      //     JSON.stringify(this.translations['cs'], null, 2),
+      //     'utf8'
+      //   );
+      // }
 
-      // Get current locale from config or use default
-      this.locale = config.get('locale', this.defaultLocale);
+      // Force English locale for now - keep config infrastructure for future
+      this.locale = this.defaultLocale;
+      // this.locale = config.get('locale', this.defaultLocale);
 
       // Validate locale
       if (!this.translations[this.locale]) {
@@ -90,16 +92,22 @@ class I18nService {
    * Set the active locale
    * @param {string} locale - Locale code (e.g., 'en', 'cs')
    * @returns {boolean} - Whether the locale was set successfully
+   * Note: Currently disabled for English-only mode
    */
   setLocale(locale) {
-    if (this.translations[locale]) {
-      this.locale = locale;
-      config.set('locale', locale);
-      logger.info(`Locale set to ${locale}`);
-      return true;
-    }
-    logger.warn(`Locale ${locale} not available, keeping ${this.locale}`);
+    // Temporarily disabled for English-only mode
+    // Keep method for future multi-language support
+    logger.info(`Locale switching disabled - staying with ${this.locale}`);
     return false;
+    
+    // if (this.translations[locale]) {
+    //   this.locale = locale;
+    //   config.set('locale', locale);
+    //   logger.info(`Locale set to ${locale}`);
+    //   return true;
+    // }
+    // logger.warn(`Locale ${locale} not available, keeping ${this.locale}`);
+    // return false;
   }
 
   /**

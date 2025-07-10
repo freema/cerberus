@@ -1,57 +1,40 @@
 {
   "common": {
-    "back": "Go back",
-    "goBack": "Go back",
-    "exit": "Exit",
-    "yes": "Yes",
-    "no": "No",
-    "save": "Save",
-    "cancel": "Cancel",
-    "continue": "Continue",
-    "success": "Success",
-    "error": "Error",
-    "warning": "Warning"
+    "back": "⬅️ Go back",
+    "goBack": "⬅️ Go back",
+    "exit": "🚪 Exit",
+    "yes": "✅ Yes",
+    "no": "❌ No",
+    "save": "💾 Save",
+    "cancel": "🚫 Cancel",
+    "continue": "➡️ Continue",
+    "success": "✅ Success",
+    "error": "❌ Error",
+    "warning": "⚠️ Warning"
   },
   "menu": {
     "main": {
       "title": "What would you like to do?",
-      "project": "Collect and prepare project files for Claude AI",
-      "codeReview": "Work with GitLab code reviews",
-      "jira": "Work with Jira issues and projects",
-      "configure": "Configure settings",
-      "exit": "Exit"
+      "project": "📁 Collect and prepare project files for Claude AI",
+      "configure": "⚙️ Configure settings",
+      "exit": "🚪 Exit"
     },
     "project": {
-      "title": "Project options:",
-      "new": "Create a new project",
-      "existing": "Work with existing project",
-      "collect": "Collect project files",
-      "analyze": "Analyze project",
-      "update": "Update project files from original sources",
-      "existingOrUpdate": "Open or update existing project"
-    },
-    "codeReview": {
-      "title": "Code review options:",
-      "fetch": "Fetch merge requests",
-      "review": "Analyze merge request",
-      "generate": "Generate AI review"
-    },
-    "jira": {
-      "title": "Jira options:",
-      "fetch": "Fetch Jira issues",
-      "analyze": "Analyze Jira issue",
-      "create": "Create new Jira issue"
+      "title": "📁 Project options:",
+      "new": "✨ Create a new project",
+      "existing": "📂 Work with existing project",
+      "collect": "📥 Collect project files",
+      "analyze": "🔎 Analyze project",
+      "update": "🔄 Update project files from original sources",
+      "existingOrUpdate": "📂 Open or update existing project"
     },
     "settings": {
-      "title": "What would you like to configure?",
-      "gitlab": "GitLab Settings",
-      "jira": "Jira Settings",
-      "claude": "Claude AI Settings",
-      "ai": "AI Services",
-      "debug": "Debug Mode",
-      "locale": "Language Settings",
-      "show": "Show Current Configuration",
-      "back": "Back to Main Menu"
+      "title": "⚙️ What would you like to configure?",
+      "ai": "🤖 AI Services",
+      "debug": "🐛 Debug Mode",
+      "locale": "🌐 Language Settings",
+      "show": "📊 Show Current Configuration",
+      "back": "⬅️ Back to Main Menu"
     }
   },
   "settings": {
@@ -79,21 +62,6 @@
       "connectionSuccess": "Successfully connected to Claude API!",
       "connectionFailed": "Failed to connect to Claude API. Please check your configuration."
     },
-    "gitlab": {
-      "title": "GitLab Configuration",
-      "apiTokenMissing": "WARNING: GitLab API token is not configured. Some features may not work properly.",
-      "configOption": "What would you like to configure?",
-      "url": "GitLab API URL",
-      "token": "GitLab API Token",
-      "test": "Test Connection",
-      "enterUrl": "Enter GitLab API URL:",
-      "urlUpdated": "GitLab API URL updated.",
-      "enterToken": "Enter GitLab API token:",
-      "tokenUpdated": "GitLab API token updated.",
-      "testingConnection": "Testing GitLab API connection...",
-      "connectionSuccess": "Successfully connected to GitLab API!",
-      "connectionFailed": "Failed to connect to GitLab API. Please check your configuration."
-    },
     "debug": {
       "title": "Debug Configuration",
       "enableDebug": "Enable debug mode?",
@@ -115,9 +83,7 @@
       "configured": "********",
       "notConfigured": "Not configured ⚠️",
       "warning": "WARNING: Some API keys are not configured:",
-      "gitlabTokenMissing": "- GitLab API token is missing",
       "claudeApiKeyMissing": "- Claude API key is missing",
-      "jiraTokenMissing": "- Jira API token is missing",
       "configureMessage": "You can configure these using the appropriate options in the configure menu."
     }
   },
@@ -125,17 +91,10 @@
     "claudeApiKeyMissing": "WARNING: Claude AI API key is not configured!",
     "claudeFeaturesLimited": "Some features that require Claude AI will not work without this key.",
     "apiKeysMissing": "WARNING: Required API keys are not configured!",
-    "gitlabTokenMissing": "- GitLab API token is missing",
-    "jiraApiKeyMissing": "WARNING: Jira API token is not configured!",
-    "jiraFeaturesLimited": "Some features that require Jira will not work without this token.",
-    "codeReviewRequirements": "The code review functionality requires these API keys.",
     "whatToDo": "What would you like to do?",
     "configureClaude": "Configure Claude AI",
     "configureApiKeys": "Configure API keys",
-    "configureJira": "Configure Jira API",
     "continueProject": "Continue to Project menu (some features may be limited)",
-    "continueCodeReview": "Continue to Code Review menu anyway",
-    "continueJira": "Continue to Jira menu (some features may be limited)",
     "goBackToMain": "Go back to main menu"
   },
   "farewell": "Goodbye!"

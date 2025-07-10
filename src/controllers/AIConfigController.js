@@ -11,7 +11,7 @@ class AIConfigController {
    * Handle AI configuration
    */
   async handleConfig() {
-    logger.info('\n=== AI Services Configuration ===');
+    logger.info('\n=== 🤖 AI Services Configuration ===');
 
     // Show available adapters
     const adapters = aiServiceProvider.getAvailableAdapters();
@@ -31,14 +31,14 @@ class AIConfigController {
       {
         type: 'list',
         name: 'configOption',
-        message: 'What would you like to configure?',
+        message: '⚙️ What would you like to configure?',
         choices: [
           ...adapters.map(adapter => ({
-            name: `Configure ${adapter.name}${adapter.isConfigured ? '' : ' (not configured)'}`,
+            name: `🔧 Configure ${adapter.name}${adapter.isConfigured ? '' : ' (not configured)'}`,
             value: `config_${adapter.id}`
           })),
-          { name: 'Set Active AI Service', value: 'setActive' },
-          { name: 'Back', value: 'back' },
+          { name: '🎯 Set Active AI Service', value: 'setActive' },
+          { name: '⬅️ Back', value: 'back' },
         ],
       },
     ]);
@@ -73,7 +73,7 @@ class AIConfigController {
       {
         type: 'list',
         name: 'adapterId',
-        message: 'Select the AI service to use:',
+        message: '🎯 Select the AI service to use:',
         choices: configuredAdapters.map(adapter => ({
           name: `${adapter.name}${adapter.id === activeAdapterId ? ' (current)' : ''}`,
           value: adapter.id
@@ -99,7 +99,7 @@ class AIConfigController {
       return;
     }
     
-    logger.info(`\n=== ${adapter.serviceName} Configuration ===`);
+    logger.info(`\n=== 🔧 ${adapter.serviceName} Configuration ===`);
     
     // Generic configuration for all adapters
     await this.handleGenericAdapterConfig(adapter);
@@ -115,12 +115,12 @@ class AIConfigController {
         {
           type: 'list',
           name: 'configOption',
-          message: 'What would you like to configure?',
+          message: '⚙️ What would you like to configure?',
           choices: [
-            { name: `${adapter.serviceName} API Key`, value: 'apiKey' },
-            { name: `${adapter.serviceName} Model`, value: 'model' },
-            { name: 'Test Connection', value: 'test' },
-            { name: 'Back', value: 'back' },
+            { name: `🔑 ${adapter.serviceName} API Key`, value: 'apiKey' },
+            { name: `🤖 ${adapter.serviceName} Model`, value: 'model' },
+            { name: '🔌 Test Connection', value: 'test' },
+            { name: '⬅️ Back', value: 'back' },
           ],
         },
       ]);
@@ -135,7 +135,7 @@ class AIConfigController {
             {
               type: 'password',
               name: 'apiKey',
-              message: `Enter ${adapter.serviceName} API key:`,
+              message: `🔑 Enter ${adapter.serviceName} API key:`,
               validate: input => input.trim() !== '' || 'API key cannot be empty',
             },
           ]);
@@ -156,7 +156,7 @@ class AIConfigController {
             {
               type: 'list',
               name: 'modelId',
-              message: `Select ${adapter.serviceName} model:`,
+              message: `🤖 Select ${adapter.serviceName} model:`,
               choices: availableModels.map(model => ({
                 name: model.name,
                 value: model.id
@@ -169,7 +169,7 @@ class AIConfigController {
           break;
 
         case 'test':
-          logger.info(`Testing ${adapter.serviceName} API connection...`);
+          logger.info(`🔌 Testing ${adapter.serviceName} API connection...`);
           const isConnected = await adapter.testConnection();
 
           if (isConnected) {

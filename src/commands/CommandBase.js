@@ -6,7 +6,7 @@ const chalk = require('chalk');
 const logger = require('../utils/logger');
 const Project = require('../models/Project');
 const config = require('../utils/config');
-// Služby budou importovány v konkrétních příkazech podle potřeby
+// Services will be imported in specific commands as needed
 const ora = require('ora');
 
 class CommandBase {

@@ -31,7 +31,7 @@ class BaseApiService {
   createClient(baseUrl, headers, options = {}) {
     this.baseUrl = baseUrl;
     
-    // Vytvoříme konfiguraci klienta
+    // Create client configuration
     const clientConfig = {
       baseURL: baseUrl,
       headers: {
@@ -41,7 +41,7 @@ class BaseApiService {
       ...options,
     };
     
-    // Pokud je v options auth objekt, vytvoříme axios klienta s autentizací
+    // If there's an auth object in options, create axios client with authentication
     this.client = axios.create(clientConfig);
   }
 
@@ -60,7 +60,7 @@ class BaseApiService {
       logger.success(`${this.serviceName} API connection successful`);
       return true;
     } catch (error) {
-      // Základní hlášení o chybě - detailnější hlášení je v performTestRequest()
+      // Basic error reporting - more detailed reporting is in performTestRequest()
       logger.error(`Failed to connect to ${this.serviceName} API: ${error.message}`);
       return false;
     }

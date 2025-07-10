@@ -10,8 +10,8 @@
   "scripts": {
     "start": "node bin/cerberus.js",
     "cli": "node bin/cerberus.js",
-    "lint": "eslint src bin",
-    "lint:fix": "eslint src bin --fix",
+    "lint": "npx eslint src bin",
+    "lint:fix": "npx eslint src bin --fix",
     "format": "prettier --write \"src/**/*.{js,json}\" \"bin/**/*.{js,json}\"",
     "test": "jest",
     "test:watch": "jest --watch",

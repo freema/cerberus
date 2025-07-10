@@ -13,9 +13,9 @@
     "lint": "npx eslint src bin",
     "lint:fix": "npx eslint src bin --fix",
     "format": "prettier --write \"src/**/*.{js,json}\" \"bin/**/*.{js,json}\"",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:file": "jest --testPathPattern",
+    "test": "npx jest",
+    "test:watch": "npx jest --watch",
+    "test:file": "npx jest --testPathPattern",
     "check": "npm test && echo 'All tests passed!'",
     "prepublishOnly": "npm test"
   },

@@ -1,4 +1,4 @@
-name: CI Tests
+name: Tests
 
 on:
   push:
@@ -12,28 +12,41 @@ jobs:
     
     strategy:
       matrix:
-        node-version: [18.x, 20.x, 22.x]
+        node-version: [18, 20, 22]
         
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
     
-    - name: Use Node.js ${{ matrix.node-version }}
+    - name: Setup Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
         
-    - name: Install dependencies
-      run: npm install
+    - name: Clear npm cache
+      run: npm cache clean --force
       
+    - name: Install dependencies
+      run: |
+        npm config set fund false
+        npm config set audit-level none
+        npm install --no-optional --no-fund --no-audit
+        
+    - name: Verify jest installation
+      run: |
+        npx jest --version || echo "Jest not found, installing..."
+        npm list jest || npm install jest --save-dev
+        
     - name: Run tests
       run: npm test
       
     - name: Upload coverage to Codecov
-      if: matrix.node-version == '20.x'
+      if: matrix.node-version == 20
       uses: codecov/codecov-action@v4
       with:
         file: ./coverage/lcov.info
         flags: unittests
         name: codecov-umbrella
         fail_ci_if_error: false
+        token: ${{ secrets.CODECOV_TOKEN }}
+      continue-on-error: true

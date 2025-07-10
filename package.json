@@ -1,7 +1,7 @@
 {
-  "name": "cerberus",
+  "name": "@graslt/cerberus-claude-cli",
   "version": "1.0.0",
-  "description": "CLI tool for preparing files and projects for Claude AI",
+  "description": "CLI tool for preparing files and projects for Claude AI. Collect, organize, and analyze source code files to create comprehensive project contexts.",
   "main": "bin/cerberus.js",
   "bin": {
     "cerberus": "./bin/cerberus.js"
@@ -15,7 +15,8 @@
     "format": "prettier --write \"src/**/*.{js,json}\" \"bin/**/*.{js,json}\"",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:file": "jest --testPathPattern"
+    "test:file": "jest --testPathPattern",
+    "prepublishOnly": "npm test && npm run lint"
   },
   "engines": {
     "node": ">=16.0.0"
@@ -25,10 +26,22 @@
     "file-management",
     "project-management",
     "claude",
-    "ai"
+    "ai",
+    "claude-ai",
+    "project-analysis",
+    "code-organization",
+    "file-bundling"
   ],
-  "author": "",
+  "author": "graslt",
   "license": "MIT",
+  "homepage": "https://github.com/freema/cerberus#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/freema/cerberus.git"
+  },
+  "bugs": {
+    "url": "https://github.com/freema/cerberus/issues"
+  },
   "dependencies": {
     "axios": "^1.6.7",
     "chalk": "^4.1.2",

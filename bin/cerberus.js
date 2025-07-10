@@ -7,12 +7,13 @@ const menuController = require('../src/controllers/menuController');
 const logger = require('../src/utils/logger');
 const config = require('../src/utils/config');
 const { clearTerminal } = require('../src/utils/terminal');
+const { getVersion } = require('../src/utils/version');
 
 // Global options
 program
   .name('cerberus')
   .description('CLI tool for preparing files and projects for Claude AI')
-  .version('1.0.0')
+  .version(getVersion())
   .option('-d, --debug', 'Enable debug mode')
   .option('-c, --config', 'Show current configuration')
   .option('-n, --no-clear', 'Do not clear terminal on startup')

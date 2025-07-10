@@ -11,7 +11,7 @@ try {
   logger = {
     error: (msg, err) => console.error(msg, err),
     info: msg => console.log(msg),
-    warn: msg => console.warn(msg)
+    warn: msg => console.warn(msg),
   };
 }
 
@@ -67,20 +67,20 @@ class SimpleConfig {
 
         // Parse and merge with defaults
         const parsed = JSON.parse(data);
-        
+
         // Check if the configuration has expired
         if (this.expiresIn && parsed._timestamp) {
           const now = Date.now();
           const createdAt = parsed._timestamp;
           const expirationTime = createdAt + this.expiresIn;
-          
+
           if (now > expirationTime) {
             logger.info(`Configuration ${this.name} has expired, using defaults`);
             this.store = { ...this.defaults };
             return;
           }
         }
-        
+
         this.store = {
           ...this.defaults,
           ...parsed,
@@ -99,12 +99,12 @@ class SimpleConfig {
   save() {
     try {
       const filePath = this.getFilePath();
-      
+
       // Add timestamp for expiration check
       if (this.expiresIn) {
         this.store._timestamp = Date.now();
       }
-      
+
       let data = JSON.stringify(this.store, null, 2);
 
       // Encrypt if necessary

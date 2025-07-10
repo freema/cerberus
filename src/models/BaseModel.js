@@ -80,20 +80,20 @@ class BaseModel {
   async save() {
     try {
       this.updateTimestamp();
-      
+
       // Pre-save hook (can be overridden by subclasses)
       await this.beforeSave();
-      
+
       // Ensure data directory exists
       await fileSystem.ensureDir(config.getDataPathForType(this.type));
-      
+
       // Save to data directory
       const filePath = this.getFilePath();
       await this.saveToStorage(filePath);
-      
+
       // Post-save hook (can be overridden by subclasses)
       await this.afterSave(filePath);
-      
+
       logger.debug(`Entity ${this.id} saved to ${filePath}`);
     } catch (error) {
       logger.error(`Error saving entity ${this.id}:`, error);
@@ -115,7 +115,7 @@ class BaseModel {
    * @param {string} filePath - Path where the entity was saved
    * @returns {Promise<void>}
    */
-  async afterSave(filePath) {
+  async afterSave(/* filePath */) {
     // Empty by default, can be overridden by subclasses
     return;
   }
@@ -147,23 +147,29 @@ class BaseModel {
   static async load(id, EntityClass, type) {
     try {
       // First try to load from data directory
-      const filePath = path.join(config.getDataPathForType(type), `${id}${EntityClass.prototype.getFileExtension ? EntityClass.prototype.getFileExtension() : '.json'}`);
-      
+      const filePath = path.join(
+        config.getDataPathForType(type),
+        `${id}${EntityClass.prototype.getFileExtension ? EntityClass.prototype.getFileExtension() : '.json'}`
+      );
+
       try {
         const data = await BaseModel.loadFromStorage(filePath);
         return new EntityClass(data);
       } catch (dataError) {
         // If not in data directory, try cache directory
         logger.debug(`Entity not found in data directory, trying cache directory...`);
-        const cacheFilePath = path.join(config.getCachePathForType(type), `${id}${EntityClass.prototype.getFileExtension ? EntityClass.prototype.getFileExtension() : '.json'}`);
-        
+        const cacheFilePath = path.join(
+          config.getCachePathForType(type),
+          `${id}${EntityClass.prototype.getFileExtension ? EntityClass.prototype.getFileExtension() : '.json'}`
+        );
+
         const data = await BaseModel.loadFromStorage(cacheFilePath);
-        
+
         // Create new entity and migrate to data directory
         const entity = new EntityClass(data);
         logger.info(`Migrating entity ${id} from cache to data directory...`);
         await entity.save();
-        
+
         return entity;
       }
     } catch (error) {
@@ -201,7 +207,7 @@ class BaseModel {
   /**
    * List all entities of a type from both data and cache directories
    * @param {string} type - Entity type
-   * @param {string} extension - File extension (default: .json) 
+   * @param {string} extension - File extension (default: .json)
    * @returns {Promise<string[]>} - Array of entity IDs
    */
   static async listAll(type, extension = '.json') {
@@ -209,28 +215,28 @@ class BaseModel {
       // Get entities from both data and cache directories
       let dataFiles = [];
       let cacheFiles = [];
-      
+
       try {
         dataFiles = await fileSystem.listFiles(config.getDataPathForType(type));
       } catch (error) {
         logger.debug(`No data ${type} directory or error reading it`);
       }
-      
+
       try {
         cacheFiles = await fileSystem.listFiles(config.getCachePathForType(type));
       } catch (error) {
         logger.debug(`No cache ${type} directory or error reading it`);
       }
-      
+
       // Combine files from both directories
       const allFiles = [...dataFiles, ...cacheFiles];
-      
+
       // Filter and remove duplicates and file extension
-      return [...new Set(
-        allFiles
-          .filter(file => file.endsWith(extension))
-          .map(file => file.replace(extension, ''))
-      )];
+      return [
+        ...new Set(
+          allFiles.filter(file => file.endsWith(extension)).map(file => file.replace(extension, ''))
+        ),
+      ];
     } catch (error) {
       logger.error(`Error listing ${type}:`, error);
       return [];
@@ -239,7 +245,7 @@ class BaseModel {
 
   /**
    * Create a new entity
-   * @param {function} EntityClass - Entity constructor 
+   * @param {function} EntityClass - Entity constructor
    * @param {string} type - Entity type
    * @param {string} id - Entity ID
    * @param {Object} data - Initial data
@@ -249,13 +255,13 @@ class BaseModel {
     try {
       // Ensure the directory exists
       await fileSystem.ensureDir(config.getDataPathForType(type));
-      
+
       // Create entity
       const entity = new EntityClass(data);
-      
+
       // Save entity
       await entity.save();
-      
+
       return entity;
     } catch (error) {
       logger.error(`Error creating entity ${id} of type ${type}:`, error);

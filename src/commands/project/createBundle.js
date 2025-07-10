@@ -9,7 +9,7 @@ const Project = require('../../models/Project');
 const bundleCreator = require('../../utils/bundleCreator');
 const clipboard = require('../../utils/clipboard');
 const logger = require('../../utils/logger');
-const UIHelper = require('../../utils/uiHelper');
+// const UIHelper = require('../../utils/uiHelper'); // TODO: Use if needed
 
 class CreateBundleCommand extends CommandBase {
   constructor() {
@@ -25,9 +25,7 @@ class CreateBundleCommand extends CommandBase {
       logger.info('\n🔗 Creating file bundles for Claude Projects...\n');
 
       // Select project
-      const project = projectName ? 
-        await Project.load(projectName) : 
-        await this.selectProject();
+      const project = projectName ? await Project.load(projectName) : await this.selectProject();
 
       if (!project) {
         logger.warn('No project selected.');
@@ -38,7 +36,7 @@ class CreateBundleCommand extends CommandBase {
       const projectFiles = await bundleCreator.getProjectFiles(project.getProjectPath());
       if (projectFiles.length === 0) {
         logger.warn(`Project "${project.name}" contains no files to bundle.`);
-        
+
         const { collectFiles } = await inquirer.prompt([
           {
             type: 'confirm',
@@ -90,7 +88,6 @@ class CreateBundleCommand extends CommandBase {
 
       // Show success message and instructions
       await this.showSuccessMessage(project, bundleResult, savedFiles);
-
     } catch (error) {
       logger.error('Error creating bundles:', error);
       throw error;
@@ -105,7 +102,7 @@ class CreateBundleCommand extends CommandBase {
   async showProjectSummary(project, projectFiles) {
     logger.info(`📁 Project: ${chalk.cyan(project.name)}`);
     logger.info(`📄 Files found: ${chalk.green(projectFiles.length)}`);
-    
+
     const totalSize = projectFiles.reduce((sum, file) => sum + file.size, 0);
     logger.info(`📊 Total size: ${chalk.yellow(this.formatFileSize(totalSize))}`);
 
@@ -118,7 +115,7 @@ class CreateBundleCommand extends CommandBase {
 
     logger.info('\n📋 File types:');
     Object.entries(fileTypes)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([, a], [, b]) => b - a)
       .slice(0, 10) // Show top 10 file types
       .forEach(([ext, count]) => {
         logger.info(`  ${ext}: ${count} files`);
@@ -144,22 +141,22 @@ class CreateBundleCommand extends CommandBase {
         choices: [
           {
             name: '📦 Single bundle - All files in one bundle (recommended for small projects)',
-            value: 'single'
+            value: 'single',
           },
           {
             name: '📚 Multiple bundles - Split into multiple bundles (recommended for large projects)',
-            value: 'multiple'
+            value: 'multiple',
           },
           {
             name: '🎯 Custom bundle - Select specific files to include',
-            value: 'custom'
+            value: 'custom',
           },
           {
             name: '🔙 Back to project menu',
-            value: 'back'
-          }
-        ]
-      }
+            value: 'back',
+          },
+        ],
+      },
     ]);
 
     if (bundleType === 'back') {
@@ -176,15 +173,17 @@ class CreateBundleCommand extends CommandBase {
    */
   async createSingleBundle(project) {
     logger.info('Creating single bundle...');
-    
+
     const result = await bundleCreator.createSingleBundle(project);
-    
+
     const bundleSize = result.totalSize;
     const sizeMB = bundleSize / (1024 * 1024);
-    
+
     if (sizeMB > 5) {
-      logger.warn(`⚠️  Bundle size is ${sizeMB.toFixed(1)}MB - this may be large for Claude Projects`);
-      
+      logger.warn(
+        `⚠️  Bundle size is ${sizeMB.toFixed(1)}MB - this may be large for Claude Projects`
+      );
+
       const { proceed } = await inquirer.prompt([
         {
           type: 'confirm',
@@ -216,20 +215,20 @@ class CreateBundleCommand extends CommandBase {
         name: 'maxFiles',
         message: 'Maximum files per bundle:',
         default: 50,
-        validate: (input) => {
+        validate: input => {
           if (input < 1) return 'Must be at least 1';
           if (input > 200) return 'Maximum 200 files per bundle recommended';
           return true;
-        }
-      }
+        },
+      },
     ]);
 
     logger.info(`Creating multiple bundles with max ${maxFiles} files each...`);
-    
+
     const result = await bundleCreator.createMultipleBundles(project, maxFiles);
-    
+
     logger.info(`✅ Created ${result.bundles.length} bundles`);
-    
+
     return result;
   }
 
@@ -246,7 +245,7 @@ class CreateBundleCommand extends CommandBase {
     const fileChoices = projectFiles.map(file => ({
       name: `${file.originalPath} (${this.formatFileSize(file.size)})`,
       value: file.originalPath,
-      checked: false
+      checked: false,
     }));
 
     const { selectedFiles } = await inquirer.prompt([
@@ -256,15 +255,15 @@ class CreateBundleCommand extends CommandBase {
         message: 'Select files to include:',
         choices: fileChoices,
         pageSize: 15,
-        validate: (input) => {
+        validate: input => {
           if (input.length === 0) return 'Please select at least one file';
           return true;
-        }
-      }
+        },
+      },
     ]);
 
     logger.info(`Creating custom bundle with ${selectedFiles.length} selected files...`);
-    
+
     return await bundleCreator.createCustomBundle(project, selectedFiles);
   }
 
@@ -280,11 +279,15 @@ class CreateBundleCommand extends CommandBase {
     // Show bundle information
     logger.info('📦 Created bundles:');
     bundleResult.bundles.forEach((bundle, index) => {
-      logger.info(`  ${index + 1}. ${bundle.filename} - ${this.formatFileSize(bundle.size)} (${bundle.fileCount} files)`);
+      logger.info(
+        `  ${index + 1}. ${bundle.filename} - ${this.formatFileSize(bundle.size)} (${bundle.fileCount} files)`
+      );
     });
 
     logger.info(`\n📍 Bundle location: ${chalk.cyan(path.dirname(savedFiles[0]))}`);
-    logger.info(`📋 System message: ${chalk.cyan(path.basename(savedFiles[savedFiles.length - 1]))}`);
+    logger.info(
+      `📋 System message: ${chalk.cyan(path.basename(savedFiles[savedFiles.length - 1]))}`
+    );
 
     // Show usage instructions
     logger.info('\n📚 How to use these bundles in Claude Projects:\n');
@@ -322,7 +325,9 @@ class CreateBundleCommand extends CommandBase {
     logger.info('• Files are marked with their original paths for easy reference');
     logger.info('• Claude will understand the project structure automatically');
     if (bundleResult.bundles.length > 1) {
-      logger.info(`• Upload ALL ${bundleResult.bundles.length} bundles for complete project context`);
+      logger.info(
+        `• Upload ALL ${bundleResult.bundles.length} bundles for complete project context`
+      );
     }
 
     logger.info(`\n🔗 Ready to use ${bundleResult.totalFiles} files in Claude Projects!`);

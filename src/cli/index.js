@@ -1,5 +1,5 @@
 const chalk = require('chalk');
-const figlet = require('figlet');
+// const figlet = require('figlet'); // TODO: Use for banner if needed
 const inquirer = require('inquirer');
 const logger = require('../utils/logger');
 

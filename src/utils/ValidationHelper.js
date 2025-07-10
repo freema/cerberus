@@ -3,7 +3,7 @@
  */
 const fs = require('fs-extra');
 const path = require('path');
-const logger = require('./logger');
+// const logger = require('./logger'); // TODO: Use if needed
 
 class ValidationHelper {
   /**
@@ -16,14 +16,14 @@ class ValidationHelper {
     if (!input || input.trim() === '') {
       return 'Path cannot be empty';
     }
-    
+
     try {
       const stats = await fs.stat(input);
-      
+
       if (requireDirectory && !stats.isDirectory()) {
         return 'Path must be a directory';
       }
-      
+
       return true;
     } catch (error) {
       return 'Path does not exist or is not accessible';
@@ -37,7 +37,7 @@ class ValidationHelper {
    */
   async validateWritablePath(input) {
     const pathExists = await this.validatePath(input);
-    
+
     if (pathExists !== true) {
       // Try to create directory
       try {
@@ -47,7 +47,7 @@ class ValidationHelper {
         return `Cannot create directory: ${error.message}`;
       }
     }
-    
+
     // Check if we can write
     try {
       await fs.access(input, fs.constants.W_OK);
@@ -76,7 +76,7 @@ class ValidationHelper {
     if (!input || input.trim() === '') {
       return 'URL cannot be empty';
     }
-    
+
     try {
       new URL(input);
       return true;
@@ -95,11 +95,11 @@ class ValidationHelper {
     if (urlValid !== true) {
       return urlValid;
     }
-    
+
     if (!input.includes('merge_requests')) {
       return 'Invalid GitLab merge request URL. Format: https://gitlab.com/path/to/project/-/merge_requests/ID';
     }
-    
+
     return true;
   }
 
@@ -112,19 +112,19 @@ class ValidationHelper {
    */
   validateNumber(input, min = null, max = null) {
     const number = Number(input);
-    
+
     if (isNaN(number)) {
       return 'Input must be a valid number';
     }
-    
+
     if (min !== null && number < min) {
       return `Number must be at least ${min}`;
     }
-    
+
     if (max !== null && number > max) {
       return `Number must be at most ${max}`;
     }
-    
+
     return true;
   }
 
@@ -137,13 +137,13 @@ class ValidationHelper {
     if (!input || input.trim() === '') {
       return 'Please enter at least one extension';
     }
-    
+
     const extensions = input.split(',').map(ext => ext.trim());
-    
+
     if (!extensions.every(ext => ext.startsWith('.'))) {
       return 'Each extension must start with a dot (.)';
     }
-    
+
     return true;
   }
 
@@ -156,13 +156,13 @@ class ValidationHelper {
     if (!input || input.trim() === '') {
       return 'Project name cannot be empty';
     }
-    
+
     // Check for forbidden characters in name
-    const invalidChars = /[\/\\:*?"<>|]/;
+    const invalidChars = /[/\\:*?"<>|]/;
     if (invalidChars.test(input)) {
       return 'Project name contains invalid characters';
     }
-    
+
     return true;
   }
 
@@ -190,9 +190,9 @@ class ValidationHelper {
     if (empty !== true) {
       return empty;
     }
-    
+
     // Additional validation could be added here based on key format
-    
+
     return true;
   }
 }

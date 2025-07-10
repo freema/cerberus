@@ -6,7 +6,7 @@ const chalk = require('chalk');
 const ora = require('ora');
 const Project = require('../../models/Project');
 const logger = require('../../utils/logger');
-const config = require('../../utils/config');
+// const config = require('../../utils/config'); // TODO: Use if needed
 const clipboard = require('../../utils/clipboard');
 const aiServiceProvider = require('../../services/AIServiceFactory');
 const { generateDirectoryStructure } = require('../../utils/directoryStructure');
@@ -69,10 +69,12 @@ async function analyzeProject(projectName) {
 
     // Get active AI service adapter
     const activeAdapter = aiServiceProvider.getActiveAdapter();
-    
+
     if (!activeAdapter || !activeAdapter.isConfigured()) {
-      logger.warn(`Active AI service (${activeAdapter ? activeAdapter.serviceName : 'None'}) is not properly configured.`);
-      
+      logger.warn(
+        `Active AI service (${activeAdapter ? activeAdapter.serviceName : 'None'}) is not properly configured.`
+      );
+
       const { configureNow } = await inquirer.prompt([
         {
           type: 'confirm',
@@ -81,12 +83,12 @@ async function analyzeProject(projectName) {
           default: true,
         },
       ]);
-      
+
       if (configureNow) {
         const AIConfigController = require('../../controllers/AIConfigController');
         const aiConfigController = new AIConfigController();
         await aiConfigController.handleConfig();
-        
+
         // Re-get the active adapter after configuration
         const adapter = aiServiceProvider.getActiveAdapter();
         if (!adapter || !adapter.isConfigured()) {
@@ -107,7 +109,7 @@ async function analyzeProject(projectName) {
         message: `Select ${activeAdapter.serviceName} model to use:`,
         choices: adapterModels.map(model => ({
           name: model.name,
-          value: model.id
+          value: model.id,
         })),
         default: activeAdapter.claudeConfig?.model || adapterModels[0].id,
       },
@@ -128,7 +130,9 @@ async function analyzeProject(projectName) {
     logger.info(chalk.cyan('\n=== Project Analysis ==='));
     logger.info(chalk.white(`Name: ${chalk.yellow(project.name)}`));
     logger.info(chalk.white(`Files: ${chalk.yellow(project.files.length)}`));
-    logger.info(chalk.white(`Source Directories: ${chalk.yellow(project.sourceDirectories.length)}`));
+    logger.info(
+      chalk.white(`Source Directories: ${chalk.yellow(project.sourceDirectories.length)}`)
+    );
     logger.info(chalk.white(`Using AI Service: ${chalk.yellow(activeAdapter.serviceName)}`));
     logger.info(chalk.white(`Using Model: ${chalk.yellow(model)}`));
 

@@ -78,14 +78,16 @@ async function openProject(projectName) {
     ]);
 
     switch (action) {
-      case 'collect':
+      case 'collect': {
         const collectFiles = require('./collectFiles');
         await collectFiles(selectedProject);
         break;
-      case 'analyze':
+      }
+      case 'analyze': {
         const analyzeProject = require('./analyzeProject');
         await analyzeProject(selectedProject);
         break;
+      }
       case 'view':
         displayProjectDetails(project);
         break;

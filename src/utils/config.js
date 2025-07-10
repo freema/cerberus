@@ -108,7 +108,6 @@ class ConfigService {
     this.credentialsConfig.set(key, value);
   }
 
-
   /**
    * Get the Claude API key
    * @returns {string|null} - Claude API key or null
@@ -140,7 +139,6 @@ class ConfigService {
   setDebugMode(enabled) {
     this.set('debug', enabled);
   }
-
 
   /**
    * Get Claude configuration

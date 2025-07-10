@@ -32,7 +32,7 @@ class Logger {
     try {
       // Create log directory if it doesn't exist
       fs.ensureDirSync(pathHelper.getLogPath());
-      
+
       // Set log file path with current date
       const now = new Date();
       const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
@@ -52,7 +52,7 @@ class Logger {
     if (enabled) {
       // Použijeme přímo console.log, protože nemůžeme volat ještě neexistující instanci
       console.log(chalk.yellow('Debug mode is now ENABLED'));
-      
+
       // Zapíšeme také do logu
       this._writeToLogFile('info', 'Debug mode is now ENABLED');
     }
@@ -75,18 +75,18 @@ class Logger {
    */
   _writeToLogFile(level, message, error = null) {
     if (!this.logToFile || !this.logFilePath) return;
-    
+
     try {
       const timestamp = new Date().toISOString();
       let logEntry = `[${timestamp}] [${level.toUpperCase()}] ${message}\n`;
-      
+
       if (error) {
         logEntry += `[${timestamp}] [${level.toUpperCase()}] ${error.message}\n`;
         if (error.stack) {
           logEntry += `[${timestamp}] [${level.toUpperCase()}] ${error.stack}\n`;
         }
       }
-      
+
       fs.appendFileSync(this.logFilePath, logEntry);
     } catch (err) {
       console.error('Failed to write to log file:', err);
@@ -145,10 +145,11 @@ class Logger {
         // When we have context data, print it properly
         console.log(chalk.gray('[DEBUG]'), message);
         console.log(context);
-        
+
         // For the log file, try to include context as JSON if possible
         try {
-          const contextStr = typeof context === 'object' ? JSON.stringify(context) : String(context);
+          const contextStr =
+            typeof context === 'object' ? JSON.stringify(context) : String(context);
           this._writeToLogFile('debug', `${message} - Context: ${contextStr}`);
         } catch (e) {
           this._writeToLogFile('debug', message);

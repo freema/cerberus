@@ -67,6 +67,11 @@ tasks:
     cmds:
       - npx eslint src/ --ext .js --fix
 
+  format:
+    desc: Format code with Prettier
+    cmds:
+      - npm run format
+
   check:
     desc: Run all checks (lint)
     cmds:

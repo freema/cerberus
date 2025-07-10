@@ -4,7 +4,7 @@
  */
 const fs = require('fs-extra');
 const path = require('path');
-const config = require('./config');
+// const config = require('./config');
 const logger = require('./logger');
 
 class I18nService {
@@ -94,12 +94,12 @@ class I18nService {
    * @returns {boolean} - Whether the locale was set successfully
    * Note: Currently disabled for English-only mode
    */
-  setLocale(locale) {
+  setLocale(/* locale */) {
     // Temporarily disabled for English-only mode
     // Keep method for future multi-language support
     logger.info(`Locale switching disabled - staying with ${this.locale}`);
     return false;
-    
+
     // if (this.translations[locale]) {
     //   this.locale = locale;
     //   config.set('locale', locale);

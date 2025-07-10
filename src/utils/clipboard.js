@@ -84,5 +84,5 @@ function write(text) {
 module.exports = {
   copyToClipboard,
   copyWithFeedback,
-  write
+  write,
 };

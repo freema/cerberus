@@ -21,17 +21,14 @@ class ConfigMenuController {
     this.checkMissingConfigs();
 
     while (true) {
-      const configType = await this.uiHelper.select(
-        i18n.t('menu.settings.title'),
-        [
-          { name: i18n.t('menu.settings.ai') || 'AI Services', value: 'ai' },
-          { name: i18n.t('menu.settings.debug'), value: 'debug' },
-          // Language settings temporarily disabled for English-only mode
-          // { name: i18n.t('menu.settings.locale'), value: 'locale' },
-          { name: i18n.t('menu.settings.show'), value: 'show' },
-          { name: i18n.t('menu.settings.back'), value: 'back' },
-        ]
-      );
+      const configType = await this.uiHelper.select(i18n.t('menu.settings.title'), [
+        { name: i18n.t('menu.settings.ai') || 'AI Services', value: 'ai' },
+        { name: i18n.t('menu.settings.debug'), value: 'debug' },
+        // Language settings temporarily disabled for English-only mode
+        // { name: i18n.t('menu.settings.locale'), value: 'locale' },
+        { name: i18n.t('menu.settings.show'), value: 'show' },
+        { name: i18n.t('menu.settings.back'), value: 'back' },
+      ]);
 
       switch (configType) {
         case 'ai':
@@ -83,30 +80,32 @@ class ConfigMenuController {
     this.uiHelper.displaySuccess(`Debug mode ${enableDebug ? 'enabled' : 'disabled'}.`);
   }
 
-
   /**
    * Configure language settings
    * Note: Temporarily disabled for English-only mode
    * Keep method for future multi-language support
    */
   async configureLanguage() {
-    this.uiHelper.displayInfo('Language switching is currently disabled. The application runs in English only.', '');
+    this.uiHelper.displayInfo(
+      'Language switching is currently disabled. The application runs in English only.',
+      ''
+    );
     return;
-    
+
     // Code kept for future multi-language support
     // this.uiHelper.displayHeader(i18n.t('settings.languageSettings.title'));
-    // 
+    //
     // const currentLocale = i18n.getCurrentLocale();
     // const localeNames = {
     //   en: 'English',
     //   cs: 'Čeština (Czech)',
     // };
-    // 
+    //
     // this.uiHelper.displayInfo(
     //   i18n.t('settings.languageSettings.currentLanguage', { language: localeNames[currentLocale] }),
     //   ''
     // );
-    // 
+    //
     // const newLocale = await this.uiHelper.select(
     //   i18n.t('settings.languageSettings.selectLanguage'),
     //   [
@@ -115,7 +114,7 @@ class ConfigMenuController {
     //   ],
     //   currentLocale
     // );
-    // 
+    //
     // if (newLocale !== currentLocale) {
     //   const success = i18n.setLocale(newLocale);
     //   if (success) {
@@ -133,7 +132,6 @@ class ConfigMenuController {
     // Delegate to the ApiConfigService
     this.apiConfigService.showConfiguration();
   }
-  
 }
 
 module.exports = ConfigMenuController;

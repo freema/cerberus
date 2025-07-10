@@ -5,9 +5,9 @@
 const inquirer = require('inquirer');
 const chalk = require('chalk');
 const ora = require('ora');
-const path = require('path');
+// const path = require('path'); // TODO: Use if needed
 const logger = require('./logger');
-const i18n = require('./i18n');
+// const i18n = require('./i18n'); // TODO: Use if needed
 const { generateDirectoryLink } = require('./pathHelper');
 const clipboard = require('./clipboard');
 
@@ -19,12 +19,14 @@ class UIHelper {
    * @returns {Promise<boolean>} - User's answer
    */
   async confirm(message, defaultValue = true) {
-    const { confirmed } = await inquirer.prompt([{
-      type: 'confirm',
-      name: 'confirmed',
-      message,
-      default: defaultValue
-    }]);
+    const { confirmed } = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'confirmed',
+        message,
+        default: defaultValue,
+      },
+    ]);
     return confirmed;
   }
 
@@ -36,13 +38,15 @@ class UIHelper {
    * @returns {Promise<string>} - User input
    */
   async input(message, validate = null, defaultValue = '') {
-    const { value } = await inquirer.prompt([{
-      type: 'input',
-      name: 'value',
-      message,
-      validate,
-      default: defaultValue
-    }]);
+    const { value } = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'value',
+        message,
+        validate,
+        default: defaultValue,
+      },
+    ]);
     return value;
   }
 
@@ -53,12 +57,14 @@ class UIHelper {
    * @returns {Promise<string>} - User password
    */
   async password(message, validate = null) {
-    const { value } = await inquirer.prompt([{
-      type: 'password',
-      name: 'value',
-      message,
-      validate
-    }]);
+    const { value } = await inquirer.prompt([
+      {
+        type: 'password',
+        name: 'value',
+        message,
+        validate,
+      },
+    ]);
     return value;
   }
 
@@ -70,13 +76,15 @@ class UIHelper {
    * @returns {Promise<any>} - Selected value
    */
   async select(message, choices, defaultValue = null) {
-    const { selected } = await inquirer.prompt([{
-      type: 'list',
-      name: 'selected',
-      message,
-      choices,
-      default: defaultValue
-    }]);
+    const { selected } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'selected',
+        message,
+        choices,
+        default: defaultValue,
+      },
+    ]);
     return selected;
   }
 
@@ -88,13 +96,15 @@ class UIHelper {
    * @returns {Promise<Array<any>>} - Selected values
    */
   async multiSelect(message, choices, defaultValue = []) {
-    const { selected } = await inquirer.prompt([{
-      type: 'checkbox',
-      name: 'selected',
-      message,
-      choices,
-      default: defaultValue
-    }]);
+    const { selected } = await inquirer.prompt([
+      {
+        type: 'checkbox',
+        name: 'selected',
+        message,
+        choices,
+        default: defaultValue,
+      },
+    ]);
     return selected;
   }
 
@@ -174,10 +184,9 @@ class UIHelper {
    */
   displayDescription(text, maxLength = 500) {
     if (!text) return;
-    
+
     logger.info(chalk.cyan('\nDescription:'));
-    logger.info(chalk.gray(text.substring(0, maxLength) + 
-      (text.length > maxLength ? '...' : '')));
+    logger.info(chalk.gray(text.substring(0, maxLength) + (text.length > maxLength ? '...' : '')));
   }
 
   /**
@@ -197,18 +206,18 @@ class UIHelper {
       });
       return maxWidth + 2; // Add padding
     });
-    
+
     // Print headers
     let headerRow = '';
     headers.forEach((header, idx) => {
       headerRow += chalk.cyan(header.padEnd(widths[idx]));
     });
     logger.info(headerRow);
-    
+
     // Print separator
     const separator = widths.map(width => '-'.repeat(width)).join('');
     logger.info(chalk.gray(separator));
-    
+
     // Print rows
     rows.forEach(row => {
       let rowStr = '';
@@ -256,7 +265,11 @@ class UIHelper {
    * @param {string} [message] - Question message
    * @param {string} [successMessage] - Success message
    */
-  async askToCopyToClipboard(text, message = 'Would you like to copy this to your clipboard?', successMessage = 'Copied to clipboard.') {
+  async askToCopyToClipboard(
+    text,
+    message = 'Would you like to copy this to your clipboard?',
+    successMessage = 'Copied to clipboard.'
+  ) {
     const shouldCopy = await this.confirm(message, true);
     if (shouldCopy) {
       return this.copyToClipboard(text, successMessage);

@@ -63,12 +63,12 @@ class AIServiceProvider {
   getActiveAdapter() {
     const activeAdapterId = config.get('activeAIService', 'claude');
     const adapter = this.getAdapter(activeAdapterId);
-    
+
     if (!adapter) {
       logger.warn(`Active AI service ${activeAdapterId} not found, falling back to Claude`);
       return this.getAdapter('claude');
     }
-    
+
     return adapter;
   }
 
@@ -82,7 +82,7 @@ class AIServiceProvider {
       logger.error(`AI service adapter ${adapterId} not found`);
       return false;
     }
-    
+
     config.set('activeAIService', adapterId);
     return true;
   }

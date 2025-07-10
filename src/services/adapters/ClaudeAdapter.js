@@ -35,7 +35,7 @@ class ClaudeAdapter extends AIServiceAdapter {
     return [
       { name: 'Claude 3 Opus (best quality, slower)', id: 'claude-3-opus-20240229' },
       { name: 'Claude 3 Sonnet (balanced)', id: 'claude-3-sonnet-20240229' },
-      { name: 'Claude 3 Haiku (fastest)', id: 'claude-3-haiku-20240307' }
+      { name: 'Claude 3 Haiku (fastest)', id: 'claude-3-haiku-20240307' },
     ];
   }
 
@@ -121,7 +121,6 @@ The instructions should be clear, precise, and focused on helping an AI system e
       null
     );
   }
-
 }
 
 module.exports = new ClaudeAdapter();

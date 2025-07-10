@@ -51,16 +51,16 @@ class CommandBase {
    * @param {Object} args - Command arguments
    * @returns {Promise<boolean>} - Whether inputs are valid
    */
-  async validateInputs(args) {
+  async validateInputs(_args) {
     return true;
   }
 
   /**
    * Run the command - must be implemented by subclasses
-   * @param {Object} args - Command arguments
+   * @param {Object} _args - Command arguments
    * @returns {Promise<any>} - Command result
    */
-  async run(args) {
+  async run(/* _args */) {
     throw new Error(`Method run() must be implemented by subclass of CommandBase`);
   }
 
@@ -192,7 +192,6 @@ class CommandBase {
     const selectedName = await this.selectOption('Select a project:', choices);
     return await Project.load(selectedName);
   }
-
 
   /**
    * Check if API keys are configured and offer to configure them if not

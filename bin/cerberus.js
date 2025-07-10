@@ -17,7 +17,7 @@ program
   .option('-d, --debug', 'Enable debug mode')
   .option('-c, --config', 'Show current configuration')
   .option('-n, --no-clear', 'Do not clear terminal on startup')
-  .hook('preAction', (thisCommand, actionCommand) => {
+  .hook('preAction', (thisCommand /* _actionCommand */) => {
     // Set debug mode if flag is provided
     if (thisCommand.opts().debug) {
       logger.setDebugMode(true);
@@ -164,7 +164,7 @@ if (shouldParseArgs) {
       await menuController.startInteractiveMenu();
     } catch (error) {
       console.error('Failed to start Cerberus:', error);
-      process.exit(1);
+      throw new Error('Failed to start Cerberus: ' + error);
     }
   })();
 }

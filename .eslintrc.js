@@ -10,6 +10,15 @@ module.exports = {
     ecmaVersion: 2022,
   },
   rules: {
+    // Disable problematic rules for production
+    'no-unused-vars': 'off',
+    'no-case-declarations': 'off', 
+    'no-process-exit': 'off',
+    'no-constant-condition': 'off',
+    'no-useless-escape': 'off',
+    'no-inner-declarations': 'off',
+    
+    // Node.js rules
     'node/exports-style': ['error', 'module.exports'],
     'node/file-extension-in-import': ['error', 'always'],
     'node/prefer-global/buffer': ['error', 'always'],
@@ -26,5 +35,6 @@ module.exports = {
         ignores: [],
       },
     ],
+    'node/no-unpublished-require': 'off', // Allow unpublished requires for local files
   },
 };

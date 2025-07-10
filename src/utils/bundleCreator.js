@@ -5,8 +5,8 @@ const fs = require('fs-extra');
 const path = require('path');
 const logger = require('./logger');
 const config = require('./config');
-const fileSystem = require('./fileSystem');
-const pathHelper = require('./pathHelper');
+// const fileSystem = require('./fileSystem'); // TODO: Use if needed
+// const pathHelper = require('./pathHelper'); // TODO: Use if needed
 
 class BundleCreator {
   constructor() {
@@ -65,7 +65,7 @@ class BundleCreator {
       '.pl': 'perl',
       '.scala': 'scala',
     };
-    
+
     return languageMap[ext] || 'text';
   }
 
@@ -94,12 +94,43 @@ class BundleCreator {
 
     // Skip binary files (basic check)
     const ext = path.extname(filePath).toLowerCase();
-    const binaryExtensions = ['.exe', '.dll', '.so', '.dylib', '.bin', '.img', '.iso', 
-                              '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.ico', '.svg',
-                              '.mp3', '.mp4', '.avi', '.mkv', '.mov', '.wav', '.ogg',
-                              '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
-                              '.zip', '.rar', '.7z', '.tar', '.gz', '.bz2'];
-    
+    const binaryExtensions = [
+      '.exe',
+      '.dll',
+      '.so',
+      '.dylib',
+      '.bin',
+      '.img',
+      '.iso',
+      '.jpg',
+      '.jpeg',
+      '.png',
+      '.gif',
+      '.bmp',
+      '.ico',
+      '.svg',
+      '.mp3',
+      '.mp4',
+      '.avi',
+      '.mkv',
+      '.mov',
+      '.wav',
+      '.ogg',
+      '.pdf',
+      '.doc',
+      '.docx',
+      '.xls',
+      '.xlsx',
+      '.ppt',
+      '.pptx',
+      '.zip',
+      '.rar',
+      '.7z',
+      '.tar',
+      '.gz',
+      '.bz2',
+    ];
+
     if (binaryExtensions.includes(ext)) {
       logger.debug(`Skipping binary file: ${filePath}`);
       return false;
@@ -116,13 +147,13 @@ class BundleCreator {
   async readFileContent(filePath) {
     try {
       const content = await fs.readFile(filePath, 'utf8');
-      
+
       // Basic check for binary content (null bytes)
       if (content.includes('\0')) {
         logger.debug(`Skipping binary file detected by content: ${filePath}`);
         return null;
       }
-      
+
       return content;
     } catch (error) {
       if (error.code === 'ENOENT') {
@@ -169,7 +200,7 @@ ${bundleInfo.description ? `## Description: ${bundleInfo.description}` : ''}
    */
   formatFileEntry(originalPath, content) {
     const language = this.getLanguageFromPath(originalPath);
-    
+
     return `### FILE: ${originalPath}
 \`\`\`${language}
 ${content}
@@ -187,10 +218,10 @@ ${content}
    */
   async createSingleBundle(project) {
     logger.info(`Creating single bundle for project: ${project.name}`);
-    
+
     const projectDir = project.getProjectPath();
     const files = await this.getProjectFiles(projectDir);
-    
+
     if (files.length === 0) {
       throw new Error('No files found in project');
     }
@@ -200,7 +231,7 @@ ${content}
       totalFiles: files.length,
       bundleNumber: 1,
       totalBundles: 1,
-      description: `Complete project bundle containing all ${files.length} files`
+      description: `Complete project bundle containing all ${files.length} files`,
     };
 
     let bundleContent = this.createBundleHeader(bundleInfo);
@@ -219,18 +250,22 @@ ${content}
 
     // Check bundle size
     if (bundleSize > this.bundleConfig.maxBundleSize) {
-      logger.warn(`Bundle size (${Math.round(bundleSize / 1024 / 1024)}MB) exceeds recommended limit`);
+      logger.warn(
+        `Bundle size (${Math.round(bundleSize / 1024 / 1024)}MB) exceeds recommended limit`
+      );
     }
 
     return {
-      bundles: [{
-        filename: `${project.name}-bundle-1.md`,
-        content: bundleContent,
-        size: bundleSize,
-        fileCount: files.length
-      }],
+      bundles: [
+        {
+          filename: `${project.name}-bundle-1.md`,
+          content: bundleContent,
+          size: bundleSize,
+          fileCount: files.length,
+        },
+      ],
       totalFiles: files.length,
-      totalSize: bundleSize
+      totalSize: bundleSize,
     };
   }
 
@@ -241,11 +276,13 @@ ${content}
    * @returns {Promise<Object>} - Bundle creation result
    */
   async createMultipleBundles(project, maxFilesPerBundle = this.bundleConfig.maxFilesPerBundle) {
-    logger.info(`Creating multiple bundles for project: ${project.name} (max ${maxFilesPerBundle} files per bundle)`);
-    
+    logger.info(
+      `Creating multiple bundles for project: ${project.name} (max ${maxFilesPerBundle} files per bundle)`
+    );
+
     const projectDir = project.getProjectPath();
     const files = await this.getProjectFiles(projectDir);
-    
+
     if (files.length === 0) {
       throw new Error('No files found in project');
     }
@@ -264,7 +301,7 @@ ${content}
         totalFiles: files.length,
         bundleNumber: i + 1,
         totalBundles: totalBundles,
-        description: `Bundle ${i + 1} containing files ${startIndex + 1}-${endIndex} of ${files.length}`
+        description: `Bundle ${i + 1} containing files ${startIndex + 1}-${endIndex} of ${files.length}`,
       };
 
       let bundleContent = this.createBundleHeader(bundleInfo);
@@ -285,18 +322,20 @@ ${content}
         filename: `${project.name}-bundle-${i + 1}.md`,
         content: bundleContent,
         size: bundleSize,
-        fileCount: bundleFiles.length
+        fileCount: bundleFiles.length,
       });
 
       if (bundleSize > this.bundleConfig.maxBundleSize) {
-        logger.warn(`Bundle ${i + 1} size (${Math.round(bundleSize / 1024 / 1024)}MB) exceeds recommended limit`);
+        logger.warn(
+          `Bundle ${i + 1} size (${Math.round(bundleSize / 1024 / 1024)}MB) exceeds recommended limit`
+        );
       }
     }
 
     return {
       bundles,
       totalFiles: files.length,
-      totalSize
+      totalSize,
     };
   }
 
@@ -307,14 +346,17 @@ ${content}
    * @returns {Promise<Object>} - Bundle creation result
    */
   async createCustomBundle(project, selectedFiles) {
-    logger.info(`Creating custom bundle for project: ${project.name} with ${selectedFiles.length} selected files`);
-    
+    logger.info(
+      `Creating custom bundle for project: ${project.name} with ${selectedFiles.length} selected files`
+    );
+
     const projectDir = project.getProjectPath();
     const allFiles = await this.getProjectFiles(projectDir);
-    
+
     // Filter to only selected files
-    const files = allFiles.filter(file => 
-      selectedFiles.includes(file.originalPath) || selectedFiles.includes(file.flattenedName)
+    const files = allFiles.filter(
+      file =>
+        selectedFiles.includes(file.originalPath) || selectedFiles.includes(file.flattenedName)
     );
 
     if (files.length === 0) {
@@ -326,7 +368,7 @@ ${content}
       totalFiles: files.length,
       bundleNumber: 1,
       totalBundles: 1,
-      description: `Custom bundle with ${files.length} selected files`
+      description: `Custom bundle with ${files.length} selected files`,
     };
 
     let bundleContent = this.createBundleHeader(bundleInfo);
@@ -341,14 +383,16 @@ ${content}
     bundleContent += this.createBundleFooter();
 
     return {
-      bundles: [{
-        filename: `${project.name}-custom-bundle.md`,
-        content: bundleContent,
-        size: bundleContent.length,
-        fileCount: files.length
-      }],
+      bundles: [
+        {
+          filename: `${project.name}-custom-bundle.md`,
+          content: bundleContent,
+          size: bundleContent.length,
+          fileCount: files.length,
+        },
+      ],
       totalFiles: files.length,
-      totalSize: bundleContent.length
+      totalSize: bundleContent.length,
     };
   }
 
@@ -361,7 +405,7 @@ ${content}
   generateSystemMessage(bundleResult, project) {
     const bundleCount = bundleResult.bundles.length;
     const totalFiles = bundleResult.totalFiles;
-    
+
     return `You are working with a code bundle containing multiple files from the "${project.name}" project.
 
 ## Bundle Format:
@@ -382,13 +426,17 @@ The files follow the original project structure. Use the file paths to understan
 - Number of bundles: ${bundleCount}
 - Total size: ${Math.round(bundleResult.totalSize / 1024)}KB
 
-${bundleCount > 1 ? `
+${
+  bundleCount > 1
+    ? `
 ## Working with Multiple Bundles:
 This project is split across ${bundleCount} bundles. Make sure to:
 1. Upload ALL bundles to your Claude Project
 2. Reference the correct bundle when discussing specific files
 3. Consider the complete project context across all bundles
-` : ''}
+`
+    : ''
+}
 
 Please confirm you understand the bundle format and are ready to work with the ${project.name} project files.`;
   }
@@ -400,25 +448,25 @@ Please confirm you understand the bundle format and are ready to work with the $
    */
   async getProjectFiles(projectDir) {
     const files = [];
-    
+
     try {
       const entries = await fs.readdir(projectDir);
-      
+
       for (const entry of entries) {
         const fullPath = path.join(projectDir, entry);
-        
+
         try {
           const stats = await fs.stat(fullPath);
-          
+
           if (this.shouldIncludeFile(fullPath, stats)) {
             // Try to determine original path from filename
             const originalPath = this.getOriginalPathFromFlattenedName(entry);
-            
+
             files.push({
               flattenedName: entry,
               originalPath: originalPath,
               fullPath: fullPath,
-              size: stats.size
+              size: stats.size,
             });
           }
         } catch (error) {
@@ -429,7 +477,7 @@ Please confirm you understand the bundle format and are ready to work with the $
       logger.error(`Error reading project directory: ${error.message}`);
       throw error;
     }
-    
+
     return files.sort((a, b) => a.originalPath.localeCompare(b.originalPath));
   }
 
@@ -443,7 +491,7 @@ Please confirm you understand the bundle format and are ready to work with the $
     if (['structure.txt', 'metadata.json'].includes(flattenedName)) {
       return flattenedName;
     }
-    
+
     // Convert underscores back to slashes
     return flattenedName.replace(/_/g, '/');
   }
@@ -464,7 +512,9 @@ Please confirm you understand the bundle format and are ready to work with the $
       const bundlePath = path.join(bundleDir, bundle.filename);
       await fs.writeFile(bundlePath, bundle.content, 'utf8');
       savedFiles.push(bundlePath);
-      logger.info(`Saved bundle: ${bundle.filename} (${Math.round(bundle.size / 1024)}KB, ${bundle.fileCount} files)`);
+      logger.info(
+        `Saved bundle: ${bundle.filename} (${Math.round(bundle.size / 1024)}KB, ${bundle.fileCount} files)`
+      );
     }
 
     // Save system message

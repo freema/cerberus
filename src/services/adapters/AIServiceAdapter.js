@@ -3,7 +3,7 @@
  * This class defines the interface that all AI model adapters must implement
  */
 const BaseApiService = require('../BaseApiService');
-const logger = require('../../utils/logger');
+// const logger = require('../../utils/logger');
 
 class AIServiceAdapter extends BaseApiService {
   /**
@@ -26,7 +26,7 @@ class AIServiceAdapter extends BaseApiService {
    * Update the service API key
    * @param {string} apiKey - New API key
    */
-  updateApiKey(apiKey) {
+  updateApiKey(/* apiKey */) {
     throw new Error('updateApiKey() must be implemented by child classes');
   }
 
@@ -34,7 +34,7 @@ class AIServiceAdapter extends BaseApiService {
    * Update service configuration
    * @param {Object} config - New configuration
    */
-  updateConfig(config) {
+  updateConfig(/* config */) {
     throw new Error('updateConfig() must be implemented by child classes');
   }
 
@@ -43,7 +43,7 @@ class AIServiceAdapter extends BaseApiService {
    * @param {Object} projectData - Project data including structure content
    * @returns {Promise<string|null>} - Generated instructions or null if error
    */
-  async generateProjectInstructions(projectData) {
+  async generateProjectInstructions(/* projectData */) {
     throw new Error('generateProjectInstructions() must be implemented by child classes');
   }
 
@@ -52,7 +52,7 @@ class AIServiceAdapter extends BaseApiService {
    * @param {Object} mergeRequestData - Merge request data including changes
    * @returns {Promise<string|null>} - Generated code review or null if error
    */
-  async generateCodeReview(mergeRequestData) {
+  async generateCodeReview(/* mergeRequestData */) {
     throw new Error('generateCodeReview() must be implemented by child classes');
   }
 }

@@ -4,12 +4,12 @@ const path = require('path');
 const fs = require('fs-extra');
 const ora = require('ora');
 const Project = require('../../models/Project');
-const { projectPrompts } = require('../../cli/prompts');
-const config = require('../../utils/config');
+// const { projectPrompts } = require('../../cli/prompts'); // TODO: Use if needed
+// const config = require('../../utils/config'); // TODO: Use if needed
 const logger = require('../../utils/logger');
 const { generateDirectoryLink } = require('../../utils/pathHelper');
 const { generateDirectoryStructure } = require('../../utils/directoryStructure');
-const { selectAndLoadProject } = require('../../utils/projectHelper');
+// const { selectAndLoadProject } = require('../../utils/projectHelper'); // TODO: Use if needed
 
 // Extension groups for different file types
 const FILE_EXTENSION_GROUPS = {
@@ -34,7 +34,7 @@ async function collectFiles(projectName) {
     // Handle project selection/creation using the helper
     const project = await handleProjectSelection(projectName);
     if (!project) return;
-    
+
     projectName = project.name;
 
     // Collect source paths from user
@@ -70,7 +70,12 @@ async function collectFiles(projectName) {
  * @param {Array} excludeExtensions - File extensions to exclude
  * @returns {Promise<Array>} - Array of file objects
  */
-async function getFilesInDirectory(dirPath, extensions = null, excludeDirs = [], excludeExtensions = []) {
+async function getFilesInDirectory(
+  dirPath,
+  extensions = null,
+  excludeDirs = [],
+  excludeExtensions = []
+) {
   const files = [];
 
   async function scanDirectory(currentPath, relativePath = '') {
@@ -88,12 +93,12 @@ async function getFilesInDirectory(dirPath, extensions = null, excludeDirs = [],
         await scanDirectory(fullPath, relPath);
       } else if (entry.isFile()) {
         const ext = path.extname(entry.name).toLowerCase();
-        
+
         // Skip excluded extensions
         if (excludeExtensions.includes(ext)) {
           continue;
         }
-        
+
         // Check if file matches included extensions
         if (!extensions || extensions.includes(ext)) {
           files.push({
@@ -128,7 +133,7 @@ async function copyFilesToProject(files, project) {
   for (const file of files) {
     try {
       // Create a flattened filename that encodes the path
-      const flattenedName = file.relativePath.replace(/[\/\\]/g, '_');
+      const flattenedName = file.relativePath.replace(/[/\\]/g, '_');
 
       // Check if file already exists and has been modified
       const existingFile = existingFiles.get(file.relativePath);
@@ -232,7 +237,7 @@ function parseMultiplePaths(input) {
   if (!input || typeof input !== 'string') {
     return [];
   }
-  
+
   // Split the input by newlines, and filter out empty lines
   return input
     .split(/[\r\n]+/)
@@ -303,7 +308,7 @@ async function handleProjectSelection(projectName) {
             return null;
           }
         }
-        
+
         return project;
       }
     } else {
@@ -363,9 +368,9 @@ async function collectSourcePaths() {
         message: 'How would you like to add paths?',
         choices: [
           { name: 'Enter a single path', value: 'single' },
-          { name: 'Paste multiple paths at once', value: 'multiple' }
-        ]
-      }
+          { name: 'Paste multiple paths at once', value: 'multiple' },
+        ],
+      },
     ]);
 
     if (inputMethod === 'single') {
@@ -439,32 +444,32 @@ async function getMultiplePaths() {
   logger.info(chalk.cyan('3. Press Enter on an empty line when finished'));
   logger.info(chalk.yellow('\n↓ Paste paths here ↓'));
   logger.info(chalk.gray('----------------------------------'));
-  
+
   const lines = [];
   let done = false;
-  
+
   while (!done) {
     const result = await inquirer.prompt([
       {
         type: 'input',
         name: 'line',
         message: ' ',
-        prefix: ''
-      }
+        prefix: '',
+      },
     ]);
-    
+
     const line = result.line.trim();
-    
+
     if (line === '') {
       done = true;
     } else {
       lines.push(line);
     }
   }
-  
+
   logger.info(chalk.gray('----------------------------------'));
   logger.info(chalk.green(`✓ Received ${lines.length} paths`));
-  
+
   const multiPaths = lines.join('\n');
   const paths = parseMultiplePaths(multiPaths);
   const validPaths = [];
@@ -518,7 +523,7 @@ async function getFileFilters() {
     .split(',')
     .map(dir => dir.trim())
     .filter(Boolean);
-    
+
   // Files to exclude by extension
   const { excludeExtensions } = await inquirer.prompt([
     {
@@ -528,9 +533,13 @@ async function getFileFilters() {
       default: '.lock,package-lock.json,.pyc',
     },
   ]);
-  
-  logger.info(chalk.yellow('Note: package-lock.json is excluded by default as analyzing it provides no value for Claude projects.'));
-  
+
+  logger.info(
+    chalk.yellow(
+      'Note: package-lock.json is excluded by default as analyzing it provides no value for Claude projects.'
+    )
+  );
+
   const excludeExtensionsList = excludeExtensions
     .split(',')
     .map(ext => ext.trim())
@@ -571,13 +580,13 @@ async function processSourcePaths(sourcePaths, filters, project) {
     } else {
       // Handle specific file
       const fileExt = path.extname(sourcePath.path).toLowerCase();
-      
+
       // Skip excluded extensions for individual files too
       if (filters.excludeExtensionsList.includes(fileExt)) {
         logger.info(chalk.yellow(`Skipping excluded file extension: ${sourcePath.path}`));
         continue;
       }
-      
+
       if (filters.selectedExtensions.includes(fileExt)) {
         const relPath = path.basename(sourcePath.path);
         allFiles.push({
@@ -598,7 +607,7 @@ async function processSourcePaths(sourcePaths, filters, project) {
 
   // Display file summary
   displayFileSummary(allFiles);
-  
+
   return allFiles;
 }
 

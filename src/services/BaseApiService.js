@@ -3,7 +3,7 @@
  */
 const axios = require('axios');
 const logger = require('../utils/logger');
-const config = require('../utils/config');
+// const config = require('../utils/config');
 
 class BaseApiService {
   /**
@@ -30,7 +30,7 @@ class BaseApiService {
    */
   createClient(baseUrl, headers, options = {}) {
     this.baseUrl = baseUrl;
-    
+
     // Create client configuration
     const clientConfig = {
       baseURL: baseUrl,
@@ -40,7 +40,7 @@ class BaseApiService {
       },
       ...options,
     };
-    
+
     // If there's an auth object in options, create axios client with authentication
     this.client = axios.create(clientConfig);
   }

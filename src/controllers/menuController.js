@@ -1,9 +1,9 @@
-const inquirer = require('inquirer');
+// const inquirer = require('inquirer');
 const { mainMenu } = require('../cli');
 const ProjectMenuController = require('./ProjectMenuController');
 const ConfigMenuController = require('./ConfigMenuController');
-const config = require('../utils/config');
-const UIHelper = require('../utils/uiHelper');
+// const config = require('../utils/config');
+// const UIHelper = require('../utils/uiHelper');
 const ApiConfigService = require('../utils/ApiConfigService');
 const logger = require('../utils/logger');
 
@@ -51,7 +51,6 @@ class MenuController {
     // Delegate to ApiConfigService for this check
     return ApiConfigService.checkClaudeApiKey();
   }
-
 
   /**
    * Show current configuration (delegated to ConfigMenuController)

@@ -16,6 +16,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:file": "jest --testPathPattern",
+    "check": "npm test && echo 'All tests passed!'",
     "prepublishOnly": "npm test && npm run lint"
   },
   "engines": {

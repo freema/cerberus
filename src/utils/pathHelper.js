@@ -13,7 +13,7 @@ try {
   logger = {
     error: (msg, err) => console.error(msg, err),
     info: msg => console.log(msg),
-    warn: msg => console.warn(msg)
+    warn: msg => console.warn(msg),
   };
 }
 

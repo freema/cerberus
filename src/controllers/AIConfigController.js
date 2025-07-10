@@ -18,14 +18,14 @@ class AIConfigController {
     const activeAdapter = aiServiceProvider.getActiveAdapter();
     const config = require('../utils/config');
     const activeAdapterId = config.get('activeAIService', 'claude');
-    
+
     logger.info('Available AI services:');
     adapters.forEach(adapter => {
       const statusSymbol = adapter.isConfigured ? '✅' : '⚠️';
-      const activeSymbol = (adapter.id === activeAdapterId) ? '[ACTIVE]' : '';
+      const activeSymbol = adapter.id === activeAdapterId ? '[ACTIVE]' : '';
       logger.info(`  ${statusSymbol} ${adapter.name} ${activeSymbol}`);
     });
-    
+
     // Adapter selection
     const { configOption } = await inquirer.prompt([
       {
@@ -35,7 +35,7 @@ class AIConfigController {
         choices: [
           ...adapters.map(adapter => ({
             name: `🔧 Configure ${adapter.name}${adapter.isConfigured ? '' : ' (not configured)'}`,
-            value: `config_${adapter.id}`
+            value: `config_${adapter.id}`,
           })),
           { name: '🎯 Set Active AI Service', value: 'setActive' },
           { name: '⬅️ Back', value: 'back' },
@@ -61,14 +61,14 @@ class AIConfigController {
     const activeAdapter = aiServiceProvider.getActiveAdapter();
     const config = require('../utils/config');
     const activeAdapterId = config.get('activeAIService', 'claude');
-    
+
     const configuredAdapters = adapters.filter(adapter => adapter.isConfigured);
-    
+
     if (configuredAdapters.length === 0) {
       logger.warn('No AI services are configured. Please configure at least one service first.');
       return;
     }
-    
+
     const { adapterId } = await inquirer.prompt([
       {
         type: 'list',
@@ -76,11 +76,11 @@ class AIConfigController {
         message: '🎯 Select the AI service to use:',
         choices: configuredAdapters.map(adapter => ({
           name: `${adapter.name}${adapter.id === activeAdapterId ? ' (current)' : ''}`,
-          value: adapter.id
+          value: adapter.id,
         })),
-      }
+      },
     ]);
-    
+
     const success = aiServiceProvider.setActiveAdapter(adapterId);
     if (success) {
       const adapter = aiServiceProvider.getAdapter(adapterId);
@@ -98,9 +98,9 @@ class AIConfigController {
       logger.error(`Service adapter ${adapterId} not found`);
       return;
     }
-    
+
     logger.info(`\n=== 🔧 ${adapter.serviceName} Configuration ===`);
-    
+
     // Generic configuration for all adapters
     await this.handleGenericAdapterConfig(adapter);
   }
@@ -146,12 +146,12 @@ class AIConfigController {
 
         case 'model':
           const availableModels = adapter.getAvailableModels();
-          
+
           if (!availableModels || availableModels.length === 0) {
             logger.warn(`No models available for ${adapter.serviceName}`);
             break;
           }
-          
+
           const { modelId } = await inquirer.prompt([
             {
               type: 'list',
@@ -159,7 +159,7 @@ class AIConfigController {
               message: `🤖 Select ${adapter.serviceName} model:`,
               choices: availableModels.map(model => ({
                 name: model.name,
-                value: model.id
+                value: model.id,
               })),
             },
           ]);
@@ -175,7 +175,9 @@ class AIConfigController {
           if (isConnected) {
             logger.success(`Successfully connected to ${adapter.serviceName} API!`);
           } else {
-            logger.error(`Failed to connect to ${adapter.serviceName} API. Please check your configuration.`);
+            logger.error(
+              `Failed to connect to ${adapter.serviceName} API. Please check your configuration.`
+            );
           }
           break;
       }

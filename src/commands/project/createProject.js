@@ -1,6 +1,6 @@
 const inquirer = require('inquirer');
-const chalk = require('chalk');
-const path = require('path');
+// const chalk = require('chalk'); // TODO: Use if needed
+// const path = require('path'); // TODO: Use if needed
 const Project = require('../../models/Project');
 const { projectPrompts } = require('../../cli/prompts');
 const logger = require('../../utils/logger');

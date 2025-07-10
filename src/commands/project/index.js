@@ -16,7 +16,7 @@ function registerCommands(program) {
     .description('Project management commands for Claude AI preparation')
     .action(async () => {
       const choice = await mainMenu();
-      
+
       switch (choice) {
         case 'project':
           await handleProjectMenu();
@@ -25,31 +25,22 @@ function registerCommands(program) {
           program.commands.find(cmd => cmd.name() === 'codeReview').action();
           break;
         case 'exit':
-          process.exit(0);
-          break;
+          throw new Error('Exit requested');
+        // break;
       }
     });
 
-  projectCommand
-    .command('create')
-    .description('Create a new project')
-    .action(createProject);
+  projectCommand.command('create').description('Create a new project').action(createProject);
 
-  projectCommand
-    .command('open')
-    .description('Open an existing project')
-    .action(openProject);
+  projectCommand.command('open').description('Open an existing project').action(openProject);
 
-  projectCommand
-    .command('collect')
-    .description('Collect files for a project')
-    .action(collectFiles);
+  projectCommand.command('collect').description('Collect files for a project').action(collectFiles);
 
   projectCommand
     .command('analyze')
     .description('Analyze a project to improve Claude instructions')
     .action(analyzeProject);
-    
+
   projectCommand
     .command('update')
     .description('Update project files from original sources')
@@ -68,7 +59,7 @@ function registerCommands(program) {
  */
 async function handleProjectMenu() {
   // Delegate to the controller implementation for consistency
-  const menuController = require('../../controllers/menuController');
+  // const menuController = require('../../controllers/menuController');
   const projectMenuController = new (require('../../controllers/ProjectMenuController'))();
   await projectMenuController.handleMenu();
 }

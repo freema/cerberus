@@ -66,14 +66,14 @@ function generateDirectoryStructure(files) {
     const origPath = file.fullOriginalPath || file.originalPath;
     directoryStructure += `- \`${origPath}\` → \`${file.newPath}\`\n`;
   });
-  
+
   // Add path reference section formatted specifically for AI context
   directoryStructure += `\n## Path Reference for Claude AI\n\n`;
   directoryStructure += `IMPORTANT: When referring to files in your responses, ALWAYS use the original file paths (left side) instead of flattened names (right side).\n`;
   directoryStructure += `When discussing code or files, reference them by their original location in the project structure.\n`;
   directoryStructure += `For example, refer to a component as "src/containers/UserProfile.tsx" not as "src_containers_UserProfile.tsx".\n\n`;
   directoryStructure += `Path reference:\n`;
-  
+
   sortedFiles.forEach(file => {
     const origPath = file.originalPath;
     // Include the full path for proper project structure context

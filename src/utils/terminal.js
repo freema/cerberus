@@ -1,7 +1,7 @@
 /**
  * Terminal utility functions
  */
-const logger = require('./logger');
+// const logger = require('./logger'); // TODO: Use if needed
 
 /**
  * Clear the terminal screen

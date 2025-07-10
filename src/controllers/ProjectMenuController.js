@@ -15,7 +15,7 @@ class ProjectMenuController {
       { name: i18n.t('menu.project.existingOrUpdate'), value: 'existingOrUpdate' }, // Combined option
       { name: i18n.t('menu.project.collect'), value: 'collect' },
       { name: i18n.t('menu.project.analyze'), value: 'analyze' },
-      { name: '📦 Create bundle for Claude', value: 'bundle' }
+      { name: '📦 Create bundle for Claude', value: 'bundle' },
     ];
   }
 
@@ -55,7 +55,7 @@ class ProjectMenuController {
       }
     }
   }
-  
+
   /**
    * Handle submenu for existing project operations
    */
@@ -63,13 +63,13 @@ class ProjectMenuController {
     const inquirer = require('inquirer');
     const logger = require('../utils/logger');
     const Project = require('../models/Project');
-    
+
     try {
       const existingProjects = await Project.listAll();
-      
+
       if (existingProjects.length === 0) {
         logger.warn('No projects found. Please create a new project first.');
-        
+
         const { createNew } = await inquirer.prompt([
           {
             type: 'confirm',
@@ -78,15 +78,15 @@ class ProjectMenuController {
             default: true,
           },
         ]);
-        
+
         if (createNew) {
           const createProject = require('../commands/project/createProject');
           await createProject();
         }
-        
+
         return;
       }
-      
+
       // Prompt user to select a project
       const { selectedProject } = await inquirer.prompt([
         {
@@ -96,11 +96,11 @@ class ProjectMenuController {
           choices: [...existingProjects, { name: '⬅️ Go back', value: 'back' }],
         },
       ]);
-      
+
       if (selectedProject === 'back') {
         return;
       }
-      
+
       // Show options for the selected project
       const { action } = await inquirer.prompt([
         {
@@ -113,11 +113,11 @@ class ProjectMenuController {
             { name: '📥 Collect more files', value: 'collect' },
             { name: '🔎 Analyze project (generate Claude instructions)', value: 'analyze' },
             { name: '📦 Create bundle for Claude Projects', value: 'bundle' },
-            { name: '⬅️ Go back', value: 'back' }
-          ]
-        }
+            { name: '⬅️ Go back', value: 'back' },
+          ],
+        },
       ]);
-      
+
       switch (action) {
         case 'open':
           const openProject = require('../commands/project/openProject');

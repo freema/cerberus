@@ -1,0 +1,32 @@
+{
+  "supportedExtensions": [
+    ".php",
+    ".js",
+    ".jsx",
+    ".ts",
+    ".tsx",
+    ".py"
+  ],
+  "excludedDirs": [
+    "node_modules",
+    "vendor",
+    ".git",
+    "dist",
+    "build",
+    "coverage"
+  ],
+  "claude": {
+    "model": "claude-3-opus-20240229",
+    "maxTokens": 4000
+  },
+  "activeAIService": "claude",
+  "debug": true,
+  "bundle": {
+    "maxFilesPerBundle": 50,
+    "bundleFormat": "markdown",
+    "includeEmptyFiles": false,
+    "maxFileSizeForBundle": 1048576,
+    "maxBundleSize": 5242880
+  },
+  "locale": "cs"
+}

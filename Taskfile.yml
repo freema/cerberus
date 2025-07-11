@@ -1,0 +1,227 @@
+version: '3'
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  install:
+    desc: Install dependencies
+    cmds:
+      - npm install
+
+  clean:
+    desc: Clean build artifacts and caches
+    cmds:
+      - rm -rf node_modules
+      - rm -f package-lock.json
+      - rm -rf var/cache/*
+      - rm -rf var/log/*
+      - echo "Cleaned build artifacts and caches"
+
+  setup:
+    desc: Initial setup - install dependencies and create required directories
+    cmds:
+      - task: install
+      - mkdir -p var/cache/security var/cache/projects var/cache/temp var/log data/projects config locales
+      - echo "Setup completed successfully"
+
+  run:
+    desc: Run Cerberus CLI in interactive mode
+    cmds:
+      - node bin/cerberus.js
+
+  run:debug:
+    desc: Run Cerberus CLI in debug mode
+    cmds:
+      - node bin/cerberus.js --debug
+
+  run:help:
+    desc: Show Cerberus CLI help
+    cmds:
+      - node bin/cerberus.js --help
+
+  test:
+    desc: Run all tests
+    cmds:
+      - npm test
+
+  test:watch:
+    desc: Run tests in watch mode
+    cmds:
+      - npm test -- --watch
+
+  test:coverage:
+    desc: Run tests with coverage report
+    cmds:
+      - npm test -- --coverage
+
+  lint:
+    desc: Run ESLint
+    cmds:
+      - npx eslint src/ --ext .js
+
+  lint:fix:
+    desc: Run ESLint with auto-fix
+    cmds:
+      - npx eslint src/ --ext .js --fix
+
+  format:
+    desc: Format code with Prettier
+    cmds:
+      - npm run format
+
+  check:
+    desc: Run all checks (lint)
+    cmds:
+      - task: lint
+
+  # Project management commands
+  project:create:
+    desc: Create a new project
+    cmds:
+      - node bin/cerberus.js project create
+
+  project:collect:
+    desc: Collect files for a project
+    cmds:
+      - node bin/cerberus.js project collect
+
+  project:analyze:
+    desc: Analyze a project and generate Claude instructions
+    cmds:
+      - node bin/cerberus.js project analyze
+
+  project:bundle:
+    desc: Create bundle for Claude Projects
+    cmds:
+      - node bin/cerberus.js project bundle
+
+  project:list:
+    desc: List all projects
+    cmds:
+      - node bin/cerberus.js project list
+
+  # Configuration commands
+  config:
+    desc: Configure Cerberus settings
+    cmds:
+      - node bin/cerberus.js configure
+
+  config:show:
+    desc: Show current configuration
+    cmds:
+      - node bin/cerberus.js --config
+
+  # Utility commands
+  logs:
+    desc: Show recent logs
+    cmds:
+      - tail -n 100 var/log/cerberus-*.log | less
+
+  logs:follow:
+    desc: Follow logs in real-time
+    cmds:
+      - tail -f var/log/cerberus-*.log
+
+  cache:clear:
+    desc: Clear all cache files
+    cmds:
+      - rm -rf var/cache/*
+      - mkdir -p var/cache/security var/cache/projects var/cache/temp
+      - echo "Cache cleared"
+
+  # Development commands
+  dev:
+    desc: Run in development mode with debug enabled
+    cmds:
+      - NODE_ENV=development node bin/cerberus.js --debug
+
+  watch:
+    desc: Watch for file changes (requires nodemon)
+    cmds:
+      - npx nodemon bin/cerberus.js
+
+  # Quick workflow commands
+  workflow:new:
+    desc: Complete workflow - create project, collect files, and analyze
+    cmds:
+      - echo "Starting complete workflow..."
+      - node bin/cerberus.js project create
+      - echo "Project created. Now collecting files..."
+      - node bin/cerberus.js project collect
+      - echo "Files collected. Now analyzing project..."
+      - node bin/cerberus.js project analyze
+      - echo "Workflow completed!"
+
+  workflow:bundle:
+    desc: Create project bundle for Claude
+    cmds:
+      - echo "Creating bundle for Claude Projects..."
+      - node bin/cerberus.js project bundle
+      - echo "Bundle created successfully!"
+
+  # CI/CD commands
+  ci:
+    desc: Run CI pipeline (install, lint, test)
+    cmds:
+      - task: clean
+      - task: install
+      - task: check
+      - task: test:coverage
+
+  release:
+    desc: Prepare for release
+    cmds:
+      - task: clean
+      - task: install
+      - task: check
+      - task: test
+      - echo "Release preparation completed"
+
+  # Maintenance commands
+  deps:check:
+    desc: Check for outdated dependencies
+    cmds:
+      - npm outdated
+
+  deps:update:
+    desc: Update dependencies to latest versions
+    cmds:
+      - npm update
+
+  security:
+    desc: Run security audit
+    cmds:
+      - npm audit
+
+  security:fix:
+    desc: Fix security vulnerabilities
+    cmds:
+      - npm audit fix
+
+  # Docker commands (if you add Docker support later)
+  docker:build:
+    desc: Build Docker image
+    cmds:
+      - docker build -t cerberus-cli .
+
+  docker:run:
+    desc: Run Cerberus in Docker container
+    cmds:
+      - docker run -it --rm -v $(pwd)/data:/app/data -v $(pwd)/var:/app/var cerberus-cli
+
+  # Backup commands
+  backup:projects:
+    desc: Backup all projects
+    cmds:
+      - tar -czf backup-projects-$(date +%Y%m%d-%H%M%S).tar.gz data/projects/
+      - echo "Projects backed up successfully"
+
+  restore:projects:
+    desc: Restore projects from backup
+    cmds:
+      - echo "Available backups:"
+      - ls -la backup-projects-*.tar.gz || echo "No backups found"
+      - echo "To restore, run - tar -xzf backup-projects-TIMESTAMP.tar.gz"

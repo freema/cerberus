@@ -1,0 +1,26 @@
+{
+  "app": {
+    "name": "Cerberus",
+    "version": "1.0.0"
+  },
+  "var": {
+    "cache": {
+      "ttl": 86400000,
+      "cleanupInterval": 3600000
+    },
+    "log": {
+      "maxFiles": 10,
+      "maxDays": 30
+    }
+  },
+  "extensions": {
+    "supported": [".php", ".js", ".jsx", ".ts", ".tsx", ".py"]
+  },
+  "exclude": {
+    "directories": ["node_modules", "vendor", ".git", "dist", "build", "public"]
+  },
+  "claude": {
+    "model": "claude-3-opus-20240229",
+    "maxTokens": 4000
+  }
+}

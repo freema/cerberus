@@ -28,6 +28,16 @@ jest.mock('figlet', () => ({
   textSync: jest.fn(() => 'CERBERUS'),
 }));
 
+// Mock console.error to suppress error output during tests
+const originalConsoleError = console.error;
+beforeAll(() => {
+  console.error = jest.fn();
+});
+
+afterAll(() => {
+  console.error = originalConsoleError;
+});
+
 const { withBackOption } = require('../../src/cli/index');
 
 describe('CLI Interface', () => {

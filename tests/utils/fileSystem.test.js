@@ -6,6 +6,16 @@ const glob = require('glob');
 jest.mock('fs-extra');
 jest.mock('glob');
 
+// Mock console.error to suppress error output during tests
+const originalConsoleError = console.error;
+beforeAll(() => {
+  console.error = jest.fn();
+});
+
+afterAll(() => {
+  console.error = originalConsoleError;
+});
+
 describe('FileSystem Utils', () => {
   beforeEach(() => {
     jest.clearAllMocks();

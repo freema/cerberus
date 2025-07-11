@@ -6,3 +6,4 @@ config/
 .git/
 dist/
 *.min.js
+data/

@@ -1,5 +1,5 @@
 {
-  "name": "@graslt/cerberus-claude-cli",
+  "name": "cerberus-claude-cli",
   "version": "1.0.0",
   "description": "CLI tool for preparing files and projects for Claude AI. Collect, organize, and analyze source code files to create comprehensive project contexts.",
   "main": "bin/cerberus.js",
@@ -33,7 +33,7 @@
     "code-organization",
     "file-bundling"
   ],
-  "author": "graslt",
+  "author": "freema",
   "license": "MIT",
   "homepage": "https://github.com/freema/cerberus#readme",
   "repository": {

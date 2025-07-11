@@ -1,9 +1,9 @@
 # Cerberus
 
-[![Node.js CI](https://github.com/yourusername/cerberus/actions/workflows/test.yml/badge.svg)](https://github.com/yourusername/cerberus/actions/workflows/test.yml)
-[![codecov](https://codecov.io/gh/yourusername/cerberus/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/cerberus)
-[![npm version](https://badge.fury.io/js/cerberus-cli.svg)](https://badge.fury.io/js/cerberus-cli)
+[![Node.js CI](https://github.com/freema/cerberus/actions/workflows/test.yml/badge.svg)](https://github.com/freema/cerberus/actions/workflows/test.yml)
+[![npm version](https://img.shields.io/npm/v/cerberus-claude-cli.svg)](https://www.npmjs.com/package/cerberus-claude-cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node version](https://img.shields.io/node/v/cerberus-claude-cli.svg)](https://nodejs.org)
 
 Cerberus is a command-line tool designed to prepare files and projects for Claude AI. It helps developers collect, organize, and analyze source code files to create comprehensive project contexts that can be used as system messages in Claude projects.
 
@@ -52,7 +52,7 @@ Cerberus simplifies the process of working with Claude AI by:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/cerberus.git
+git clone https://github.com/freema/cerberus.git
 cd cerberus
 
 # Install dependencies

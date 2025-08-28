@@ -1,6 +1,6 @@
 {
   "name": "cerberus-claude-cli",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "CLI tool for preparing files and projects for Claude AI. Collect, organize, and analyze source code files to create comprehensive project contexts.",
   "main": "bin/cerberus.js",
   "bin": {

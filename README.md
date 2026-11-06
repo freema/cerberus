@@ -1,5 +1,8 @@
 # Cerberus
 
+> [!WARNING]
+> **Archived — no longer maintained.** This repository is read-only and the npm package `cerberus-claude-cli` will not receive further updates, including security fixes for its dependencies.
+
 [![Node.js CI](https://github.com/freema/cerberus/actions/workflows/test.yml/badge.svg)](https://github.com/freema/cerberus/actions/workflows/test.yml)
 [![npm version](https://img.shields.io/npm/v/cerberus-claude-cli.svg)](https://www.npmjs.com/package/cerberus-claude-cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
